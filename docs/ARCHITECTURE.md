@@ -1,64 +1,57 @@
 # Architecture
 
 ```
- OFFLINE (Mac: Python, PyTorch)                    ON THE CARTRIDGE (SM83 assembly only)
- ------------------------------                    -------------------------------------
- training/dataset.py  grammar, splits              game.asm       story truth: scene, items, wounds
- training/train.py    float + QAT training            |  event token
- tools/export_weights.py  int8 blob with SHA-256   tokenizer.asm  <BOS> EVENT ITEMS FATE
- tools/rom_layout.py  weights -> ROM layout           |
- reference/fixed_point.py  independent integers    model.asm      forward pass
-      |                         |                     |- matvec.asm     dot, matvec, multiply
-      v  tests compare          |                     |- norm.asm       mean-absolute norm
- tools/benchmark.py  T-cycles   +-- bit-exact --->    |- attention.asm  scores, weights, values
- tools/compare.py    reports                          |- activation.asm ReLU
- tools/capture_demo.py                                |- quant.asm      round, saturate
-                                                      v
-                                                   sampler.asm    mask, argmax or sampling
-                                                   ui.asm, video.asm  words on screen
+Player input            quick action, or text from the on-screen keyboard
+      |
+Parser (deterministic)  src/parser.asm: cue words -> intent, topic, facts. Admits what it doesn't know.
+      |
+Memory (deterministic)  src/convo.asm: anger, respect, boredom, counts, name, like. Saved to cartridge RAM.
+      |
+Prompt                  <BOS> MOOD RELATION HISTORY REPEAT FACTS INTENT TOPIC <SAY>   (9 tokens)
+      |
+Neural inference        src/model.asm, matvec.asm, attention.asm, norm.asm: one forward pass per token
+      |
+Decoding                src/sampler.asm: allowed rows, repetition penalty, seeded sampling
+      |
+Rendering               src/ui.asm: the emotion token sets the face, words stream into the box, slots print memory
 ```
 
-**The boundary:** during a gameplay run no host code computes anything. The harness only presses buttons and reads memory. `src/selftest.asm` proves this directly: it needs no host and prints its verdict on screen.
+## Which parts are neural
 
-## Source modules
+| Part | Neural? | Where |
+|---|---|---|
+| Every word in a box marked NEURAL | **Yes** | One forward pass per token, on the SM83 |
+| Which face the robot reacts with | **Yes** | The first token is an emotion, chosen by the model |
+| When a response ends, how long it is | **Yes** | `<EOS>` is a token |
+| Whether it mentions your name or counts your insults | **Yes** | The model decides to emit the slot token |
+| The value printed for a slot (`BOB`, `3`) | No | Printed from memory by the renderer |
+| Typed text to intent and topic | No | Keyword rules, the same in `reference/conversation.py` and `src/parser.asm` |
+| Mood, respect, counts, repeat detection | No | Fixed rules. These are state, never weight updates |
+| Boot text, intro lines, power-down lines, menus | No | Fixed text. Dialogue from this source is marked SYSTEM |
+| Blink, bob, shake, talk animation | No | VBlank handler |
 
-| File | Role |
+The model never learns during play. It remembers you only in the sense that memory changes the prompt it is given.
+
+## Source layout
+
+| Path | Contents |
 |---|---|
-| `boot.asm` | Vectors, header, hardware init, entry dispatch |
-| `video.asm` | VBlank ISR, shadow map, text primitives, palette fades, art loading |
-| `input.asm` | Joypad sampling in the ISR, edge latch |
-| `ui.asm` | State machine: TITLE, INTRO, MENU, PREFILL, GENERATING, REVEAL, UPDATE, ENDING, STATS. One job per screen |
-| `game.asm` | Story engine: filters choices by flags, applies consequences. Its tables are generated from `reference/story.py` |
-| `tokenizer.asm` | Prompt builder, word wrap, streaming narration |
-| `model.asm` | Forward pass, tensor buffers, output layer |
-| `matvec.asm` | Multiply variants, dot kernels, matvec |
-| `attention.asm`, `norm.asm`, `activation.asm`, `quant.asm`, `sampler.asm` | One operation each |
-| `bank.asm` | MBC5 switching, counted for instrumentation |
-| `profile.asm` | Label markers for hooks, on-device frame timing |
-| `debug.asm` | Mailbox at a fixed address. The game reads only the harness overrides (seed, greedy) |
-| `testrom.asm` | Kernel test command loop, test build only |
-| `selftest.asm` | Host-free verification, self-test build only |
+| `src/matvec.asm`, `attention.asm`, `norm.asm`, `quant.asm`, `activation.asm`, `model.asm`, `sampler.asm` | The inference engine. Selected by `IF DEF` from `configs/*.yaml` |
+| `src/parser.asm`, `convo.asm` | Text rules and memory, including the save format |
+| `src/ui.asm`, `robot.asm`, `video.asm`, `input.asm` | Screens, sprites, VBlank uploads, joypad |
+| `src/testrom.asm`, `selftest.asm`, `debug.asm`, `profile.asm` | Test commands, standalone self-test, mailbox, timing labels |
+| `reference/fixed_point.py`, `conversation.py` | The independent integer reference and rules. Pure Python integers, no torch |
+| `training/corpus.py`, `dialogue.py`, `model.py`, `train.py`, `evaluate.py` | Corpus, vocabulary and splits, QAT model, training, evaluation |
+| `tools/` | Art, weights, ROM layout, build, benchmarks, study, report, demo |
+| `web/` | The browser handheld. Plain ES modules, no build step |
+| `tests/` | Python tests against reference and ROM; `tests/web/` for the browser |
 
-Each routine's header states its inputs, outputs and clobbered registers.
+## Banks and timing
 
-## Why words appear one at a time
+Bank 0 holds everything the engine and interrupt handler touch. Bank 1 holds the conversation code, and that code is only mapped between forward passes: `TokenHook` in bank 0 switches to it after each token, and the engine switches away again by itself. Bank 2 onward holds weights, with token embeddings pinned at `$4000` so `id >> 9` selects the bank.
 
-The main thread does inference and the VBlank ISR does everything visual. Kernels write into a WRAM shadow of the background map and set a dirty flag per row. The ISR uploads at most 4 rows per VBlank, so inference never waits on the PPU and the spinner stays alive during a long multiply. Each new token is appended to the shadow right after it's chosen, so the player reads the sentence as it's written.
+During a weight stream SP points into ROM and interrupts are off for one row, about three scanlines. So the VBlank handler can start late. It reads LY first and skips VRAM and OAM work when there isn't room, leaving it for the next frame. Sprites rebuild after the uploads, since a rebuild costs more than VBlank has left and its result is shown next frame. Input and animation keep running throughout inference.
 
-Two bugs found by the emulator tests shaped this design. Six rows per VBlank overran mode 1 and dropped writes, which is why the limit is 4. And a shadow write must be marked dirty *after* the write: marking first let a VBlank upload the old value and clear the flag.
+## Why sprites for the face
 
-## Variant builds
-
-`configs/*.yaml` choose assembler defines and the ROM layout, and `tools/build.py` builds three ROMs per variant: `gameboygpt.gb`, `test.gb` and optionally `selftest.gb`. All variants live in one source tree behind `IF DEF`, and every one can be built at any time. The git tag `baseline` also pins V0 as first measured.
-
-## Risk register
-
-| Risk | Outcome |
-|---|---|
-| Inference too slow | The baseline was playable with patience, and RESULTS.md has the shipping build's speed |
-| RAM overflow | Less than half of WRAM is allocated, see [MEMORY_MAP.md](MEMORY_MAP.md) |
-| Broken bank switching | Tensors are read from ROMX across layouts, with parity tests on each |
-| Quantization-induced nonsense | Avoided with QAT, and all quality numbers come from the integer reference |
-| Misleading benchmark timing | Cycle counter calibrated against hand-counted code, cross-checked with on-device frames and a second emulator |
-| Static-text fallback | Weights-patch test and ROM string audit; capped events are counted and shown |
-| Real-hardware behaviour | **Open: not tested on a physical DMG** |
+The robot is 32 sprites in 8x16 mode. Moving one sprite's Y is a bob, tearing rows sideways is a glitch, and swapping tile numbers in two sprite rows changes the eyes and mouth without touching the dialogue. Background tiles would have needed VRAM updates per frame and a whole-row upload per change. Eight sprites per row leaves the 10-per-line limit intact, and mirrored cells cut the tile count. Sprite tiles have `$8000`-`$87FF` to themselves because the background is set to the other tile addressing mode.

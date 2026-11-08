@@ -438,4 +438,5 @@ WipeSave::
     ld [MBC5_RAMB], a
     ld [sMagic], a
     ld [MBC5_RAMG], a
-    jp StateReset
+    call StateReset
+    jp UpdateMood

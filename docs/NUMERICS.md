@@ -13,6 +13,7 @@ Every weight and activation is an int8 in **[-127, 127]**. -128 never occurs, so
 | Weights `w_*` | Per-tensor power of two `2^-s`, `s` in 0..7 | `s` is the largest value where `max|w| * 2^s <= 127` |
 | Attention weights | Q7 unsigned, 0..127 | Sum is about 128 |
 | Logits | int16 | Compared only with each other |
+| Output bottleneck `z` | Q4 activation, width `k` | `z = matvec(W_b, n3, s_b)` |
 
 ## Primitives
 
@@ -56,15 +57,19 @@ a[i] = sat8(rshift_round(sum w'[j] * v[j][i], 7))
 ## Output and decoding
 
 ```
-logit[i] = rshift_round(W_out[i] . n3, 4)
+z        = matvec(W_b, n3, s_b)            k values
+logit[i] = rshift_round(W_out[i] . z, 4)
 ```
 
-The worst case fits in int16.
+The worst case fits in int16 with room left for the repetition penalty. Token ids are 16 bits.
 
-- **Mask:** only ids from `<EOS>` onward can be generated. Control tokens never appear in output.
+- **Rows:** ids are ordered `[prompt tokens] [8 emotions] <EOS> [slots] [punctuation] [words]`. The first generated token may only be an emotion. Every later one may only be `<EOS>`, a slot or a word. Other rows can't be chosen, and the optimized builds don't compute them.
+- **Repetition penalty:** before choosing, each earlier use of a word in this response subtracts `rep_penalty` (2.0 nats) from that word's logit. Punctuation, slots and emotions are exempt. The checksum in `wMB_LogitSum` is taken before the penalty.
 - **Greedy:** the highest logit; ties resolve to the lowest id.
-- **Sampling:** uniform over the first 4 ids (in id order) within `sample_margin` of the best logit. The margin is 0.7 nats, converted to logit units at export. The RNG is a 16-bit Galois LFSR with taps `$B400`, advanced 8 bits per pick, separate from the world's RNG so narration can't alter game truth.
-- **Cap:** generation stops at context 24. An event that reaches the cap without `<EOS>` is counted in `wMB_Fallbacks`, which is visible on the stats screen as `Capped`.
+- **Sampling:** softmax at temperature 1 over the first 12 ids (in id order) within `sample_margin` (2.2 nats) of the best. A candidate weighs `ExpLut[min(127, delta * 16 >> s_out)]`, the same exponential attention uses, where `delta` is its distance from the best. With `b` the next RNG byte, `pick = (b * sum) >> 8`, then walk the candidates. The RNG is a 16-bit Galois LFSR with taps `$B400`, advanced 8 bits per pick.
+- **Cap:** generation stops at context 32. A response that reaches the cap without `<EOS>` is counted in `wMB_Fallbacks` and shown ending in two dots.
+
+Slots are not numbers the model computes: it emits `<NAME>` or `<NI>`, and the renderer prints a value from memory.
 
 ## Output-preserving optimizations
 
@@ -74,7 +79,8 @@ Each of these changes how a value is computed, never the value. All are checked 
 |---|---|
 | Quarter-square multiply | `ab = floor((a+b)^2/4) - floor((a-b)^2/4)` holds for all integers, because `a+b` and `a-b` have the same parity |
 | Biased inputs | `x + 128` and `w + 128` only make the 9-bit sum's carry select a table page |
-| Output pruning | Masked rows can't affect masked argmax or sampling. Tests compare only masked logits |
+| Row pruning | Rows that can't be chosen at this position can't affect the choice. Tests compare only allowed rows |
+| Head tables | `entry[w + 128] = w * z + 32768` is the product, plus a constant that is removed from the total. A lookup gives the same sum as a multiply |
 | K/V cache | `K[j]` and `V[j]` depend only on token `j` and position `j` in a one-layer model |
 | Sparse aggregation | `w' = 0` contributes nothing. The 16-bit accumulators are safe because the sum of `w'` is bounded (`tests/test_export.py`) |
 | Zero-column skip | `x = 0` makes every product in that column 0 |

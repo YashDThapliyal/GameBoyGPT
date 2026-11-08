@@ -4,19 +4,22 @@ Run from a clean clone with RGBDS and uv installed:
 
 ```
 uv sync --python 3.12
-make all          # builds every variant, runs the full test suite
+(cd web && npm install)
+make train           # only if retraining; hashes will change
+make study           # the scaling study; about an hour
+make all             # builds every variant, runs the full test suite
 make second-emulator
 make benchmark
-make quality
-make heldout
+make evaluate
+make report
+make web-test
 make demo
-make report       # figures, RESULTS.md, memory map, dashboard
 ```
 
 - [ ] All tests pass on every variant
 - [ ] `SELFTEST PASS` on SameBoy and PyBoy, with matching frames
-- [ ] Every CSV row's `token_match_baseline` is `SELF` or `True`
-- [ ] README's generated block matches RESULTS.md
-- [ ] Claims say "emulator" and "tiny causal transformer"; prior art is cited
-- [ ] `NOTICE.md` is current; no third-party art, no Nintendo marks
-- [ ] Not done for this release: physical DMG run
+- [ ] Every CSV row has `token_match_baseline` of `SELF` or `True` and `matches_reference` of `True`
+- [ ] Browser tokens equal the reference
+- [ ] Demo tokens equal the reference for its pinned seeds
+- [ ] `scripts/reproduce_v031.sh` still reproduces v0.3.1
+- [ ] Claims say "emulator" and "narrow domain". Memory is never called learning. Prior art is cited

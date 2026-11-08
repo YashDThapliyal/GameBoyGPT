@@ -142,6 +142,7 @@ function fit() {
 }
 
 async function main() {
+  document.documentElement.classList.toggle("demo", params.get("demo") === "1");
   restorePrefs();
   applyDisplay();
   fit();

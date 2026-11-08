@@ -51,7 +51,7 @@
     <h1>System Override</h1>
     <p class="lede">An arrogant neural network, running on an 8-bit CPU from 1989. It insults you when you talk to it.</p>
 
-    <div class="row-buttons">
+    <div class="row-buttons not-demo">
       <button id="btnPower" type="button">Turn on</button>
       <button id="btnReset" type="button" disabled>Reset</button>
       <button id="btnFull" type="button">Full screen</button>
@@ -65,7 +65,7 @@
       <div><dt>Last response</dt><dd id="lvLast">None yet</dd></div>
       <div><dt>Tokens generated</dt><dd id="lvTotal">0</dd></div>
     </dl>
-    <p class="note">Read each moment from the emulator's work RAM. Times are emulated seconds at 4.19 MHz, counted by the ROM's own frame counter.</p>
+    <p class="note not-demo">Read each moment from the emulator's work RAM. Times are emulated seconds at 4.19 MHz, counted by the ROM's own frame counter.</p>
 
     <h2>Tokens from the last response</h2>
     <div class="tokens" id="tokens"><p class="empty">Pick something to say on the handheld. Each word shows up here with its token id as the model produces it.</p></div>
@@ -73,8 +73,8 @@
     <h2>What this build is</h2>
     <dl class="facts" id="build"></dl>
 
-    <h2>Display</h2>
-    <div class="toggles">
+    <h2 class="not-demo">Display</h2>
+    <div class="toggles not-demo">
       <label><input type="checkbox" id="optTint" checked> Green tint</label>
       <label><input type="checkbox" id="optGrid" checked> Pixel grid</label>
       <label><input type="checkbox" id="optGlow" checked> Glass glow</label>
@@ -82,8 +82,9 @@
       <label><input type="checkbox" id="optClean"> Clean test display</label>
     </div>
 
-    <h2>What is real here</h2>
-    <p class="note">The plastic is CSS and does nothing but look the part. The screen shows the real ROM's machine code running in <a href="vendor/binjgb/LICENSE">binjgb</a>, an open-source emulator compiled to WebAssembly. No JavaScript takes part in generating the text and nothing is sent over the network. The model understands only a narrow set of topics. This has not been tested on a physical console.</p>
+    <h2 class="not-demo">What is real here</h2>
+    <p class="demo-only note">Real emulator footage of the real ROM. The plastic is decoration.</p>
+    <p class="note not-demo">The plastic is CSS and does nothing but look the part. The screen shows the real ROM's machine code running in <a href="vendor/binjgb/LICENSE">binjgb</a>, an open-source emulator compiled to WebAssembly. No JavaScript takes part in generating the text and nothing is sent over the network. The model understands only a narrow set of topics. This has not been tested on a physical console.</p>
   </aside>
 </main>
 <script type="module" src="js/main.js"></script>

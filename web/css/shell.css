@@ -146,6 +146,13 @@ kbd { font: inherit; font-weight: 600; color: var(--ink); }
 .toggles label { display: flex; gap: 8px; align-items: center; cursor: pointer; }
 .toggles input { accent-color: var(--solder); width: 16px; height: 16px; }
 
+.demo-only { display: none; }
+.demo .demo-only { display: block; }
+.demo .not-demo { display: none; }
+.demo .keys { display: none; }
+.demo .panel h2 { margin-top: 14px; }
+.demo .tokens { min-height: 118px; }
+.demo .lede { margin-bottom: 4px; }
 .fullscreen .panel, .fullscreen .keys { display: none; }
 .fullscreen .bench { align-items: center; padding: 0; }
 

@@ -221,3 +221,58 @@ def test_response_depends_on_conversation_state_at_equal_seed():
         return out
     calm, rude = run([]), run([1, 1, 1])
     assert calm[0] != rude[0]
+
+
+def test_presses_during_generation_do_not_dismiss_the_reply():
+    gb = boot()
+    select(gb, 1)
+    gb.press("a")
+    gb.wait_for(lambda: gb.read1("wMB_State") == ST_THINKING, 200)
+    for button in ("a", "start", "select", "a"):
+        gb.press(button)
+    wait_response(gb)
+    gb.tick(30)
+    assert gb.read1("wMB_State") == ST_READ
+    assert screen_text(gb)
+    gb.stop()
+
+
+def test_inspector_at_the_reply_comes_back_to_the_same_reply():
+    gb = boot()
+    action(gb, 1)
+    text, expr = screen_text(gb), gb.read1("wExpr")
+    gb.press("select")
+    gb.wait_for(lambda: gb.read1("wMB_State") == ST_INSPECT, 300)
+    gb.tick(20)
+    gb.press("b")
+    gb.wait_for(lambda: gb.read1("wMB_State") == ST_READ, 300)
+    gb.tick(30)
+    assert screen_text(gb) == text and gb.read1("wExpr") == expr
+    assert_vram_matches_shadow(gb)
+    next_page(gb)
+    assert gb.read1("wMB_State") == ST_MENU
+    gb.stop()
+
+
+def test_forgetting_the_player_resets_memory_and_stays_forgotten(tmp_path):
+    rom = _copy_rom(tmp_path)
+    gb = boot(rom=rom, ram_file="auto")
+    for _ in range(3):
+        action(gb, cv.ACTIONS.index("SHUT DOWN"))
+        if gb.read1("wMood") != 5:
+            next_page(gb)
+    assert gb.read1("wMood") == 5
+    gb.press("select")
+    gb.wait_for(lambda: gb.read1("wMB_State") == ST_INSPECT, 300)
+    gb.tick(20)
+    gb.press("start")
+    gb.tick(10)
+    gb.press("start")
+    gb.wait_for(lambda: gb.read1("wMB_State") == ST_MENU, 600)
+    assert gb.read1("wTurns") == 0 and gb.read1("wMood") == 0 and gb.read1("wRelation") == 1
+    gb.stop(save=True)
+    second = GB(rom, ram_file="auto")
+    second.wait_for(lambda: second.read1("wMB_State") == ST_INTRO, 300)
+    second.tick(30)
+    assert second.read1("wReturning") == 0
+    second.stop()

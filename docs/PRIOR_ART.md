@@ -34,6 +34,13 @@ Sources checked 2026-11-07 through the GitHub API, the listed pages, the arXiv A
 
 **Comparability.** Seconds per token are not comparable across these projects: clock mode, model size, tokenizer and decoding differ. Frames are not seconds. M-cycle counts on the same model are the only figures that travel, and only when the kernel's assumptions (double speed, banked WRAM) are stated.
 
+## Additions for SYSTEM OVERRIDE
+
+- **binjgb** provides the browser emulator core; see NOTICE.md.
+- **chatgbc's** 27-sum lookup, built once per input and read by weight, is the closest prior idea to this project's head tables. Theirs tabulates ternary weight triples and ours tabulates a full 256-entry byte multiply per input. We arrived at ours from our profile, and it uses none of their code.
+- **BPE** (Sennrich et al., [Neural Machine Translation of Rare Words with Subword Units](https://arxiv.org/abs/1508.07909), 2015) is the method behind the phrase tokens, applied to whole words rather than characters.
+- **Low-rank output layers** are a standard factorization. The head here is not novel; running it on a DMG with lookup tables is what this project measured.
+
 ## 3. Papers
 
 | Publication (verified) | Concept | How it applies to a DMG | What we do NOT claim |

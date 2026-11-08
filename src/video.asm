@@ -285,9 +285,10 @@ ScreenOff::
 
 ScreenOn::
     call UploadAllNow
-    ld a, 1
-    ldh [hOamDirty], a
+    ld a, HIGH(wOam)     ; LCD and interrupts are off, so sprites are right from the first visible frame
+    call hDmaRoutine
     xor a
+    ldh [hOamDirty], a
     ldh [rIF], a
     ld a, LCDC_ON
     ldh [rLCDC], a

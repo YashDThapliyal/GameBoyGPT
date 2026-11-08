@@ -172,10 +172,46 @@ WaitConfirm:
     call WaitVBlank
     call ConsumePressed
     bit PAD_SELECT, a
-    jp nz, Inspector
+    jr nz, .inspect
     and (1 << PAD_A) | (1 << PAD_START)
     jr z, WaitConfirm
     jp StirRng
+.inspect:
+    call Inspector
+    ld a, [wSeqLen]
+    cp MODEL_CTX + 1
+    ret nc               ; the player chose to be forgotten: no reply left to show
+    call RedrawReply
+    jr WaitConfirm
+
+; RedrawReply: draws the reply again from the token ids in wSeq, after the inspector replaced the screen. No inference.
+RedrawReply:
+    ld hl, StrBandNN
+    call SetBand
+    call ClearText
+    ld hl, StrHintNext
+    call Hint
+    ld a, PROMPT_LEN
+.t:
+    ld b, a
+    ld a, [wSeqLen]
+    cp b
+    ret z
+    ld a, b
+    push af
+    add a
+    ld l, a
+    ld h, 0
+    ld de, wSeq
+    add hl, de
+    ld a, [hl+]
+    ld [wPickId], a
+    ld a, [hl]
+    ld [wPickId + 1], a
+    call RenderToken
+    pop af
+    inc a
+    jr .t
 
 ; StirRng: mixes timing into the sampler seed unless the harness pinned it.
 StirRng:
@@ -603,7 +639,7 @@ MenuPos:
     ld a, b
     and 1
     ld b, c
-    ld c, 1
+    ld c, 0
     ret z
     ld c, 10
     ret
@@ -634,6 +670,7 @@ MainMenu:
     call ClearParsed
     call DrawMenu
     call MoveCursor
+    call ConsumePressed
 .loop:
     call ReadNav
     ld b, a
@@ -761,6 +798,7 @@ Respond:
     call SetState
     ld hl, StrHintNext
     call Hint
+    call ConsumePressed  ; presses made while it was talking must not dismiss the reply unread
     call WaitConfirm
     ld a, [wMood]
     cp MOOD_DYING
@@ -775,6 +813,9 @@ OnToken:
     inc hl
     inc [hl]
 .nc:
+    ; fall through
+; RenderToken: draws wPickId. Used live and to redraw a reply.
+RenderToken:
     ld a, [wPickId]
     ld e, a
     ld a, [wPickId + 1]
@@ -1232,6 +1273,7 @@ Keyboard:
     ld [wKeyRow], a
     ld [wKeyCol], a
     call DrawKeyboard
+    call ConsumePressed
 .loop:
     call KeyCursor
     call DrawInput
