@@ -1,0 +1,1 @@
+GameBoyGPT_Adventure_Mega_Spec.md

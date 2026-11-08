@@ -1,0 +1,10 @@
+# Exact tool versions this repository was built and measured with.
+rgbds=rgbasm v1.0.4
+python=Python 3.12.13
+matplotlib=3.11.2
+numpy=2.5.4
+pillow=13.0.0
+pyboy=2.9.0
+pytest=9.2.0
+torch=2.15.0
+os=Darwin arm64
