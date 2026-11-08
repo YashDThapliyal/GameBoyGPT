@@ -25,7 +25,7 @@ A token's cycles run from `ProfileTokenStart` to `ProfileTokenEnd`: the whole fo
 
 - **First token** includes prefill: all 5 prompt positions for cached builds.
 - **Seconds per token** is total cycles over total tokens across all workloads and rounds.
-- **WRAM** is what the linker allocated, including the reserved stack and mailbox. Stack high-water is measured with a fill pattern.
+- **WRAM** is what the linker allocated, including the reserved stack and mailbox. The CSV column `peak_wram_bytes` keeps the spec's name but holds this allocated figure, not a runtime high-water mark. Stack high-water is measured with a fill pattern, in both kernel mode (CSV notes) and the game loop (RESULTS.md).
 
 ## Workloads
 
@@ -36,14 +36,14 @@ A token's cycles run from `ProfileTokenStart` to `ProfileTokenEnd`: the whole fo
 | PROMPT_C | Tower | Lamp and key | FORWARD | WIN |
 | PROMPT_D | River | None | RIGHT | MOVE |
 
-These use greedy decoding, the same weights and 3 rounds each, with one emulator running at a time. The spec's PROMPT_B says "cave + lantern + SEARCH". The closest reachable situation has the key just found, so the inventory token already includes it. Events end at `<EOS>`, so output lengths are 9 to 11 tokens rather than the spec's 16-token cap.
+These use greedy decoding, the same weights and 3 rounds each, with one emulator running at a time. Runs are deterministic, so rounds confirm stability rather than sample a distribution. The spec's PROMPT_B says "cave + lantern + SEARCH". The closest reachable situation has the key just found, so the inventory token already includes it. Events end at `<EOS>`, so output lengths are 9 to 11 tokens rather than the spec's 16-token cap.
 
 Context lengths 4, 8 and 16 are measured as a single cold step. Longer-context decode is visible in per-token traces in `reports/raw/`.
 
 ## Fairness rules
 
 - Every variant is the same model, the same weights and the same numeric semantics. The harness records `token_match_baseline` per row, and `tests/test_benchmark_integrity.py` fails on a mismatch.
-- V0 isn't deliberately crippled: it's simple code with a call per multiply and full K/V recomputation, as a straightforward port would be. It does *not* compute the block at earlier positions, which a framework-style forward would do.
+- V0 is simple code with a call per multiply, full K/V recomputation and all 95 output rows. It makes no attempt at speed, and that inflates the headline ratio, so RESULTS.md also gives the ratio against V0 plus the K/V cache. V0 does *not* compute the block at earlier positions, which a framework-style forward would do.
 - No comparisons with other projects' numbers: they use different models and hardware.
 - Output pruning doesn't skip work a variant needs: masked rows can't affect output, and logits for generatable tokens are compared bit for bit.
 

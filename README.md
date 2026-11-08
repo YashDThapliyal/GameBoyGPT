@@ -24,7 +24,7 @@ The project then asks a measurement question: **what actually makes neural text 
 **9.2x faster, same tokens.**
 <!-- end generated -->
 
-Same model, same weights, same prompts. Both builds pass the same tests against an independent integer reference, and SameBoy and PyBoy report identical frame counts for each. Full tables are in [RESULTS.md](RESULTS.md).
+Same model, same weights, same prompts. V0 is a plain baseline that recomputes K and V for every token, which is why the second figure matters. Both builds pass the same tests against an independent integer reference, and SameBoy and PyBoy report identical frame counts for each. Full tables are in [RESULTS.md](RESULTS.md).
 
 ![Optimization waterfall](docs/figures/waterfall.png)
 

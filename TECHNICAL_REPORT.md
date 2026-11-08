@@ -4,7 +4,7 @@
 
 A Game Boy has an 8-bit CPU at 4.194304 MHz, no multiply instruction and 8 KiB of RAM. Can it run a real attention-based language model as part of an actual game, and which software changes make that faster?
 
-Results below are from an emulated DMG, using PyBoy's cycle counter cross-checked against SameBoy. No physical unit was tested. All numbers are in [RESULTS.md](RESULTS.md), which is generated from raw measurements.
+Results below are from an emulated DMG, using PyBoy's cycle counter. As a check, SameBoy and PyBoy report identical LCD-frame counts from the ROM itself. No physical unit was tested. All numbers are in [RESULTS.md](RESULTS.md), which is generated from raw measurements.
 
 ## Designing a language the model can learn
 
@@ -37,11 +37,11 @@ Then the audits:
 
 ## The baseline
 
-V0 is plain: shift-and-add multiply, a call per MAC, K and V recomputed every token. It's what a careful first port looks like, and it's not deliberately slow. It takes 5.8 s/token, or about a minute per event, and two-thirds of that goes on recomputing K and V.
+V0 is plain: shift-and-add multiply, a call per MAC, K and V recomputed every token. It's a straightforward port with no attempt at speed. It takes 5.8 s/token, or about a minute per event, and two-thirds of that goes on recomputing K and V. A speed-minded port would cache K and V from the start, so RESULTS.md also reports the gain against that stronger baseline.
 
 ## What made it faster
 
-From 5.805 to 0.634 s/token, 9.16x, with identical tokens. Each experiment, including what didn't work, is in [docs/PERFORMANCE.md](docs/PERFORMANCE.md).
+From 5.805 to 0.634 s/token, 9.16x, with identical tokens (about 4x against V0 with only the K/V cache added). Each experiment, including what didn't work, is in [docs/PERFORMANCE.md](docs/PERFORMANCE.md).
 
 The results didn't follow the spec's expectations. Bank layout, the headline idea going in, saved 0.13%. Streaming attention was meant to reduce RAM and instead added 32 bytes. The largest gains came from not doing work: not recomputing K and V, not computing rows the decoder can't choose, not multiplying by zero. The next came from plain kernel engineering: inline the MAC, keep operands where they're cheap to read. A 4 KiB nibble table lost to a 1 KiB quarter-square table on both speed and size.
 

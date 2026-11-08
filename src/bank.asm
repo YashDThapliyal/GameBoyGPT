@@ -6,8 +6,7 @@ hCurBank:: ds 1
 
 SECTION "bank_code", ROM0
 ; BankSwitch: a = target ROM bank (1-255). Preserves all but flags. Counts switches for benchmarks.
-; Writing the register when already selected is skipped only by callers that want that: the
-; vanilla baseline deliberately keeps this plain, unconditional behaviour.
+; The V0 build writes the register every time; V1 and later skip the write if the bank is already selected.
 BankSwitch::
 IF DEF(BANK_SKIP)
     push hl

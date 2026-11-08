@@ -45,13 +45,13 @@ In a one-layer model, `K[j]` and `V[j]` depend only on token `j` and its positio
 
 ## V5S: Weights through the stack pointer
 
-`pop bc` reads two weights in 12 T-cycles and keeps both in registers, so each is loaded once. Per-MAC cost fell from 254 to 232. Interrupts are held off for one row at a time and nothing is ever pushed while SP points into ROM. Since a VBlank can now start late, the ISR checks LY before touching VRAM or OAM and leaves dirty rows for the next frame.
+`pop bc` reads two weights in 12 T-cycles and keeps both in registers, so each is loaded once. Per-MAC cost fell from 254 to 232. Interrupts are held off for one row at a time and nothing is ever pushed while SP points into ROM. Since a VBlank can now start late, the ISR checks LY before touching VRAM or OAM and leaves dirty rows for the next frame. The cost is that screen updates can lag by a few frames during inference; nothing is corrupted. The size of that lag wasn't measured.
 
 **Caveat:** Elyan Labs warn about this technique under active interrupts, and their SP kernel is unverified on hardware. Ours passes on SameBoy but hasn't run on a physical DMG either.
 
 ## V5Z: Zero-column skip
 
-62% of `f` is exactly zero after ReLU, measured across a third of all situations on the reference. Each block in the 64-wide kernel now tests for the biased zero first. Dense vectors get slower (213 to 227 T-cycles per MAC on the dense microbenchmark) while real inference gets faster, because real activations are sparse. Only the 64-wide kernel pays for the test.
+62% of `f` is exactly zero after ReLU, measured across all situations on the reference (`tools/sparsity_study.py`). Each block in the 64-wide kernel now tests for the biased zero first. Dense vectors get slower (213 to 227 T-cycles per MAC on the dense microbenchmark) while real inference gets faster, because real activations are sparse. Only the 64-wide kernel pays for the test.
 
 ## Where the time goes now
 

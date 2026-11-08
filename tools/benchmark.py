@@ -190,6 +190,7 @@ def ux_mode(version, rom, rows, model_sha, wram, nll, quality, baseline_tokens) 
     gb.write("wMB_Greedy", [1])
     gb.press("start")
     gb.wait_state(3, 3000)
+    gb.write("wStackBottom", [0xA5] * 0xF0)  # measures depth with the ISR and UI live, unlike kernel mode
     w, s = g.gen_world(seed), None
     s = g.start(w)
     BUTTONS = {g.LEFT: ("up", "left"), g.RIGHT: ("up", "right"), g.FORWARD: ("down", "left"), g.SEARCH: ("down", "right")}
@@ -219,8 +220,9 @@ def ux_mode(version, rom, rows, model_sha, wram, nll, quality, baseline_tokens) 
         if not s.done:
             gb.wait_state(3, 3000)
     t.off()
+    peak = stack_peak(gb)
     gb.stop()
-    return {"events": events}
+    return {"events": events, "stack_peak": peak}
 
 
 def main():

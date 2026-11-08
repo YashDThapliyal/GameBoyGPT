@@ -2,6 +2,7 @@
 # End-to-end regeneration of every artifact, in dependency order. Stops at the first failure.
 set -euo pipefail
 PY=.venv/bin/python
+echo "== sparsity"; $PY tools/sparsity_study.py
 echo "== build"; make rom
 echo "== verify"; make verify
 echo "== second emulator"; make second-emulator
