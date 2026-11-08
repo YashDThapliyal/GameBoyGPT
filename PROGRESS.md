@@ -7,7 +7,7 @@ ROM: MBC5, 65,536 bytes, 0 SRAM. Hashes in RESULTS.md and release/SHA256SUMS
 Last passing checkpoint: cp9-release
 Measured baseline: see RESULTS.md (V0)
 Measured optimized: see RESULTS.md (V5Z)
-Next action: optional Phase 10, physical DMG with an MBC5 flash cartridge
+Next action: player feedback on the story, then optional Phase 10, physical DMG with an MBC5 flash cartridge
 Known risks: SP-stream kernel not tested on silicon. V5 is the fallback.
 
 ## Checkpoints
@@ -15,3 +15,6 @@ cp0 bootstrap, cp1 game shell, cp2 training, cp3 fixed point, cp4 real inference
 
 ## Not done
 V6 in ROM (reference study only), V7, V8, human rating study, physical hardware.
+
+## Design change after v0.2.1
+The room maze was replaced by an authored branching story (reference/story.py). The model narrates; it does not invent plot.

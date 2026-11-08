@@ -14,15 +14,15 @@ This repository claims that a transformer runs on an emulated original Game Boy'
 scripts/verify_release.sh
 ```
 
-It rebuilds all 11 variants from source, runs every test, checks that rebuilt ROMs equal `release/`, and runs the self-test ROM on SameBoy and PyBoy. It ends with `VERIFY OK` and stops at the first failure. Expect several minutes.
+It rebuilds all 11 variants from source, runs every test, checks that rebuilt ROMs equal `release/`, and runs the self-test ROM on SameBoy and PyBoy. It ends with `VERIFY OK` and stops at the first failure. Allow around half an hour, mostly the slow baseline running on two emulators.
 
 ## Expected values
 
 | Artifact | SHA-256 |
 |---|---|
-| `generated/model.bin` | `2e2ca73681900e21385eeef725f07d31a29dad347b3878b9ed1ad9f40cb153d2` |
-| `release/gameboygpt.gb` | `c13c869d82225ba89114d0134653ca5e8ed6171a77e5ad4dc1280bc7d4522f05` |
-| `release/gameboygpt_v0.gb` | `b23780020fe8eb62b7d4c3c00cdba8107d671307fd4fbcccb659ee18361f5df4` |
+| `generated/model.bin` | `dd7e1c8f5e293a267bbcab1b43603293f7461a8df338b5969e0a72582628ab69` |
+| `release/gameboygpt.gb` | `5e21ea99336a8234a922d73419f6988b36553f5f3089e0313706c7e073019879` |
+| `release/gameboygpt_v0.gb` | `99fd4d0857dbb448eeddb25cdb278746a83c1d7aee64bacffb4f59ee51754b3d` |
 
 ## What to look at, by claim
 

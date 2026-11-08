@@ -8,6 +8,7 @@ make all          # builds every variant, runs the full test suite
 make second-emulator
 make benchmark
 make quality
+make heldout
 make demo
 make report       # figures, RESULTS.md, memory map, dashboard
 ```
