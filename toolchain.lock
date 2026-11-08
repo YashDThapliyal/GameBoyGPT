@@ -8,3 +8,4 @@ pyboy=2.9.0
 pytest=9.2.0
 torch=2.15.0
 os=Darwin arm64
+sameboy=ea667ad (LIJI32/SameBoy, sameboy_tester built from source)

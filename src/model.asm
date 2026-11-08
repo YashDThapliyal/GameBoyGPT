@@ -202,7 +202,8 @@ OutputLogits::
     ldh [hAcc + 2], a
     ld d, a
     ld e, a
-    call DotW32
+    ld hl, DotW32
+    call DotEnter
     push bc
     ld c, LOGIT_SHIFT
     call RsAcc

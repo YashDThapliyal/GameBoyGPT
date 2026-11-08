@@ -7,7 +7,7 @@ import argparse, csv, hashlib, json, re, statistics, subprocess, sys, time
 from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path[:0] = [str(ROOT), str(ROOT / "tools"), str(ROOT / "tests")]
-from kernel_harness import KernelRig, CMD_GENERATE, CMD_STEP, CMD_DOT, CMD_MUL
+from kernel_harness import KernelRig, CMD_GENERATE, CMD_STEP, CMD_DOT, CMD_MUL, CMD_MATVEC
 from run_emulator import GB
 from reference import game as g
 from training import dataset as ds
@@ -151,6 +151,10 @@ def bench_variant(version: str, rounds: int, baseline_tokens: dict | None, quali
         rig.run(CMD_DOT, [n])
     t.off()
     raw["micro"] = {"mul_tcycles": t.pairs("TestMulSite", "TestMulEnd"), "dot_16_32_64_tcycles": t.pairs("TestDotSite", "TestDotEnd")}
+    # Real kernel on real weights: tensor index 2 (w_q) is 32x32 = 1024 MACs, tensor 7 (w_f2) is 32x64 = 2048 MACs.
+    rig.gb.write("wTestA", [(i * 37 % 255) - 127 for i in range(64)])
+    raw["micro"]["matvec_q_1024mac_tcycles"] = rig.run(CMD_MATVEC, [2])
+    raw["micro"]["matvec_f2_2048mac_tcycles"] = rig.run(CMD_MATVEC, [7])
     rig.stop()
     raw["ux_mode"] = ux_mode(version, game_rom, rows, model_sha, wram_game, nll, quality, baseline_tokens)
     raw["rom_sha256"] = sha(game_rom)

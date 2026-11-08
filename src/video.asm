@@ -27,6 +27,15 @@ VBlankIsr::
     inc hl
     inc [hl]
 .nocarry:
+IF DEF(SP_STREAM)
+    ; A row with interrupts held off can delay this ISR past mode 1, so VRAM and OAM are only touched
+    ; while LY says there is room. Dirty rows simply wait for the next frame.
+    ldh a, [rLY]
+    cp 144
+    jr c, .joy
+    cp 148
+    jr nc, .joy
+ENDC
     ldh a, [hDirtyAny]
     or a
     jr z, .oam
@@ -37,6 +46,11 @@ VBlankIsr::
     ld a, [hl]
     or a
     jr z, .next
+IF DEF(SP_STREAM)
+    ldh a, [rLY]
+    cp 150
+    jr nc, .joy
+ENDC
     xor a
     ld [hl], a
     push hl
@@ -243,9 +257,7 @@ ScreenOff::
     ldh [rBGP], a
     call WaitVBlank
     di
-    xor a
-    ldh [rLCDC], a
-    ret
+    jp WaitLcdOff         ; re-checks LY: disabling the LCD outside VBlank can damage a real DMG screen
 
 ScreenOn::
     call UploadAllNow

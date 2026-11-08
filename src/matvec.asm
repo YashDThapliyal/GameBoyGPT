@@ -280,6 +280,169 @@ MACRO QMAC                  ; \1 = x slot; \2 = 1 if the stream holds raw signed
     inc bc
 ENDM
 
+IF DEF(SP_STREAM)
+; Weight stream through SP: pop reads two biased weights in 12 T and keeps both in registers, so each is
+; loaded once instead of twice. Interrupts are held off for the row only, and nothing is ever pushed while
+; SP points into ROM. An interrupt arriving mid-row is serviced by the ei at the row's end.
+MACRO QMACS                 ; \1 = x slot; \2 = register holding the weight
+    ldh a, [hXb + \1]
+    add \2
+    ld l, a
+    ld a, HIGH(QTab)
+    adc 0
+    ld h, a
+    ld a, [hl]
+    add e
+    ld e, a
+    inc h
+    inc h
+    ld a, [hl]
+    adc d
+    ld d, a
+    jr nc, :+
+    ldh a, [hAcc + 2]
+    inc a
+    ldh [hAcc + 2], a
+:
+    ldh a, [hXb + \1]
+    sub \2
+    ld l, a
+    ld a, HIGH(QTab) + 1
+    sbc 0
+    ld h, a
+    ld a, e
+    sub [hl]
+    ld e, a
+    inc h
+    inc h
+    ld a, d
+    sbc [hl]
+    ld d, a
+    jr nc, :+
+    ldh a, [hAcc + 2]
+    dec a
+    ldh [hAcc + 2], a
+:
+ENDM
+
+SECTION "sp_vars", WRAM0
+wSaveSP: ds 2
+
+SECTION "sp_code", ROM0
+; DotEnter: hl = DotW* entry, bc -> weights, d=e=hAcc+2=0. -> hAcc = sum, bc advanced.
+DotEnter::
+    di
+    ld [wSaveSP], sp
+    ld d, h
+    ld e, l
+    ld h, b
+    ld l, c
+    ld sp, hl
+    ld h, d
+    ld l, e
+    ld de, 0
+    jp hl
+
+IF DEF(ZERO_SKIP)
+; ReLU leaves most of the 64-wide input at exactly zero, and x = 0 makes every product zero. The biased
+; zero is $80, so each block tests that first and skips its two table lookups. Only the 64-wide kernel
+; pays for the test: the narrower vectors are rarely zero.
+MACRO QMACZ                 ; \1 = x slot; \2 = register holding the weight
+    ldh a, [hXb + \1]
+    cp $80
+    jr z, .skip\@
+    add \2
+    ld l, a
+    ld a, HIGH(QTab)
+    adc 0
+    ld h, a
+    ld a, [hl]
+    add e
+    ld e, a
+    inc h
+    inc h
+    ld a, [hl]
+    adc d
+    ld d, a
+    jr nc, :+
+    ldh a, [hAcc + 2]
+    inc a
+    ldh [hAcc + 2], a
+:
+    ldh a, [hXb + \1]
+    sub \2
+    ld l, a
+    ld a, HIGH(QTab) + 1
+    sbc 0
+    ld h, a
+    ld a, e
+    sub [hl]
+    ld e, a
+    inc h
+    inc h
+    ld a, d
+    sbc [hl]
+    ld d, a
+    jr nc, .skip\@
+    ldh a, [hAcc + 2]
+    dec a
+    ldh [hAcc + 2], a
+.skip\@:
+ENDM
+
+DotW64::
+    FOR I, 0, 64, 2
+    pop bc
+    QMACZ I, c
+    QMACZ I + 1, b
+    ENDR
+    jp DotFinish
+DotW32::
+    FOR I, 32, 48, 2
+    pop bc
+    QMACS I, c
+    QMACS I + 1, b
+    ENDR
+ELSE
+DotW64::
+    FOR I, 0, 32, 2
+    pop bc
+    QMACS I, c
+    QMACS I + 1, b
+    ENDR
+DotW32::
+    FOR I, 32, 48, 2
+    pop bc
+    QMACS I, c
+    QMACS I + 1, b
+    ENDR
+ENDC
+DotW16::
+    FOR I, 48, 64, 2
+    pop bc
+    QMACS I, c
+    QMACS I + 1, b
+    ENDR
+DotFinish:
+    ld hl, sp + 0
+    ld b, h
+    ld c, l              ; bc = next weight
+    ld a, e
+    ldh [hAcc], a
+    ld a, d
+    ldh [hAcc + 1], a
+    ld a, [wSaveSP]
+    ld l, a
+    ld a, [wSaveSP + 1]
+    ld h, a
+    ld sp, hl
+    ei
+    ret
+ELSE
+; DotEnter: hl = DotW* entry. Same contract as the SP form, without touching IME.
+DotEnter::
+    jp hl
+
 ; DotW64/32/16: bc -> biased weights, hXb end-aligned. -> hAcc = sum. bc advanced. Clobbers a, de, hl.
 DotW64::
     FOR I, 0, 32
@@ -298,6 +461,7 @@ DotW16::
     ld a, d
     ldh [hAcc + 1], a
     ret
+ENDC
 
 ; DotRaw16: bc -> raw signed 16 values (keys in WRAM), q already in hXb+48.. -> hAcc.
 DotRaw16::
@@ -361,7 +525,7 @@ MatVec::
     ld a, [hl+]
     ld h, [hl]
     ld l, a
-    rst $00
+    call DotEnter
     push bc
     ld a, [wMvShift]
     ld c, a

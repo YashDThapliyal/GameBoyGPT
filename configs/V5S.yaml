@@ -1,0 +1,7 @@
+# V5S = V5 + weights streamed through SP with interrupts held off per row. Hardware-safe by construction
+# (no push while SP is in ROM), but unverified on a physical DMG.
+display: V5S SP STREAM
+layout: bank_aware
+biased: true
+tables: [qsq_table]
+defines: [BANK_SKIP, MUL_QSQ, FAST_DOT, ATTN_SPARSE, KV_CACHE, SP_STREAM]

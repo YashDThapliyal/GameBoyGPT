@@ -8,3 +8,4 @@ checkpoints/two_layer*
 *.sav
 *.ram
 *.state
+.third_party/

@@ -1,0 +1,6 @@
+# V5Z = V5S + zero-column skip in the 64-wide F2 kernel. Shipping candidate if measurements hold.
+display: V5Z ZERO SKIP
+layout: bank_aware
+biased: true
+tables: [qsq_table]
+defines: [BANK_SKIP, MUL_QSQ, FAST_DOT, ATTN_SPARSE, KV_CACHE, SP_STREAM, ZERO_SKIP]

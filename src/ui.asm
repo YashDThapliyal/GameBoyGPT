@@ -210,7 +210,8 @@ DrawBand::
     dec hl
     dec d
     jr nz, .hearts
-    ret
+    ld b, BAND_ROW
+    jp MarkRow
 
 ; DrawStatus: LAMP 0 KEY 0 TURN 00 on the inverse status row.
 DrawStatus::
@@ -423,6 +424,8 @@ PlayTurn:
     call PrintAt
     ld a, TILE_ARROW
     ld [wBgMap + (MENU_ROW + 1) * SCREEN_W + TEXT_COL], a
+    ld b, MENU_ROW + 1
+    call MarkRow          ; direct shadow writes must be marked after the write, or a VBlank can miss them
     call ConsumePressed
 .w:
     call WaitVBlank
@@ -546,6 +549,13 @@ StatsScreen::
     xor a
     call FillRows
     call DrawStats
+    ld b, TEXT_ROW
+    ld c, 10
+.marks:
+    call MarkRow
+    inc b
+    dec c
+    jr nz, .marks
 .w:
     call WaitVBlank
     call ConsumePressed
@@ -703,7 +713,7 @@ PrintCenti:
     ret
 
 ; PrintDec16: de = value, hl = shadow ptr. Five digits. Clobbers a, bc, de.
-PrintDec16:
+PrintDec16::
     ld bc, -10000
     call .digit
     ld bc, -1000

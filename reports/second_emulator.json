@@ -1,0 +1,42 @@
+{
+ "V0": {
+  "sameboy": {
+   "frames": [
+    3060,
+    4023,
+    3528,
+    3060
+   ],
+   "verdict": "SELFTEST PASS"
+  },
+  "pyboy": {
+   "frames": [
+    3060,
+    4023,
+    3528,
+    3060
+   ],
+   "verdict": "SELFTEST PASS"
+  }
+ },
+ "V5Z": {
+  "sameboy": {
+   "frames": [
+    342,
+    419,
+    386,
+    346
+   ],
+   "verdict": "SELFTEST PASS"
+  },
+  "pyboy": {
+   "frames": [
+    342,
+    419,
+    386,
+    346
+   ],
+   "verdict": "SELFTEST PASS"
+  }
+ }
+}
