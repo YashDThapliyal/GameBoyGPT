@@ -150,6 +150,19 @@ AppendChar:
 
 ; AppendRaw: a = ASCII at the text cursor. Clobbers a, bc, de, hl.
 AppendRaw:
+    ld c, a
+    ld a, [wTextRowN]
+    cp TEXT_ROWS
+    ret nc               ; never draw past the story box, even for an ungrammatical event
+    ld b, a
+    ld a, [wTextColN]
+    or b
+    ld a, c
+    jr nz, .plain
+    cp 'a'
+    jr c, .plain
+    sub 'a' - 'A'        ; first letter of the event
+.plain:
     sub $20
     push af
     ld a, [wTextRowN]

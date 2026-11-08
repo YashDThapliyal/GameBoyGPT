@@ -26,13 +26,23 @@ def gb():
     b.stop()
 
 
-def test_dpad_moves_selection_in_a_grid(gb):
+def test_each_direction_selects_the_action_drawn_on_that_side(gb):
     sel = lambda: gb.read1("wMenuSel")
-    gb.press("right"); assert sel() == 1
-    gb.press("down"); assert sel() == 3
-    gb.press("left"); assert sel() == 2
-    gb.press("up"); assert sel() == 0
-    gb.press("up"); assert sel() == 0, "selection clamps instead of wrapping"
+    assert sel() == g.FORWARD, "a new run starts on AHEAD"
+    for button, action in (("left", g.LEFT), ("right", g.RIGHT), ("down", g.SEARCH), ("up", g.FORWARD)):
+        gb.press(button)
+        assert sel() == action
+        gb.press(button)
+        assert sel() == action, "pressing again keeps the selection"
+
+
+def test_selected_label_is_highlighted(gb):
+    gb.press("down")
+    gb.tick(6)
+    row = gb.read("wBgMap", 6, (13 + 2) * 20 + 8)
+    assert all(t >= 116 for t in row), "SEARCH is drawn in the inverse font"
+    row = gb.read("wBgMap", 5, 13 * 20 + 8)
+    assert all(t < 96 for t in row), "AHEAD is back to the normal font"
 
 
 def test_held_button_does_not_repeat_confirm(gb):

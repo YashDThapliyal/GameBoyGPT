@@ -26,3 +26,17 @@ def test_oracle_rejects_wrong_room_and_action():
     assert all(ds.check_sentence(s, good).values())
     assert not ds.check_sentence((1, 0, 0, 0), good)["room"]
     assert not ds.check_sentence((0, 0, 1, 0), good)["action"]
+
+
+def test_every_grammar_sentence_fits_the_story_box():
+    """Greedy wrap at 18 columns must fit 4 rows; the final full stop may use the 19th column."""
+    for s in ds.situations():
+        for sentence in ds.sentences(*s):
+            rows, col = 1, 0
+            for w in sentence:
+                need = len(w) + (1 if col else 0)
+                if col + need > 18:
+                    rows, col = rows + 1, len(w)
+                else:
+                    col += need
+            assert rows <= 4, sentence

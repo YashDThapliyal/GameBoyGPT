@@ -11,7 +11,7 @@ from reference import game as g
 
 ROM = ROOT / "build" / os.environ.get("GBGPT_VARIANT", "V0") / "gameboygpt.gb"
 ST_TITLE, ST_MENU, ST_REVEAL = 1, 3, 6
-BUTTON_FOR_ACTION = {g.LEFT: ("up", "left"), g.RIGHT: ("up", "right"), g.FORWARD: ("down", "left"), g.SEARCH: ("down", "right")}
+BUTTON_FOR_ACTION = {g.LEFT: ("left",), g.RIGHT: ("right",), g.FORWARD: ("up",), g.SEARCH: ("down",)}
 
 
 def boot(seed):

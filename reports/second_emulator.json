@@ -5,7 +5,7 @@
     3060,
     4023,
     3527,
-    3059
+    3060
    ],
    "verdict": "SELFTEST PASS"
   },
@@ -14,7 +14,7 @@
     3060,
     4023,
     3527,
-    3059
+    3060
    ],
    "verdict": "SELFTEST PASS"
   }
@@ -24,7 +24,7 @@
    "frames": [
     343,
     420,
-    385,
+    386,
     344
    ],
    "verdict": "SELFTEST PASS"
@@ -33,7 +33,7 @@
    "frames": [
     343,
     420,
-    385,
+    386,
     344
    ],
    "verdict": "SELFTEST PASS"

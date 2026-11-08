@@ -6,22 +6,24 @@ You wake in a misty forest. Somewhere beyond it is a ruined tower. Find a lamp, 
 
 | Button | Action |
 |---|---|
-| D-pad | Move the cursor between GO LEFT, GO RIGHT, GO ON, SEARCH |
+| D-pad | Select the action drawn on that side: left LEFT, right RIGHT, up AHEAD, down SEARCH. The selected label is highlighted |
 | A | Confirm, continue |
 | B | Continue |
-| START | Run stats: variant, seconds per token, frames and bank switches measured on the device |
+| START | Run stats: variant, seconds per word, seconds per event and bank switches measured on the device |
 | SELECT (on the stats page) | New run |
+
+The bottom bar always shows your current goal and the turn number. Lamp and key icons appear on the room-name band once you have them.
 
 ## World rules
 
 The rules are deterministic and live in `src/game.asm`, mirrored by `reference/game.py`. The model never changes them.
 
 - **8 rooms:** forest, marsh, river, ruins, shrine, cave, gate, tower.
-- **Layout:** a seeded shuffle arranges 7 rooms in a cycle reached by GO ON, plus random side exits. The gate's GO LEFT and the room before the cave always lead back to the forest.
+- **Layout:** a seeded shuffle arranges 7 rooms in a cycle reached by AHEAD, plus random side exits. The gate's LEFT and the room before the cave's RIGHT always lead back to the forest.
 - **Lamp:** hidden in a room before the cave in the cycle. SEARCH finds it.
 - **Cave:** too dark to enter without the lamp. SEARCH inside finds the key.
-- **Gate:** GO ON opens it with the key.
-- **Tower:** GO ON wins. SEARCH wakes the guardian and costs a life.
+- **Gate:** AHEAD opens it with the key.
+- **Tower:** AHEAD wins. SEARCH wakes the guardian and costs a life.
 - **Hazards:** moving into the marsh or river, or searching the ruins, has a 1-in-8 chance of costing a life. You start with 3, and at 0 the run ends.
 
 Every run is winnable. `tests/test_game_state.py` runs a reachability and softlock search over 1,772 seeds across the seed space and a 100-seed random-play simulation. That search caught a real softlock during development (a dead-end room before the cave), now fixed by the guaranteed exit.
@@ -32,7 +34,8 @@ Every run is winnable. `tests/test_game_state.py` runs a reachability and softlo
 |---|---|
 | Every word of each story event | Title, intro lines, room names, menu labels |
 | Sentence shape, adjective, noun choices | Win and lose banners |
-| | The full stop added on `<EOS>` |
+| | The full stop on `<EOS>`, and capitalizing the first letter |
+| | The goal hint on the status bar, derived from game state |
 | | Which outcome happened, always decided by the engine |
 
 ## Art

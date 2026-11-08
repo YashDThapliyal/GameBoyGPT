@@ -41,7 +41,7 @@ Training sentences come from a grammar in `training/dataset.py` that composes an
 <BOS> <R_CAVE> <I_LAMP> <A_FORWARD> <O_MOVE>  ->  YOU PRESS ON AND YOUR LAMP SHOWS SILENT BATS
 ```
 
-**The only fixed text added at display time is the final full stop on `<EOS>`.** Every word on screen is a token the model chose. The title, intro lines, menu labels and win/lose banners are static UI assets, not generated. The language is deliberately narrow: this is a grammar-learning model and not a general language model.
+**At display time the only changes are a final full stop on `<EOS>` and a capital first letter.** Every word on screen is a token the model chose. Tokens are shown in lowercase, and the examples here use the uppercase vocabulary names. The title, intro lines, menu labels, goal hint and win/lose banners are static UI assets, not generated. The language is deliberately narrow: this is a grammar-learning model and not a general language model.
 
 ## Splits
 

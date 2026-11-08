@@ -63,6 +63,8 @@ Tests found each of these, and all are now covered by tests or documented:
 6. **A misleading metric.** An early report called a 20.5% action score "close to chance." Untrained weights scored the same 20.5%, which exposed the real cause: WIN and LOSE sentences name no action, so they pass that check by default. The metric now excludes them.
 7. **A hardware hazard, found by reading the code.** The LCD could be disabled right after a VBlank wait without re-checking LY. Doing that outside VBlank can damage a real screen. It now re-checks.
 
+8. **An unreadable first UI.** All-caps text, a grid menu that didn't match the D-pad and an unexplained status bar were hard to follow in real play, which emulator tests can't judge. The redesign added a lowercase font, a D-pad-shaped menu, button chips and a goal line. It also introduced a bug: a wrong table stride wrote stray bytes over the selection variable. Scripted input caught it before the rebuild.
+
 ## Limitations and future work
 
 - Run it on a physical DMG with a flash cartridge. The SP-stream kernel is the part most in need of that.

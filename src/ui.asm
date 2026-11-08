@@ -7,30 +7,46 @@ wMenuSel::   ds 1
 wTextRowN::  ds 1          ; current row inside the text box
 wTextColN::  ds 1
 wSaved::     ds SCREEN_W * 10
-wSavedSpr::  ds 8
 wEndFlag::   ds 1
 
 SECTION "ui_strings", ROM0
 StrSub1:   db "A TINY TRANSFORMER", 0
 StrSub2:   db "STORY", 0
 StrStart:  db "PRESS START", 0
-StrIntro1: db "THE TOWER WAITS", 0
-StrIntro2: db "PAST THE MIST.", 0
-StrIntro3: db "FIND A LAMP.", 0
-StrIntro4: db "FIND THE KEY.", 0
-StrAsk:    db "WHAT WILL YOU DO?", 0
-StrItem0:  db "GO LEFT", 0
-StrItem1:  db "GO RIGHT", 0
-StrItem2:  db "GO ON", 0
-StrItem3:  db "SEARCH", 0
-StrHint:   db "A CHOOSE START INFO", 0
-StrThink1: db "THE CARTRIDGE IS", 0
-StrThink2: db "THINKING", 0
-StrWord:   db "TOKEN", 0
-StrMore:   db "A CONTINUE", 0
-StrWin:    db "THE TOWER IS YOURS", 0
-StrLose:   db "THE MIST TAKES YOU", 0
-StrAgain:  db "A NEW RUN", 0
+StrIntro1: db "The tower waits", 0
+StrIntro2: db "past the mist.", 0
+StrIntro3: db "Find a lamp, then", 0
+StrIntro4: db "the key.", 0
+StrItemL:  db "LEFT", 0
+StrItemR:  db "RIGHT", 0
+StrItemU:  db "AHEAD", 0
+StrItemD:  db "SEARCH", 0
+StrChipA:  db "A", 0
+StrChipSt: db "START", 0
+StrChoose: db "choose", 0
+StrStatsL: db "stats", 0
+StrThink1: db "The cartridge is", 0
+StrThink2: db "thinking", 0
+StrWord:   db "Word", 0
+StrMore:   db "continue", 0
+StrWin:    db "The tower is yours!", 0
+StrLose:   db "The mist takes you.", 0
+StrAgain:  db "new run", 0
+StrGoal0:  db "FIND THE LAMP", 0
+StrGoal1:  db "FIND THE KEY", 0
+StrGoal2:  db "GO TO THE GATE", 0
+StrGoal3:  db "CLIMB THE TOWER", 0
+; Action menu mirrors the D-pad: row, arrow column, arrow tile, label column, label. Indexed by action.
+DEF MENU_ITEM_SIZE EQU 6
+MenuItems:
+    db MENU_ROW + 1, 1, TILE_PAD_L, 3
+    dw StrItemL
+    db MENU_ROW + 1, 17, TILE_PAD_R, 11
+    dw StrItemR
+    db MENU_ROW, 6, TILE_PAD_U, 8
+    dw StrItemU
+    db MENU_ROW + 2, 6, TILE_PAD_D, 8
+    dw StrItemD
 RoomNames:
     dw .r0, .r1, .r2, .r3, .r4, .r5, .r6, .r7
 .r0: db "DARK FOREST", 0
@@ -134,9 +150,10 @@ NewRun::
     ld [wNarrRng + 1], a
     xor a
     ld [wEndFlag], a
-    ld [wMenuSel], a
     ld [wOutcome], a
     ld [wAction], a
+    ld a, ACT_FORWARD
+    ld [wMenuSel], a
     call SyncMailbox
     call LoadRoomScreen
     call ClearText
@@ -200,6 +217,20 @@ DrawBand::
     ld b, BAND_ROW
     ld c, 1
     call PrintInvAt
+    ld a, [wHasLamp]
+    or a
+    jr z, .nolamp
+    ld a, TILE_LAMP
+    ld [wBgMap + BAND_ROW * SCREEN_W + 13], a
+.nolamp:
+    ld a, [wHasKey]
+    or a
+    jr z, .nokey
+    ld a, TILE_KEY
+    ld [wBgMap + BAND_ROW * SCREEN_W + 14], a
+.nokey:
+    ld b, BAND_ROW
+    call MarkRow
     ld a, [wLives]
     or a
     ret z
@@ -213,34 +244,39 @@ DrawBand::
     ld b, BAND_ROW
     jp MarkRow
 
-; DrawStatus: LAMP 0 KEY 0 TURN 00 on the inverse status row.
+; DrawStatus: current goal and turn counter on the inverse status row.
 DrawStatus::
     ld b, STATUS_ROW
     ld c, 1
     ld a, TILE_BAND
     call FillRows
-    ld hl, wBgMap + STATUS_ROW * SCREEN_W + 1
+    ld hl, StrGoal0
     ld a, [wHasLamp]
     or a
-    jr z, .nl
-    ld [hl], TILE_LAMP
-.nl:
-    inc hl
+    jr z, .print
+    ld hl, StrGoal1
     ld a, [wHasKey]
     or a
-    jr z, .nk
-    ld [hl], TILE_KEY
-.nk:
+    jr z, .print
+    ld hl, StrGoal2
+    ld a, [wRoom]
+    cp ROOM_TOWER
+    jr nz, .print
+    ld hl, StrGoal3
+.print:
+    ld b, STATUS_ROW
+    ld c, 1
+    call PrintInvAt
     ld hl, StrTurnLbl
     ld b, STATUS_ROW
-    ld c, 12
+    ld c, 17
     call PrintInvAt
     ld a, [wTurn]
-    ld hl, wBgMap + STATUS_ROW * SCREEN_W + 17
+    ld hl, wBgMap + STATUS_ROW * SCREEN_W + 18
     call PrintDec2Inv
     ld b, STATUS_ROW
     jp MarkRow
-StrTurnLbl: db "TURN", 0
+StrTurnLbl: db "T", 0
 
 ; PrintDec2Inv: a = value, hl = shadow ptr, inverse digits.
 PrintDec2Inv:
@@ -280,45 +316,21 @@ ClearMenu::
     jp FillRows
 
 ; ---- Action menu ----------------------------------------------------------
+; Pressing a direction selects the action drawn on that side. A confirms.
 ActionMenu:
     ld a, ST_MENU
     call SetState
     call ClearMenu
-    ld hl, StrAsk
-    ld b, MENU_ROW
-    ld c, TEXT_COL
-    call PrintAt
-    ld hl, StrItem0
-    ld b, MENU_ROW + 1
-    ld c, 2
-    call PrintAt
-    ld hl, StrItem1
-    ld b, MENU_ROW + 1
-    ld c, 11
-    call PrintAt
-    ld hl, StrItem2
-    ld b, MENU_ROW + 2
-    ld c, 2
-    call PrintAt
-    ld hl, StrItem3
-    ld b, MENU_ROW + 2
-    ld c, 11
-    call PrintAt
-    ld hl, StrHint
-    ld b, MENU_ROW + 3
-    ld c, 0
-    call PrintAt
+    call DrawMenu
+    call DrawChoiceHints
     call ConsumePressed
 .loop:
     call WaitVBlank
-    call PlaceCursor
     call ConsumePressed
     ld b, a
     bit PAD_START, b
     jr z, .nostart
-    push bc
     call StatsScreen
-    pop bc
     ld a, [wEndFlag]
     cp 2
     jr nz, .loop
@@ -331,58 +343,98 @@ ActionMenu:
     ld c, a
     bit PAD_LEFT, b
     jr z, .a1
-    res 0, c
+    ld c, ACT_LEFT
 .a1:
     bit PAD_RIGHT, b
     jr z, .a2
-    set 0, c
+    ld c, ACT_RIGHT
 .a2:
     bit PAD_UP, b
     jr z, .a3
-    res 1, c
+    ld c, ACT_FORWARD
 .a3:
     bit PAD_DOWN, b
     jr z, .a4
-    set 1, c
+    ld c, ACT_SEARCH
 .a4:
     ld a, c
-    ld [wMenuSel], a
+    ld hl, wMenuSel
+    cp [hl]
+    jr z, .same
+    ld [hl], a
+    push bc
+    call DrawMenu
+    pop bc
+.same:
     bit PAD_A, b
     jr z, .loop
+    ld a, [wMenuSel]
     ld [wAction], a
-    ; hide cursor
-    xor a
-    ld [wOam], a
     ret
 
-; PlaceCursor: animated arrow sprite beside the selected item.
-PlaceCursor:
-    ld a, [wMenuSel]
-    ld b, a
-    and 2
-    add a
-    add a                ; 0 or 8
-    add 16 + (MENU_ROW + 1) * 8
-    ld [wOam], a
-    ld a, b
-    and 1
-    ld a, 8 + 8
-    jr z, .l
-    ld a, 8 + 8 + 72
-.l:
-    ld c, a
-    ldh a, [hFrames]
-    and 16
-    jr z, .n
-    inc c
-.n:
-    ld a, c
-    ld [wOam + 1], a
-    ld a, TILE_CURSOR
-    ld [wOam + 2], a
+; DrawMenu: the four actions, with the selected label in the inverse font. Clobbers everything.
+DrawMenu:
+    ld hl, MenuItems
     xor a
-    ld [wOam + 3], a
+.item:
+    push af
+    push hl
+    ld d, a               ; item index
+    ld a, [hl+]
+    ld b, a               ; row
+    ld a, [hl+]
+    ld c, a               ; arrow column
+    ld a, [hl+]
+    ld e, a               ; arrow tile
+    ld a, [hl+]
+    push af               ; label column
+    ld a, [hl+]
+    ld h, [hl]
+    ld l, a               ; label
+    push hl
+    push de
+    call RowPtr
+    pop de
+    ld [hl], e
+    call MarkRow
+    pop hl
+    pop af
+    ld c, a
+    ld a, [wMenuSel]
+    cp d
+    jr z, .sel
+    call PrintAt
+    jr .next
+.sel:
+    call PrintInvAt
+.next:
+    pop hl
+    ld de, MENU_ITEM_SIZE
+    add hl, de
+    pop af
+    inc a
+    cp 4
+    jr nz, .item
     ret
+
+; DrawChoiceHints: button chips on the bottom menu row.
+DrawChoiceHints:
+    ld hl, StrChipA
+    ld b, MENU_ROW + 3
+    ld c, 0
+    call PrintInvAt
+    ld hl, StrChoose
+    ld b, MENU_ROW + 3
+    ld c, 2
+    call PrintAt
+    ld hl, StrChipSt
+    ld b, MENU_ROW + 3
+    ld c, 9
+    call PrintInvAt
+    ld hl, StrStatsL
+    ld b, MENU_ROW + 3
+    ld c, 15
+    jp PrintAt
 
 ; ---- Turn -----------------------------------------------------------------
 PlayTurn:
@@ -418,14 +470,14 @@ PlayTurn:
     ld [wEndFlag], a
 .wait:
     call ClearMenu
+    ld hl, StrChipA
+    ld b, MENU_ROW + 1
+    ld c, TEXT_COL
+    call PrintInvAt
     ld hl, StrMore
     ld b, MENU_ROW + 1
     ld c, TEXT_COL + 2
     call PrintAt
-    ld a, TILE_ARROW
-    ld [wBgMap + (MENU_ROW + 1) * SCREEN_W + TEXT_COL], a
-    ld b, MENU_ROW + 1
-    call MarkRow          ; direct shadow writes must be marked after the write, or a VBlank can miss them
     call ConsumePressed
 .w:
     call WaitVBlank
@@ -519,9 +571,13 @@ EndingScreen:
     ld b, MENU_ROW
     ld c, TEXT_COL
     call PrintAt
-    ld hl, StrAgain
+    ld hl, StrChipA
     ld b, MENU_ROW + 2
     ld c, TEXT_COL
+    call PrintInvAt
+    ld hl, StrAgain
+    ld b, MENU_ROW + 2
+    ld c, TEXT_COL + 2
     call PrintAt
     call ConsumePressed
 .w:
@@ -536,20 +592,16 @@ StatsScreen::
     ld a, ST_STATS
     call SetState
     ; save rows 7..16, then draw
-    ld hl, wBgMap + TEXT_ROW * SCREEN_W
+    ld hl, wBgMap + PANEL_ROW * SCREEN_W
     ld de, wSaved
     ld bc, SCREEN_W * 10
     call MemCopy
-    ld a, [wOam]
-    ld [wSavedSpr], a
-    xor a
-    ld [wOam], a
-    ld b, TEXT_ROW
+    ld b, PANEL_ROW
     ld c, 10
     xor a
     call FillRows
     call DrawStats
-    ld b, TEXT_ROW
+    ld b, PANEL_ROW
     ld c, 10
 .marks:
     call MarkRow
@@ -570,12 +622,10 @@ StatsScreen::
     ld [wEndFlag], a
 .restore:
     ld hl, wSaved
-    ld de, wBgMap + TEXT_ROW * SCREEN_W
+    ld de, wBgMap + PANEL_ROW * SCREEN_W
     ld bc, SCREEN_W * 10
     call MemCopy
-    ld a, [wSavedSpr]
-    ld [wOam], a
-    ld b, TEXT_ROW
+    ld b, PANEL_ROW
     ld c, 10
 .m:
     call MarkRow
@@ -587,37 +637,37 @@ StatsScreen::
 
 ; ---- Stats content (measured on this device from LCD frames; zero until an event has run) ----
 StrS1: db "RUN STATS", 0
-StrS2: db "EVENTS", 0
-StrS3: db "CAP", 0
+StrS2: db "Events", 0
+StrS3: db "Capped", 0
 StrS4: db "MODEL 14784 PARAMS", 0
-StrS5: db "SEC/EVENT", 0
-StrS6: db "SEC/TOKEN", 0
-StrS7: db "TOKENS", 0
-StrS8: db "BANK SW", 0
-StrS9: db "SEL NEW RUN  A BACK", 0
+StrS5: db "Sec/event", 0
+StrS6: db "Sec/word", 0
+StrS7: db "Words", 0
+StrS8: db "Bank sw", 0
+StrS9: db "SELECT new  A back", 0
 
 DrawStats::
     ld hl, StrVariant
-    ld b, TEXT_ROW
+    ld b, PANEL_ROW
     ld c, TEXT_COL
     call PrintAt
     ld hl, StrS4
-    ld b, TEXT_ROW + 1
+    ld b, PANEL_ROW + 1
     ld c, TEXT_COL
     call PrintAt
     ld hl, StrS2
-    ld b, TEXT_ROW + 2
+    ld b, PANEL_ROW + 2
     ld c, TEXT_COL
     call PrintAt
     ld a, [wMB_Events]
-    ld hl, wBgMap + (TEXT_ROW + 2) * SCREEN_W + 8
+    ld hl, wBgMap + (PANEL_ROW + 2) * SCREEN_W + 8
     call PrintDec2
     ld hl, StrS3
-    ld b, TEXT_ROW + 2
-    ld c, 12
+    ld b, PANEL_ROW + 2
+    ld c, 11
     call PrintAt
     ld a, [wTotalFallbacks]
-    ld hl, wBgMap + (TEXT_ROW + 2) * SCREEN_W + 16
+    ld hl, wBgMap + (PANEL_ROW + 2) * SCREEN_W + 18
     call PrintDec2
     ; centiseconds = frames * 5 / 3 (nominal 60 Hz; the LCD's true rate differs by 0.4%)
     ld a, [wLastEventFrames]
@@ -634,11 +684,11 @@ DrawStats::
     push hl
     push hl
     ld hl, StrS5
-    ld b, TEXT_ROW + 4
+    ld b, PANEL_ROW + 4
     ld c, TEXT_COL
     call PrintAt
     pop de
-    ld hl, wBgMap + (TEXT_ROW + 4) * SCREEN_W + 11
+    ld hl, wBgMap + (PANEL_ROW + 4) * SCREEN_W + 11
     call PrintCenti
     pop hl
     ld a, [wLastEventTokens]
@@ -649,31 +699,31 @@ DrawStats::
 .notok:
     push hl
     ld hl, StrS6
-    ld b, TEXT_ROW + 5
+    ld b, PANEL_ROW + 5
     ld c, TEXT_COL
     call PrintAt
     pop de
-    ld hl, wBgMap + (TEXT_ROW + 5) * SCREEN_W + 11
+    ld hl, wBgMap + (PANEL_ROW + 5) * SCREEN_W + 11
     call PrintCenti
     ld hl, StrS7
-    ld b, TEXT_ROW + 6
+    ld b, PANEL_ROW + 6
     ld c, TEXT_COL
     call PrintAt
     ld a, [wLastEventTokens]
-    ld hl, wBgMap + (TEXT_ROW + 6) * SCREEN_W + 14
+    ld hl, wBgMap + (PANEL_ROW + 6) * SCREEN_W + 14
     call PrintDec2
     ld hl, StrS8
-    ld b, TEXT_ROW + 7
+    ld b, PANEL_ROW + 7
     ld c, TEXT_COL
     call PrintAt
     ld a, [wLastEventBanks]
     ld e, a
     ld a, [wLastEventBanks + 1]
     ld d, a
-    ld hl, wBgMap + (TEXT_ROW + 7) * SCREEN_W + 11
+    ld hl, wBgMap + (PANEL_ROW + 7) * SCREEN_W + 11
     call PrintDec16
     ld hl, StrS9
-    ld b, TEXT_ROW + 9
+    ld b, PANEL_ROW + 9
     ld c, 0
     jp PrintAt
 

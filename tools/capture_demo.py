@@ -19,7 +19,7 @@ FIG = ROOT / "docs" / "figures"
 SHIP = ROOT / "build" / "gameboygpt.gb"
 BASE = ROOT / "build" / "gameboygpt_v0.gb"
 MODEL = from_blob((ROOT / "generated" / "model.bin").read_bytes())
-BUTTONS = {g.LEFT: ("up", "left"), g.RIGHT: ("up", "right"), g.FORWARD: ("down", "left"), g.SEARCH: ("down", "right")}
+BUTTONS = {g.LEFT: ("left",), g.RIGHT: ("right",), g.FORWARD: ("up",), g.SEARCH: ("down",)}
 ST_TITLE, ST_MENU, ST_GEN, ST_REVEAL, ST_ENDING, ST_STATS = 1, 3, 5, 6, 8, 9
 SCALE, GIF_STEP = 3, 6  # 6 LCD frames at 59.73 Hz is 100.5 ms: the GIF's 100 ms delay is real time within 0.5%
 SEED = 321
@@ -65,7 +65,7 @@ def boot(rom, seed, greedy):
 
 
 def text(tokens):
-    return " ".join(ds.VOCAB[t] for t in tokens if t != ds.EOS) + "."
+    return " ".join(ds.VOCAB[t].lower() for t in tokens if t != ds.EOS).capitalize() + "."
 
 
 def play_gif_run() -> list[dict]:

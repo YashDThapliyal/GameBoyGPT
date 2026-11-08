@@ -14,8 +14,9 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parent.parent
 GEN, PREVIEW = ROOT / "generated", ROOT / "assets" / "tiles"
 SCENE_W, SCENE_H = 160, 48
-FIRST_UI_TILE, FIRST_INV_TILE, FIRST_SCENE_TILE = 64, 80, 120
-TITLE_FIRST_TILE = 120
+FIRST_UI_TILE, FIRST_INV_TILE, FIRST_SCENE_TILE = 96, 116, 156
+TITLE_FIRST_TILE = 156
+ART_TILE_BUDGET = 100
 BAYER = np.array([[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]]) / 16 + 1 / 32
 PREVIEW_RGB = [(224, 232, 208), (160, 176, 136), (84, 104, 80), (24, 32, 28)]
 
@@ -42,7 +43,16 @@ GLYPHS = {
     "V": "11 11 11 11 11 0A 04", "W": "11 11 11 15 15 1B 11", "X": "11 11 0A 04 0A 11 11",
     "Y": "11 11 11 0A 04 04 04", "Z": "1F 01 02 04 08 10 1F", "[": "0E 08 08 08 08 08 0E",
     "\\": "10 10 08 04 02 01 01", "]": "0E 02 02 02 02 02 0E", "^": "04 0E 15 04 04 04 04",
-    "_": "00 00 00 00 00 00 1F",
+    "_": "00 00 00 00 00 00 1F", "`": "08 04 00 00 00 00 00",
+    # Lowercase: x-height of 5 rows, row 7 is available for descenders, so lines read with visible gaps.
+    "a": "00 00 0E 01 0F 11 0F", "b": "10 10 1E 11 11 11 1E", "c": "00 00 0E 11 10 11 0E", "d": "01 01 0F 11 11 11 0F",
+    "e": "00 00 0E 11 1F 10 0E", "f": "06 09 08 1C 08 08 08", "g": "00 00 0F 11 11 0F 01 0E", "h": "10 10 16 19 11 11 11",
+    "i": "04 00 0C 04 04 04 0E", "j": "02 00 06 02 02 12 0C", "k": "10 10 12 14 18 14 12", "l": "0C 04 04 04 04 04 0E",
+    "m": "00 00 1A 15 15 11 11", "n": "00 00 16 19 11 11 11", "o": "00 00 0E 11 11 11 0E", "p": "00 00 1E 11 11 11 1E 10",
+    "q": "00 00 0F 11 11 11 0F 01", "r": "00 00 16 19 10 10 10", "s": "00 00 0F 10 0E 01 1E", "t": "08 08 1C 08 08 09 06",
+    "u": "00 00 11 11 11 13 0D", "v": "00 00 11 11 11 0A 04", "w": "00 00 11 11 15 15 0A", "x": "00 00 11 0A 04 0A 11",
+    "y": "00 00 11 11 11 0F 01 0E", "z": "00 00 1F 02 04 08 1F", "{": "02 04 04 08 04 04 02", "|": "04 04 04 04 04 04 04",
+    "}": "08 04 04 02 04 04 08", "~": "00 00 08 15 02 00 00", "\x7f": "00 00 00 00 00 00 00",
 }
 INV_CHARS = " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:/-"
 
@@ -54,7 +64,7 @@ def glyph_rows(ch: str, bold: bool = False) -> np.ndarray:
         v = int(hx, 16)
         v6 = (v << 1 | v) if bold else v << 1
         for x in range(6):
-            out[y + 1, x + 1] = bool(v6 & (1 << (5 - x)))
+            out[y, x + 1] = bool(v6 & (1 << (5 - x)))
     return out
 
 
@@ -93,7 +103,14 @@ def ui_tiles() -> list[np.ndarray]:
         t.append(tile_from(rows))
     t.append(tile_from(["###..###", "#..##..#", "#.#..#.#", ".#.##.#.", ".#.##.#.", "#.#..#.#", "#..##..#", "###..###"]))  # chip glyph
     t.append(tile_from([":::::::#", ":::::::#", ":::::::#", ":::::::#", ":::::::#", ":::::::#", ":::::::#", ":::::::#"]))  # panel edge
-    assert len(t) == 16
+    for rows in (  # D-pad direction marks for the action menu: left, right, up, down
+        ["........", "...##...", "..###...", ".######.", ".######.", "..###...", "...##...", "........"],
+        ["........", "...##...", "...###..", ".######.", ".######.", "...###..", "...##...", "........"],
+        ["...##...", "..####..", ".######.", "...##...", "...##...", "...##...", "...##...", "........"],
+        ["...##...", "...##...", "...##...", "...##...", ".######.", "..####..", "...##...", "........"],
+    ):
+        t.append(tile_from(rows))
+    assert len(t) == FIRST_INV_TILE - FIRST_UI_TILE
     return t
 
 
@@ -341,11 +358,11 @@ def title_screen() -> np.ndarray:
     img[0:72, :] = night
     disc(img, 112, 24, 15, 0)
     disc(img, 118, 21, 13, 2)
-    for _ in range(24):
+    for _ in range(4):
         x, y = rnd.randint(0, 159), rnd.randint(0, 50)
         if (x - 112) ** 2 + (y - 24) ** 2 > 330:
             img[y, x] = rnd.choice((0, 1))
-    hills(img, rnd, 58, 10, 3, step=11)
+    rect(img, 0, 60, 160, 72, 3)
     x0 = 36
     rect(img, x0, 12, x0 + 20, 72, 2)
     rect(img, x0 + 13, 12, x0 + 20, 72, 3)
@@ -355,9 +372,6 @@ def title_screen() -> np.ndarray:
         rect(img, x0 - 3 + k * 8, 3, x0 + 2 + k * 8, 8, 2)
     rect(img, x0 + 7, 20, x0 + 11, 28, 0)
     rect(img, x0 + 7, 40, x0 + 11, 48, 0)
-    for x in range(0, 160, 16):
-        if not x0 - 6 < x < x0 + 24:
-            pine(img, x + rnd.randint(-3, 3), 70, rnd.randint(12, 20), 3)
     big_text(img, "8-BIT", 44 - 8, 78, 2, 0, 2)
     for i, ch in enumerate("ADVENTURE"):
         g = glyph_rows(ch, True)
@@ -418,7 +432,7 @@ def build() -> None:
     GEN.mkdir(exist_ok=True)
     PREVIEW.mkdir(parents=True, exist_ok=True)
     chars = [chr(c) for c in range(0x20, 0x60)]
-    font = b"".join(encode(font_tile(c)) for c in chars)
+    font = b"".join(encode(font_tile(chr(c))) for c in range(0x20, 0x80))
     ui = b"".join(encode(t) for t in ui_tiles())
     inv = b"".join(encode(font_tile(c, 0, 3)) for c in INV_CHARS)
     inv_map = bytes((FIRST_INV_TILE + INV_CHARS.index(c)) if c in INV_CHARS else FIRST_INV_TILE for c in chars)
@@ -430,13 +444,13 @@ def build() -> None:
         img = fn(random.Random(SCENE_SEEDS[i]))
         assert img.shape == (SCENE_H, SCENE_W)
         save_preview(img, f"scene_{i}_{fn.__name__[6:]}")
-        tiles, tm = to_tiles(img, FIRST_SCENE_TILE, 136, fn.__name__)
+        tiles, tm = to_tiles(img, FIRST_SCENE_TILE, ART_TILE_BUDGET, fn.__name__)
         sizes.append(len(tiles))
         out += [f'SECTION "scene_{i}", ROMX', f"Scene{i}Tiles:", db(b"".join(tiles)), f"Scene{i}Map:", db(bytes(tm)), ""]
         table.append(f"    db BANK(Scene{i}Tiles), {len(tiles)}\n    dw Scene{i}Tiles, Scene{i}Map")
     img = title_screen()
     save_preview(img, "title")
-    tiles, tm = to_tiles(img, TITLE_FIRST_TILE, 136, "title")
+    tiles, tm = to_tiles(img, TITLE_FIRST_TILE, ART_TILE_BUDGET, "title")
     out += ['SECTION "title_gfx", ROMX', "TitleTiles:", db(b"".join(tiles)), "TitleMap:", db(bytes(tm)), ""]
     table.append(f"TitleInfo::\n    db BANK(TitleTiles), {len(tiles)}\n    dw TitleTiles, TitleMap")
     (GEN / "assets.asm").write_text("\n".join(out + table) + "\n")

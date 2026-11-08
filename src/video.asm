@@ -177,7 +177,7 @@ MemCopy::
 VideoInit::
     ld hl, FontTiles
     ld de, $8000
-    ld bc, 120 * 16      ; font + UI + inverse font are contiguous in ROM0
+    ld bc, TILE_ART * 16 ; font + UI + inverse font are contiguous in ROM0
     call MemCopy
     ld a, PAL_NORMAL
     ldh [rBGP], a

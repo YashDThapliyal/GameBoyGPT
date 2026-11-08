@@ -16,7 +16,7 @@ import dataclasses
 VARIANT = os.environ.get("GBGPT_VARIANT", "V0")
 ROM = ROOT / "build" / VARIANT / "gameboygpt.gb"
 ST_TITLE, ST_MENU, ST_GENERATING, ST_REVEAL, ST_ENDING = 1, 3, 5, 6, 8
-BUTTONS = {g.LEFT: ("up", "left"), g.RIGHT: ("up", "right"), g.FORWARD: ("down", "left"), g.SEARCH: ("down", "right")}
+BUTTONS = {g.LEFT: ("left",), g.RIGHT: ("right",), g.FORWARD: ("up",), g.SEARCH: ("down",)}
 MODEL = from_blob((ROOT / "generated" / "model.bin").read_bytes())
 
 
@@ -47,14 +47,14 @@ def event_tokens(gb):
 
 def visible_text(gb):
     rows = []
-    for r in range(7, 12):
-        rows.append("".join(chr(t + 0x20) if t < 64 else "?" for t in gb.read("wBgMap", 19, r * 20 + 1)).rstrip())
+    for r in range(8, 12):
+        rows.append("".join(chr(t + 0x20) if t < 96 else "?" for t in gb.read("wBgMap", 19, r * 20 + 1)).rstrip())
     return " ".join(x for x in rows if x)
 
 
 def render(tokens):
-    words = [ds.VOCAB[t] for t in tokens if t != ds.EOS]
-    return " ".join(words) + "."
+    words = [ds.VOCAB[t].lower() for t in tokens if t != ds.EOS]
+    return " ".join(words).capitalize() + "."
 
 
 def assert_clean_screen(gb):
@@ -119,8 +119,8 @@ def test_rom_contains_real_weights_and_no_canned_narration():
         flat = bytes(v & 0xFF for row in getattr(MODEL, name) for v in row)
         biased = bytes((v + 128) & 0xFF for row in getattr(MODEL, name) for v in row)
         assert rom[off:off + len(flat)] in (flat, biased), name
-    for phrase in (b"YOU TURN", b"AND THE", b"YOU LOOK", b"BUT THE", b"UNDER THE"):
-        assert phrase not in rom, "narration must not exist as stored sentences"
+    for phrase in (b"you turn", b"and the", b"you look", b"but the", b"under the"):
+        assert phrase not in rom.lower(), "narration must not exist as stored sentences"
     words_blob = sum(len(w) + 1 for w in ds.VOCAB[ds.FIRST_GEN:])
     assert words_blob < 700
 

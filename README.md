@@ -42,11 +42,14 @@ ROMs are in [`release/`](release/): `gameboygpt.gb` is the fast build and `gameb
 
 | Button | Action |
 |---|---|
-| D-pad, A | Choose an action, continue |
+| D-pad | Pick the action on that side: left, right, up for AHEAD, down for SEARCH |
+| A | Confirm, continue |
 | START | Run stats, measured on the device |
 | SELECT on stats | New run |
 
-Find a lamp, take the key from the cave, open the gate and climb the tower. See [docs/GAMEPLAY.md](docs/GAMEPLAY.md).
+In `make play`, the keys are the arrow keys, `A`, `S` for B, Enter for START and Backspace for SELECT.
+
+Find a lamp, take the key from the cave, open the gate and climb the tower. The bottom bar shows your current goal. See [docs/GAMEPLAY.md](docs/GAMEPLAY.md).
 
 ## How it works
 
@@ -69,7 +72,7 @@ Button press -> deterministic game rules -> outcome
 | RAM | 2,673 of 8,192 bytes of built-in WRAM allocated |
 | Training | PyTorch on one CPU thread, about 3 minutes, byte-reproducible |
 
-The engine decides what happens: rooms, items, damage, winning. The model is told the outcome and narrates it, so it can't break the game. Every story word comes from a model token; the only added character is the final full stop. Titles, intro lines and menus are fixed text.
+The engine decides what happens: rooms, items, damage, winning. The model is told the outcome and narrates it, so it can't break the game. Every story word comes from a model token; the display only adds the final full stop and capitalizes the first letter. Titles, intro lines and menus are fixed text.
 
 The architecture is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), the equations in [docs/MODEL.md](docs/MODEL.md) and the rounding rules in [docs/NUMERICS.md](docs/NUMERICS.md). The long version of the story is [TECHNICAL_REPORT.md](TECHNICAL_REPORT.md).
 

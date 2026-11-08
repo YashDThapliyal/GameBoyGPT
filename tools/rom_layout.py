@@ -52,7 +52,7 @@ def words() -> str:
     gen = ds.VOCAB[ds.FIRST_GEN:]
     out += [f"    dw Word{i}" for i in range(len(gen))]
     for i, w in enumerate(gen):
-        text = "" if w == "<EOS>" else w
+        text = "" if w == "<EOS>" else w.lower()  # the first word of an event is capitalized at draw time
         out.append(f'Word{i}: db "{text}", 0')
     return "\n".join(out) + "\n"
 

@@ -193,7 +193,7 @@ def ux_mode(version, rom, rows, model_sha, wram, nll, quality, baseline_tokens) 
     gb.write("wStackBottom", [0xA5] * 0xF0)  # measures depth with the ISR and UI live, unlike kernel mode
     w, s = g.gen_world(seed), None
     s = g.start(w)
-    BUTTONS = {g.LEFT: ("up", "left"), g.RIGHT: ("up", "right"), g.FORWARD: ("down", "left"), g.SEARCH: ("down", "right")}
+    BUTTONS = {g.LEFT: ("left",), g.RIGHT: ("right",), g.FORWARD: ("up",), g.SEARCH: ("down",)}
     events = []
     t = Timers(gb)
     t.on("ProfileTokenStart", "ProfileTokenEnd", "NarrateEvent", "ThinkingDone")

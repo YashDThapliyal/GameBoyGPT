@@ -64,7 +64,7 @@ The worst case fits in int16.
 - **Mask:** only ids from `<EOS>` onward can be generated. Control tokens never appear in output.
 - **Greedy:** the highest logit; ties resolve to the lowest id.
 - **Sampling:** uniform over the first 4 ids (in id order) within `sample_margin` of the best logit. The margin is 0.7 nats, converted to logit units at export. The RNG is a 16-bit Galois LFSR with taps `$B400`, advanced 8 bits per pick, separate from the world's RNG so narration can't alter game truth.
-- **Cap:** generation stops at context 16. An event that reaches the cap without `<EOS>` is counted in `wMB_Fallbacks`, which is visible on the stats screen as `CAP`.
+- **Cap:** generation stops at context 16. An event that reaches the cap without `<EOS>` is counted in `wMB_Fallbacks`, which is visible on the stats screen as `Capped`.
 
 ## Output-preserving optimizations
 
