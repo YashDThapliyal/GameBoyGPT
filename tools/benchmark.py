@@ -19,7 +19,7 @@ from workloads import WORKLOADS
 
 HZ = 4194304
 FRAME_T = 70224
-CSV_FIELDS = "version,git_commit,rom_sha256,model_sha256,emulator,hardware_mode,workload,round,prompt_len,output_tokens,first_token_tcycles,token_tcycles_median,token_tcycles_p95,total_tcycles,seconds_per_token,seconds_per_response,bank_switches,stack_peak_bytes,wram_bytes,sram_bytes,rom_bytes,token_match_baseline,matches_reference,mode".split(",")
+CSV_FIELDS = "version,git_commit,rom_sha256,test_rom_sha256,model_sha256,emulator,hardware_mode,workload,round,prompt_len,output_tokens,first_token_tcycles,token_tcycles_median,token_tcycles_p95,total_tcycles,seconds_per_token,seconds_per_response,bank_switches,stack_peak_bytes,wram_bytes,sram_bytes,rom_bytes,token_match_baseline,matches_reference,mode".split(",")
 PHASES = [("kv", "ForwardStep", "BlockAfterKV"), ("query", "BlockAfterKV", "PhAttn"), ("attention", "PhAttn", "PhProj"), ("projection_norm", "PhProj", "PhFfn"),
           ("feed_forward_norm", "PhFfn", "PhOut"), ("output_head", "PhOut", "PickToken"), ("decode", "PickToken", "ProfileTokenEnd")]
 
@@ -100,11 +100,11 @@ def run_kernel(rig: KernelRig, sit: cv.Situation) -> dict:
     return {"tokens": read_ids(gb, gb.read1("wSeqLen")), "per_token": per, "phases": {n: sum(t.pairs(a, b)) for n, a, b in PHASES}, "banks": bank_counter(gb) - banks0, "stack": stack_peak(gb)}
 
 
-def row(version, rom, model_sha, name, rnd, r, match, ref_ok, mode, map_path) -> dict:
+def row(version, rom, test_rom, model_sha, name, rnd, r, match, ref_ok, mode, map_path) -> dict:
     per = r["per_token"]
     rest = per[1:] or per
     total = sum(per)
-    return {"version": version, "git_commit": git_commit(), "rom_sha256": sha(rom), "model_sha256": model_sha, "emulator": "PyBoy", "hardware_mode": "DMG (cgb=False)", "workload": name, "round": rnd,
+    return {"version": version, "git_commit": git_commit(), "rom_sha256": sha(rom), "test_rom_sha256": sha(test_rom), "model_sha256": model_sha, "emulator": "PyBoy", "hardware_mode": "DMG (cgb=False)", "workload": name, "round": rnd,
             "prompt_len": dl.PROMPT_LEN, "output_tokens": len(per), "first_token_tcycles": per[0], "token_tcycles_median": int(statistics.median(rest)), "token_tcycles_p95": sorted(rest)[int(round(0.95 * (len(rest) - 1)))],
             "total_tcycles": total, "seconds_per_token": round(sum(rest) / len(rest) / HZ, 6), "seconds_per_response": round(total / HZ, 6), "bank_switches": r["banks"], "stack_peak_bytes": r["stack"],
             "wram_bytes": wram_bytes(map_path), "sram_bytes": sram_bytes(map_path), "rom_bytes": Path(rom).stat().st_size, "token_match_baseline": match, "matches_reference": ref_ok, "mode": mode}
@@ -121,7 +121,7 @@ def bench_variant(version: str, rounds: int, baseline: dict | None, model) -> tu
         for rnd in range(rounds):
             r = run_kernel(rig, sit)
             match = "SELF" if baseline is None else baseline.get(name) == r["tokens"]
-            rows.append(row(version, rom, model_sha, name, rnd, r, match, r["tokens"] == want, "kernel", game.with_suffix(".map")))
+            rows.append(row(version, game, rom, model_sha, name, rnd, r, match, r["tokens"] == want, "kernel", game.with_suffix(".map")))
             raw["workloads"].setdefault(name, []).append(r)
     # One forward pass at each context length, same token stream, cold cache: cost as the conversation fills the context.
     stream = dl.prompt_ids(WORKLOADS["GREET"]) + list(range(dl.FIRST_WORD, dl.FIRST_WORD + dl.CTX))

@@ -48,6 +48,7 @@ def test_every_variant_ran_every_workload_on_one_model():
 
 def test_rom_hashes_in_report_match_built_roms():
     for r in rows():
-        rom = ROOT / "build" / r["version"] / "gameboygpt.gb"
-        if rom.exists():
-            assert hashlib.sha256(rom.read_bytes()).hexdigest() == r["rom_sha256"], r["version"]
+        for name, field in (("gameboygpt.gb", "rom_sha256"), ("test.gb", "test_rom_sha256")):
+            rom = ROOT / "build" / r["version"] / name
+            if rom.exists():
+                assert hashlib.sha256(rom.read_bytes()).hexdigest() == r[field], (r["version"], name)
