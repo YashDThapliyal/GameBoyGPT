@@ -1,0 +1,13 @@
+# Release model. Selected by quality/latency comparison (see docs/MODEL.md).
+seed: 1234
+threads: 4
+n_train: 48000
+n_eval: 4000
+model: {ctx: 16, d: 32, heads: 2, ffn: 64, layers: 2}
+batch: 256
+lr: 0.004
+weight_decay: 0.001
+float_steps: 12000
+qat_steps: 8000
+eval_every: 1000
+out: checkpoints/two_layer.pt

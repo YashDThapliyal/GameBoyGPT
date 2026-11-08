@@ -1,0 +1,21 @@
+step 1000 quant=0 train 0.2520 val 0.3075 t=6s
+step 2000 quant=0 train 0.2362 val 0.3043 t=12s
+step 3000 quant=0 train 0.2502 val 0.3054 t=18s
+step 4000 quant=0 train 0.2644 val 0.3043 t=25s
+step 5000 quant=0 train 0.2477 val 0.3053 t=31s
+step 6000 quant=0 train 0.2390 val 0.3047 t=38s
+step 7000 quant=0 train 0.2442 val 0.3041 t=44s
+step 8000 quant=0 train 0.2465 val 0.3055 t=52s
+step 9000 quant=0 train 0.2452 val 0.3052 t=59s
+step 10000 quant=0 train 0.2466 val 0.3034 t=65s
+step 11000 quant=0 train 0.2549 val 0.3044 t=71s
+step 12000 quant=0 train 0.2551 val 0.3043 t=79s
+step 13000 quant=1 train 0.2521 val 0.3040 t=91s
+step 14000 quant=1 train 0.2508 val 0.3044 t=103s
+step 15000 quant=1 train 0.2464 val 0.3038 t=116s
+step 16000 quant=1 train 0.2644 val 0.3040 t=128s
+step 17000 quant=1 train 0.2385 val 0.3040 t=142s
+step 18000 quant=1 train 0.2557 val 0.3043 t=154s
+step 19000 quant=1 train 0.2391 val 0.3042 t=164s
+step 20000 quant=1 train 0.2597 val 0.3044 t=174s
+{"params": 14784, "best_val_nll_quant": 0.30377534041190757, "test_nll_quant": 0.3088504794958253, "test_nll_float": 0.3099093897802438, "untrained": {"val_nll": 5.274969666774007, "uniform_nll": 4.553876891600541}}

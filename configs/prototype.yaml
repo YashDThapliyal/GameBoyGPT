@@ -1,0 +1,12 @@
+seed: 1234
+threads: 4
+n_train: 48000
+n_eval: 4000
+model: {ctx: 16, d: 16, heads: 1, ffn: 32, layers: 1}
+batch: 256
+lr: 0.004
+weight_decay: 0.001
+float_steps: 12000
+qat_steps: 8000
+eval_every: 2000
+out: checkpoints/prototype.pt

@@ -1,0 +1,206 @@
+{
+  "all_greedy": {
+    "strict": 1.0,
+    "action": 1.0,
+    "room": 1.0,
+    "outcome": 1.0,
+    "capped": 0.0,
+    "n": 283,
+    "unique": 173,
+    "examples": [
+      [
+        "<R_FOREST>",
+        "<I_NONE>",
+        "<A_LEFT>",
+        "<O_MOVE>",
+        "YOU GO LEFT AND THE DARK ROOTS STIR"
+      ],
+      [
+        "<R_FOREST>",
+        "<I_NONE>",
+        "<A_LEFT>",
+        "<O_BLOCK>",
+        "YOU GO LEFT BUT THE FERNS STOP YOU"
+      ],
+      [
+        "<R_FOREST>",
+        "<I_NONE>",
+        "<A_LEFT>",
+        "<O_DARK>",
+        "YOU GO LEFT BUT THE DARK BATS STOP YOU"
+      ],
+      [
+        "<R_FOREST>",
+        "<I_NONE>",
+        "<A_LEFT>",
+        "<O_HURT>",
+        "YOU GO LEFT AND THE COLD FERNS BITE"
+      ]
+    ]
+  },
+  "test_heldout_greedy": {
+    "strict": 1.0,
+    "action": 1.0,
+    "room": 1.0,
+    "outcome": 1.0,
+    "capped": 0.0,
+    "n": 9,
+    "unique": 9,
+    "examples": [
+      [
+        "<R_FOREST>",
+        "<I_BOTH>",
+        "<A_RIGHT>",
+        "<O_MOVE>",
+        "YOU GO RIGHT AND YOUR KEY HUMS BY COLD FERNS"
+      ],
+      [
+        "<R_MARSH>",
+        "<I_BOTH>",
+        "<A_FORWARD>",
+        "<O_MOVE>",
+        "YOU WALK ON AND YOUR KEY HUMS BY COLD LEECHES"
+      ],
+      [
+        "<R_RIVER>",
+        "<I_LAMP>",
+        "<A_FORWARD>",
+        "<O_BLOCK>",
+        "YOU WALK ON BUT THE STONES STOP YOU"
+      ],
+      [
+        "<R_RUINS>",
+        "<I_NONE>",
+        "<A_LEFT>",
+        "<O_MOVE>",
+        "YOU GO LEFT AND THE COLD ARCHES SIGH"
+      ]
+    ]
+  },
+  "heldout_all_greedy": {
+    "strict": 1.0,
+    "action": 1.0,
+    "room": 1.0,
+    "outcome": 1.0,
+    "capped": 0.0,
+    "n": 15,
+    "unique": 15,
+    "examples": [
+      [
+        "<R_FOREST>",
+        "<I_BOTH>",
+        "<A_RIGHT>",
+        "<O_MOVE>",
+        "YOU GO RIGHT AND YOUR KEY HUMS BY COLD FERNS"
+      ],
+      [
+        "<R_FOREST>",
+        "<I_BOTH>",
+        "<A_SEARCH>",
+        "<O_NOTHING>",
+        "YOU LOOK BUT FIND ONLY DARK FERNS"
+      ],
+      [
+        "<R_MARSH>",
+        "<I_NONE>",
+        "<A_RIGHT>",
+        "<O_BLOCK>",
+        "YOU TURN RIGHT BUT THE LEECHES STOP YOU"
+      ],
+      [
+        "<R_MARSH>",
+        "<I_BOTH>",
+        "<A_FORWARD>",
+        "<O_MOVE>",
+        "YOU WALK ON AND YOUR KEY HUMS BY COLD LEECHES"
+      ]
+    ]
+  },
+  "all_sampled": {
+    "strict": 1.0,
+    "action": 1.0,
+    "room": 1.0,
+    "outcome": 1.0,
+    "capped": 0.0,
+    "n": 849,
+    "unique": 539,
+    "examples": [
+      [
+        "<R_FOREST>",
+        "<I_NONE>",
+        "<A_LEFT>",
+        "<O_MOVE>",
+        "YOU GO LEFT AND THE PALE FERNS STIR"
+      ],
+      [
+        "<R_FOREST>",
+        "<I_NONE>",
+        "<A_LEFT>",
+        "<O_MOVE>",
+        "YOU TURN LEFT AND THE SILENT FERNS STIR"
+      ],
+      [
+        "<R_FOREST>",
+        "<I_NONE>",
+        "<A_LEFT>",
+        "<O_MOVE>",
+        "YOU TURN LEFT AND THE DARK FERNS LOOM"
+      ],
+      [
+        "<R_FOREST>",
+        "<I_NONE>",
+        "<A_LEFT>",
+        "<O_BLOCK>",
+        "YOU TURN LEFT BUT THE ROOTS STOP YOU"
+      ]
+    ]
+  },
+  "test_heldout_sampled": {
+    "strict": 1.0,
+    "action": 1.0,
+    "room": 1.0,
+    "outcome": 1.0,
+    "capped": 0.0,
+    "n": 270,
+    "unique": 127,
+    "examples": [
+      [
+        "<R_FOREST>",
+        "<I_BOTH>",
+        "<A_RIGHT>",
+        "<O_MOVE>",
+        "YOU GO RIGHT AND YOUR KEY HUMS BY COLD ROOTS"
+      ],
+      [
+        "<R_FOREST>",
+        "<I_BOTH>",
+        "<A_RIGHT>",
+        "<O_MOVE>",
+        "YOU TURN RIGHT AND YOUR KEY HUMS BY DARK ROOTS"
+      ],
+      [
+        "<R_FOREST>",
+        "<I_BOTH>",
+        "<A_RIGHT>",
+        "<O_MOVE>",
+        "YOU TURN RIGHT AND YOUR KEY HUMS BY DARK ROOTS"
+      ],
+      [
+        "<R_FOREST>",
+        "<I_BOTH>",
+        "<A_RIGHT>",
+        "<O_MOVE>",
+        "YOU GO RIGHT AND YOUR KEY HUMS BY PALE ROOTS"
+      ]
+    ]
+  },
+  "action_ablation": {
+    "changed_rate": 0.7985865724381626,
+    "wrong_action_token_scores_action_ok": 0.2049469964664311,
+    "n": 283
+  },
+  "novelty_test": {
+    "text_seen_in_train_for_any_prompt": 0.3333333333333333,
+    "exact_prompt_plus_text_in_train": 0.0
+  }
+}

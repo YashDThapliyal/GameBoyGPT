@@ -3,7 +3,7 @@ __pycache__/
 *.pyc
 .pytest_cache/
 build/
-checkpoints/*.tmp
+checkpoints/two_layer*
 .DS_Store
 *.sav
 *.ram
