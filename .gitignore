@@ -19,3 +19,6 @@ reports/pipeline.log
 checkpoints/sweep*
 configs/sweep*
 reports/sweep*
+
+# User-supplied third-party style references: guidance only, never redistributed
+docs/references/*.png

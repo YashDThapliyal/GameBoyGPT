@@ -1,0 +1,516 @@
+{
+ "rom_sha256": "03db35f59af2c28fd42db7dbc09d5fafe0ba359a77730e2f39e67e92a19fd300",
+ "seed": 321,
+ "journey": [
+  {
+   "turn": 1,
+   "place": "OLD RUINS",
+   "choice": "Follow the light",
+   "beat": "SEE_RUINS",
+   "input_ids": [
+    0,
+    25,
+    39,
+    53
+   ],
+   "generated_ids": [
+    193,
+    104,
+    179,
+    145,
+    180,
+    60,
+    164,
+    56,
+    57,
+    138,
+    61,
+    57,
+    175,
+    143,
+    121,
+    56,
+    55
+   ],
+   "text": "You follow the light to ancient ruins. A lamp and a sword lie here.",
+   "on_device_frames": 765,
+   "strict_valid": true
+  },
+  {
+   "turn": 2,
+   "place": "COLD RIVER",
+   "choice": "Take the lamp",
+   "beat": "TAKE_LAMP",
+   "input_ids": [
+    0,
+    33,
+    40,
+    53
+   ],
+   "generated_ids": [
+    193,
+    114,
+    179,
+    138,
+    56,
+    146,
+    56,
+    179,
+    154,
+    80,
+    167,
+    56,
+    55
+   ],
+   "text": "You grab the lamp. Look. The old bridge sags.",
+   "on_device_frames": 584,
+   "strict_valid": true
+  },
+  {
+   "turn": 3,
+   "place": "DEEP CAVE",
+   "choice": "Enter the cave",
+   "beat": "ENTER_CAVE",
+   "input_ids": [
+    0,
+    7,
+    40,
+    53
+   ],
+   "generated_ids": [
+    193,
+    99,
+    179,
+    84,
+    56,
+    146,
+    56,
+    179,
+    95,
+    123,
+    57,
+    97,
+    56,
+    55
+   ],
+   "text": "You enter the cave. Look. The dark hides a drop.",
+   "on_device_frames": 632,
+   "strict_valid": true
+  },
+  {
+   "turn": 4,
+   "place": "DEEP CAVE",
+   "choice": "Light the lamp",
+   "beat": "LIGHT_LAMP",
+   "input_ids": [
+    0,
+    19,
+    40,
+    53
+   ],
+   "generated_ids": [
+    194,
+    138,
+    170,
+    57,
+    122,
+    96,
+    56,
+    146,
+    56,
+    179,
+    86,
+    119,
+    178,
+    56,
+    55
+   ],
+   "text": "Your lamp shows a hidden door. Look. The chest has teeth.",
+   "on_device_frames": 672,
+   "strict_valid": true
+  },
+  {
+   "turn": 5,
+   "place": "PALE SHRINE",
+   "choice": "Take the key",
+   "beat": "TAKE_KEY",
+   "input_ids": [
+    0,
+    32,
+    42,
+    53
+   ],
+   "generated_ids": [
+    193,
+    114,
+    179,
+    134,
+    56,
+    146,
+    56,
+    179,
+    58,
+    73,
+    75,
+    56,
+    55
+   ],
+   "text": "You grab the key. Look. The altar blade bleeds.",
+   "on_device_frames": 585,
+   "strict_valid": true
+  },
+  {
+   "turn": 6,
+   "place": "IRON GATE",
+   "choice": "Pray at the altar",
+   "beat": "PRAY",
+   "input_ids": [
+    0,
+    23,
+    42,
+    53
+   ],
+   "generated_ids": [
+    193,
+    160,
+    61,
+    103,
+    166,
+    56,
+    146,
+    56,
+    179,
+    67,
+    63,
+    168,
+    56,
+    55
+   ],
+   "text": "You pray and feel safe. Look. The bars are sharp.",
+   "on_device_frames": 629,
+   "strict_valid": true
+  },
+  {
+   "turn": 7,
+   "place": "THE TOWER",
+   "choice": "Use the key",
+   "beat": "OPEN_GATE",
+   "input_ids": [
+    0,
+    21,
+    42,
+    53
+   ],
+   "generated_ids": [
+    194,
+    134,
+    157,
+    179,
+    109,
+    56,
+    146,
+    56,
+    125,
+    117,
+    162,
+    155,
+    59,
+    65,
+    56,
+    55
+   ],
+   "text": "Your key opens the gate. Look. His hand rests on an axe.",
+   "on_device_frames": 726,
+   "strict_valid": true
+  },
+  {
+   "turn": 8,
+   "place": "THE TOWER",
+   "choice": "Wake him",
+   "beat": "WAKE",
+   "input_ids": [
+    0,
+    37,
+    42,
+    53
+   ],
+   "generated_ids": [
+    193,
+    186,
+    124,
+    61,
+    120,
+    147,
+    64,
+    193,
+    56,
+    146,
+    56,
+    125,
+    100,
+    112,
+    180,
+    179,
+    90,
+    56,
+    55
+   ],
+   "text": "You wake him and he looks at you. Look. His eyes go to the crown.",
+   "on_device_frames": 855,
+   "strict_valid": true
+  },
+  {
+   "turn": 9,
+   "place": "THE TOWER",
+   "choice": "Free him",
+   "beat": "FREE_GUARDIAN",
+   "input_ids": [
+    0,
+    11,
+    42,
+    53
+   ],
+   "generated_ids": [
+    193,
+    78,
+    125,
+    85,
+    56,
+    120,
+    77,
+    61,
+    179,
+    181,
+    131,
+    107,
+    56,
+    55
+   ],
+   "text": "You break his chains. He bows and the tower is free.",
+   "on_device_frames": 629,
+   "strict_valid": true
+  }
+ ],
+ "other_journey": [
+  {
+   "turn": 1,
+   "place": "BLACK MARSH",
+   "choice": "Hear the voice",
+   "beat": "HEAR_VOICE",
+   "input_ids": [
+    0,
+    16,
+    39,
+    53
+   ],
+   "generated_ids": [
+    193,
+    104,
+    179,
+    183,
+    130,
+    179,
+    148,
+    56,
+    57,
+    161,
+    68,
+    129,
+    179,
+    150,
+    56,
+    55
+   ],
+   "text": "You follow the voice into the marsh. A prisoner begs in the mud.",
+   "on_device_frames": 718,
+   "strict_valid": true
+  },
+  {
+   "turn": 2,
+   "place": "COLD RIVER",
+   "choice": "Take his ring",
+   "beat": "TAKE_RING",
+   "input_ids": [
+    0,
+    34,
+    51,
+    53
+   ],
+   "generated_ids": [
+    193,
+    114,
+    125,
+    163,
+    61,
+    142,
+    124,
+    56,
+    179,
+    154,
+    80,
+    167,
+    56,
+    55
+   ],
+   "text": "You grab his ring and leave him. The old bridge sags.",
+   "on_device_frames": 629,
+   "strict_valid": true
+  },
+  {
+   "turn": 3,
+   "place": "PALE SHRINE",
+   "choice": "Wade the shallows",
+   "beat": "WADE_RIVER",
+   "input_ids": [
+    0,
+    36,
+    51,
+    53
+   ],
+   "generated_ids": [
+    193,
+    184,
+    179,
+    88,
+    191,
+    56,
+    179,
+    58,
+    73,
+    192,
+    56,
+    55
+   ],
+   "text": "You wade the cold water. The altar blade weeps.",
+   "on_device_frames": 539,
+   "strict_valid": true
+  },
+  {
+   "turn": 4,
+   "place": "IRON GATE",
+   "choice": "Walk on",
+   "beat": "PASS_SHRINE",
+   "input_ids": [
+    0,
+    22,
+    51,
+    53
+   ],
+   "generated_ids": [
+    193,
+    172,
+    159,
+    179,
+    58,
+    56,
+    179,
+    67,
+    63,
+    91,
+    56,
+    55
+   ],
+   "text": "You slip past the altar. The bars are cruel.",
+   "on_device_frames": 540,
+   "strict_valid": true
+  },
+  {
+   "turn": 5,
+   "place": "THE TOWER",
+   "choice": "Climb the wall",
+   "beat": "CLIMB_WALL",
+   "input_ids": [
+    0,
+    4,
+    51,
+    53
+   ],
+   "generated_ids": [
+    193,
+    87,
+    179,
+    189,
+    61,
+    101,
+    118,
+    56,
+    125,
+    117,
+    162,
+    155,
+    59,
+    65,
+    56,
+    55
+   ],
+   "text": "You climb the wall and fall hard. His hand rests on an axe.",
+   "on_device_frames": 720,
+   "strict_valid": true
+  },
+  {
+   "turn": 6,
+   "place": "THE TOWER",
+   "choice": "Wake him",
+   "beat": "WAKE",
+   "input_ids": [
+    0,
+    37,
+    51,
+    53
+   ],
+   "generated_ids": [
+    193,
+    186,
+    124,
+    61,
+    120,
+    147,
+    64,
+    193,
+    56,
+    125,
+    100,
+    112,
+    180,
+    179,
+    90,
+    56,
+    55
+   ],
+   "text": "You wake him and he looks at you. His eyes go to the crown.",
+   "on_device_frames": 762,
+   "strict_valid": true
+  },
+  {
+   "turn": 7,
+   "place": "THE TOWER",
+   "choice": "Show the ring",
+   "beat": "SHOW_RING",
+   "input_ids": [
+    0,
+    26,
+    51,
+    53
+   ],
+   "generated_ids": [
+    120,
+    137,
+    180,
+    179,
+    163,
+    56,
+    152,
+    193,
+    116,
+    179,
+    181,
+    106,
+    56,
+    55
+   ],
+   "text": "He kneels to the ring. Now you guard the tower forever.",
+   "on_device_frames": 631,
+   "strict_valid": true
+  }
+ ]
+}

@@ -1,0 +1,400 @@
+{
+  "all_greedy": {
+    "strict": 0.9904761904761905,
+    "event": 1.0,
+    "closing": 0.9904761904761905,
+    "capped": 0.0,
+    "n": 210,
+    "unique": 78,
+    "examples": [
+      [
+        "ASK_CROWN",
+        0,
+        0,
+        "he laughs and lifts his axe . the stairs crumble behind him ."
+      ],
+      [
+        "ASK_CROWN",
+        1,
+        0,
+        "he laughs and lifts his axe . look . the stairs crumble behind him ."
+      ],
+      [
+        "ASK_CROWN",
+        3,
+        0,
+        "he laughs and lifts his axe . look . the stairs crumble behind him ."
+      ],
+      [
+        "ASK_CROWN",
+        4,
+        0,
+        "he laughs and lifts his axe . he warns . the stairs crumble behind him ."
+      ],
+      [
+        "ASK_CROWN",
+        6,
+        0,
+        "he laughs and lifts his axe . he warns . the stairs crumble behind him ."
+      ],
+      [
+        "ASK_CROWN",
+        8,
+        0,
+        "he laughs and lifts his axe . the stairs crumble behind him ."
+      ]
+    ],
+    "failures": [
+      [
+        "FIGHT_SWORD",
+        8,
+        1,
+        "he falls but you bleed . the crown glows . the mist ."
+      ],
+      [
+        "FIGHT_SWORD",
+        11,
+        0,
+        "he falls but you bleed . look . the mist takes you ."
+      ]
+    ]
+  },
+  "test_heldout_greedy": {
+    "strict": 1.0,
+    "event": 1.0,
+    "closing": 1.0,
+    "capped": 0.0,
+    "n": 20,
+    "unique": 17,
+    "examples": [
+      [
+        "ASK_CROWN",
+        11,
+        0,
+        "he laughs and lifts his axe . look . the stairs crumble behind him ."
+      ],
+      [
+        "BREAK_CROWN",
+        2,
+        0,
+        "you break the crown and the mist lifts at last ."
+      ],
+      [
+        "CROSS_BRIDGE",
+        1,
+        0,
+        "the bridge breaks and you fall . look . the altar blade weeps ."
+      ],
+      [
+        "FRIEND_HOLDS",
+        8,
+        0,
+        "your friend holds him and falls . the crown glows ."
+      ],
+      [
+        "OPEN_GATE",
+        11,
+        0,
+        "your key opens the gate . look . his hand rests on an axe ."
+      ],
+      [
+        "PRAY",
+        6,
+        0,
+        "you pray and feel safe . he warns . the bars are sharp ."
+      ]
+    ],
+    "failures": []
+  },
+  "heldout_all_greedy": {
+    "strict": 0.96875,
+    "event": 1.0,
+    "closing": 0.96875,
+    "capped": 0.0,
+    "n": 32,
+    "unique": 24,
+    "examples": [
+      [
+        "ASK_CROWN",
+        8,
+        0,
+        "he laughs and lifts his axe . the stairs crumble behind him ."
+      ],
+      [
+        "ASK_CROWN",
+        11,
+        0,
+        "he laughs and lifts his axe . look . the stairs crumble behind him ."
+      ],
+      [
+        "BREAK_CROWN",
+        2,
+        0,
+        "you break the crown and the mist lifts at last ."
+      ],
+      [
+        "CLIMB_WALL",
+        16,
+        0,
+        "you climb the wall and fall hard . his hand rests on an axe ."
+      ],
+      [
+        "CLIMB_WALL",
+        24,
+        0,
+        "you climb the wall and fall hard . his hand rests on an axe ."
+      ],
+      [
+        "CROSS_BRIDGE",
+        0,
+        0,
+        "the bridge breaks and you fall . the altar blade bleeds ."
+      ]
+    ],
+    "failures": [
+      [
+        "FIGHT_SWORD",
+        11,
+        0,
+        "he falls but you bleed . look . the mist takes you ."
+      ]
+    ]
+  },
+  "all_sampled": {
+    "strict": 0.9904761904761905,
+    "event": 1.0,
+    "closing": 0.9936507936507937,
+    "capped": 0.0,
+    "n": 630,
+    "unique": 130,
+    "examples": [
+      [
+        "ASK_CROWN",
+        0,
+        0,
+        "he laughs and lifts his axe . the stairs crumble behind him ."
+      ],
+      [
+        "ASK_CROWN",
+        0,
+        0,
+        "he laughs and lifts his axe . the stairs crumble behind him ."
+      ],
+      [
+        "ASK_CROWN",
+        0,
+        0,
+        "he laughs and lifts his axe . the stairs crumble behind him ."
+      ],
+      [
+        "ASK_CROWN",
+        1,
+        0,
+        "he laughs and lifts his axe . look . the stairs crumble behind him ."
+      ],
+      [
+        "ASK_CROWN",
+        1,
+        0,
+        "he laughs and lifts his axe . look . the stairs crumble behind him ."
+      ],
+      [
+        "ASK_CROWN",
+        1,
+        0,
+        "he laughs and lifts his axe . look . the stairs crumble behind him ."
+      ]
+    ],
+    "failures": [
+      [
+        "FIGHT_SWORD",
+        8,
+        0,
+        "he falls but you bleed . the mist . look . the crown glows ."
+      ],
+      [
+        "FIGHT_SWORD",
+        8,
+        0,
+        "he falls but you bleed . the mist . look . the crown glows ."
+      ],
+      [
+        "FIGHT_SWORD",
+        8,
+        1,
+        "he falls but you bleed . the crown glows . the mist ."
+      ],
+      [
+        "FIGHT_SWORD",
+        11,
+        0,
+        "he falls but you bleed . look . the mist takes you ."
+      ],
+      [
+        "FIGHT_SWORD",
+        11,
+        0,
+        "he falls but you bleed . look . the mist takes you ."
+      ],
+      [
+        "FIGHT_SWORD",
+        11,
+        0,
+        "he falls but you bleed . look . the mist takes you ."
+      ]
+    ]
+  },
+  "test_heldout_sampled": {
+    "strict": 1.0,
+    "event": 1.0,
+    "closing": 1.0,
+    "capped": 0.0,
+    "n": 600,
+    "unique": 30,
+    "examples": [
+      [
+        "ASK_CROWN",
+        11,
+        0,
+        "he laughs and lifts his axe . look . the stairs crumble behind him ."
+      ],
+      [
+        "ASK_CROWN",
+        11,
+        0,
+        "he laughs and lifts his axe . look . the stairs crumble behind him ."
+      ],
+      [
+        "ASK_CROWN",
+        11,
+        0,
+        "he laughs and lifts his axe . look . the stairs crumble behind him ."
+      ],
+      [
+        "ASK_CROWN",
+        11,
+        0,
+        "he laughs and lifts his axe . look . the stairs crumble behind him ."
+      ],
+      [
+        "ASK_CROWN",
+        11,
+        0,
+        "he laughs and lifts his axe . look . the stairs crumble behind him ."
+      ],
+      [
+        "ASK_CROWN",
+        11,
+        0,
+        "he laughs and lifts his axe . look . the stairs crumble behind him ."
+      ]
+    ],
+    "failures": []
+  },
+  "untrained_all_greedy": {
+    "strict": 0.0,
+    "event": 0.0,
+    "closing": 0.0,
+    "capped": 0.9571428571428572,
+    "n": 210,
+    "unique": 201,
+    "examples": [
+      [
+        "ASK_CROWN",
+        0,
+        0,
+        "falls safe begs hides ancient enter here falls beside beside takes pray stairs grab at waits key altar old breaks"
+      ],
+      [
+        "ASK_CROWN",
+        1,
+        0,
+        "falls safe begs hides ancient enter here falls beside beside takes pray drop safe begs grab at to grab at"
+      ],
+      [
+        "ASK_CROWN",
+        3,
+        0,
+        "falls safe begs feel waits go ancient enter key now enter key altar walk old wake beside sags feel looks"
+      ],
+      [
+        "ASK_CROWN",
+        4,
+        0,
+        "weeps key weeps key ruins ring icy are falls king glows key altar to weeps here falls safe icy hard"
+      ],
+      [
+        "ASK_CROWN",
+        6,
+        0,
+        "weeps force weeps tower weeps it in voice old pray weeps key altar to to back wall voice bridge eyes"
+      ],
+      [
+        "ASK_CROWN",
+        8,
+        0,
+        "falls lifts falls king mud sharp bleeds tower weeps key altar walk stairs begs hides here falls safe icy breaks"
+      ]
+    ],
+    "failures": [
+      [
+        "ASK_CROWN",
+        0,
+        0,
+        "falls safe begs hides ancient enter here falls beside beside takes pray stairs grab at waits key altar old breaks"
+      ],
+      [
+        "ASK_CROWN",
+        1,
+        0,
+        "falls safe begs hides ancient enter here falls beside beside takes pray drop safe begs grab at to grab at"
+      ],
+      [
+        "ASK_CROWN",
+        3,
+        0,
+        "falls safe begs feel waits go ancient enter key now enter key altar walk old wake beside sags feel looks"
+      ],
+      [
+        "ASK_CROWN",
+        4,
+        0,
+        "weeps key weeps key ruins ring icy are falls king glows key altar to weeps here falls safe icy hard"
+      ],
+      [
+        "ASK_CROWN",
+        6,
+        0,
+        "weeps force weeps tower weeps it in voice old pray weeps key altar to to back wall voice bridge eyes"
+      ],
+      [
+        "ASK_CROWN",
+        8,
+        0,
+        "falls lifts falls king mud sharp bleeds tower weeps key altar walk stairs begs hides here falls safe icy breaks"
+      ],
+      [
+        "ASK_CROWN",
+        9,
+        0,
+        "falls safe begs hides hides only tower weeps enter here enter key altar holds sharp begs hides voice old go"
+      ],
+      [
+        "ASK_CROWN",
+        11,
+        0,
+        "falls safe begs feel waits go ancient enter tower crumble beside cut drop safe ring beside take kneel breaks him"
+      ]
+    ]
+  },
+  "conditioning": {
+    "beat_changed_rate": 1.0,
+    "flags_changed_rate": 0.425,
+    "n": 210,
+    "flag_pairs": 200
+  },
+  "novelty_test": {
+    "text_seen_in_train_for_any_prompt": 0.9,
+    "exact_prompt_plus_text_in_train": 0.0
+  }
+}
