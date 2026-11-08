@@ -639,7 +639,8 @@
       "on_device_frames": 3531,
       "bank_switches": 7881
      }
-    ]
+    ],
+    "stack_peak": 44
    },
    "rom_sha256": "342a3b22ac17a069801ba874498633f85a17728b52074d9cc10a367a89449e5f",
    "model_sha256": "2e2ca73681900e21385eeef725f07d31a29dad347b3878b9ed1ad9f40cb153d2"
@@ -1283,7 +1284,8 @@
       "on_device_frames": 3526,
       "bank_switches": 2
      }
-    ]
+    ],
+    "stack_peak": 44
    },
    "rom_sha256": "e6f335c3c3093a878e3ae385b3c98a66cc1428a6f26f8610b23f39562a5a8d46",
    "model_sha256": "2e2ca73681900e21385eeef725f07d31a29dad347b3878b9ed1ad9f40cb153d2"
@@ -1927,7 +1929,8 @@
       "on_device_frames": 2006,
       "bank_switches": 2
      }
-    ]
+    ],
+    "stack_peak": 42
    },
    "rom_sha256": "8462c375bae3e1204c185cbf656115f3268a44465a26aaa34a75d021def6fc54",
    "model_sha256": "2e2ca73681900e21385eeef725f07d31a29dad347b3878b9ed1ad9f40cb153d2"
@@ -2571,7 +2574,8 @@
       "on_device_frames": 1107,
       "bank_switches": 2
      }
-    ]
+    ],
+    "stack_peak": 36
    },
    "rom_sha256": "cf01eb77c38b92ea596ac702cf3f807bfa8599f513acec97ff750929563955f8",
    "model_sha256": "2e2ca73681900e21385eeef725f07d31a29dad347b3878b9ed1ad9f40cb153d2"
@@ -3215,7 +3219,8 @@
       "on_device_frames": 1086,
       "bank_switches": 2
      }
-    ]
+    ],
+    "stack_peak": 36
    },
    "rom_sha256": "70c0786fbd52abf2d057ea10d95123aa08adf5f7be5d1d7e92237d0e07c750fd",
    "model_sha256": "2e2ca73681900e21385eeef725f07d31a29dad347b3878b9ed1ad9f40cb153d2"
@@ -3859,7 +3864,8 @@
       "on_device_frames": 443,
       "bank_switches": 2
      }
-    ]
+    ],
+    "stack_peak": 38
    },
    "rom_sha256": "bc4fa7d1cdcfad3751e82c940e04fa86358c2fab6e0afa564b4a097a10601755",
    "model_sha256": "2e2ca73681900e21385eeef725f07d31a29dad347b3878b9ed1ad9f40cb153d2"
@@ -4503,7 +4509,8 @@
       "on_device_frames": 407,
       "bank_switches": 2
      }
-    ]
+    ],
+    "stack_peak": 38
    },
    "rom_sha256": "506eb446530e0dfa422fc8f0b8c89ce09e4ad76d1a05cc06f3d1437bc2eb43c8",
    "model_sha256": "2e2ca73681900e21385eeef725f07d31a29dad347b3878b9ed1ad9f40cb153d2"
@@ -5147,7 +5154,8 @@
       "on_device_frames": 379,
       "bank_switches": 2
      }
-    ]
+    ],
+    "stack_peak": 38
    },
    "rom_sha256": "2c4b1752e646bb8743b849f4774d579b2d2d7933ba4a37f237d80945e7e48469",
    "model_sha256": "2e2ca73681900e21385eeef725f07d31a29dad347b3878b9ed1ad9f40cb153d2"
@@ -5791,7 +5799,8 @@
       "on_device_frames": 2011,
       "bank_switches": 7881
      }
-    ]
+    ],
+    "stack_peak": 42
    },
    "rom_sha256": "5eaecd60a1a47556caed85d622ad71bfca77c52656f7b7266b123a06276e9b25",
    "model_sha256": "2e2ca73681900e21385eeef725f07d31a29dad347b3878b9ed1ad9f40cb153d2"
@@ -6435,7 +6444,8 @@
       "on_device_frames": 2941,
       "bank_switches": 7881
      }
-    ]
+    ],
+    "stack_peak": 46
    },
    "rom_sha256": "a3faa17eabc4e0a10e6fe729edbcd058c26cdd423b35cdba9741b7c869268371",
    "model_sha256": "2e2ca73681900e21385eeef725f07d31a29dad347b3878b9ed1ad9f40cb153d2"
@@ -7079,7 +7089,8 @@
       "on_device_frames": 1520,
       "bank_switches": 2535
      }
-    ]
+    ],
+    "stack_peak": 44
    },
    "rom_sha256": "ec6c635159eafd2fc47c285d35c6916d68cdf0035c12ba92e45b09e4ff71cf4f",
    "model_sha256": "2e2ca73681900e21385eeef725f07d31a29dad347b3878b9ed1ad9f40cb153d2"

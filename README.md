@@ -21,7 +21,7 @@ The project then asks a measurement question: **what actually makes neural text 
 | WRAM allocated | 2639 B | 2673 B |
 | Tokens identical to V0 | n/a | yes |
 
-**9.2x faster, same tokens.**
+**9.2x faster, same tokens.** 4.0x against a baseline that already caches K and V.
 <!-- end generated -->
 
 Same model, same weights, same prompts. V0 is a plain baseline that recomputes K and V for every token, which is why the second figure matters. Both builds pass the same tests against an independent integer reference, and SameBoy and PyBoy report identical frame counts for each. Full tables are in [RESULTS.md](RESULTS.md).
