@@ -9,7 +9,7 @@ from pathlib import Path
 import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
-FIX = ["-v", "-p", "0xFF", "-m", "MBC5", "-t", "GAMEBOYGPT", "-n", "1", "-k", "HB", "-l", "0x33", "-r", "4"]
+FIX = ["-v", "-p", "0xFF", "-m", "MBC5", "-t", "GAMEBOYGPT", "-n", "1", "-k", "HB", "-l", "0x33"]
 
 
 def run(cmd):

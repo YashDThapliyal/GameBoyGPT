@@ -6,6 +6,8 @@ wEventStartFrames: ds 2
 wLastEventFrames:: ds 2
 wLastEventTokens:: ds 1
 wTotalFallbacks::  ds 1
+wEventBankStart:   ds 2
+wLastEventBanks::  ds 2
 
 SECTION "profile_code", ROM0
 ; Harness hooks fire on these labels. Each is a bare ret, so instrumentation does not depend on host code.
@@ -22,6 +24,10 @@ EventTimerStart::
     ld [wEventStartFrames], a
     ldh a, [hFrames + 1]
     ld [wEventStartFrames + 1], a
+    ld a, [wMB_BankSwitches]
+    ld [wEventBankStart], a
+    ld a, [wMB_BankSwitches + 1]
+    ld [wEventBankStart + 1], a
     ret
 
 EventTimerStop::
@@ -37,4 +43,14 @@ EventTimerStop::
     sbc c
     ld [wLastEventFrames + 1], a
     ld [wMB_EventFrames + 1], a
+    ld a, [wEventBankStart]
+    ld c, a
+    ld a, [wMB_BankSwitches]
+    sub c
+    ld [wLastEventBanks], a
+    ld a, [wEventBankStart + 1]
+    ld c, a
+    ld a, [wMB_BankSwitches + 1]
+    sbc c
+    ld [wLastEventBanks + 1], a
     ret

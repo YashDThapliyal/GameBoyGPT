@@ -197,3 +197,30 @@ def softlocked_states(world: World) -> list[tuple[int, bool, bool]]:
         if not ok:
             bad.append(st)
     return bad
+
+
+def next_action(world: World, s: State) -> int:
+    """Best action from the current state by BFS over (room,key,lamp). Used to script full journeys."""
+    from collections import deque
+    begin = (s.room, s.key, s.lamp)
+    seen = {begin}
+    q = deque()
+    q.append((begin, None))
+    while q:
+        (room, key, lamp), first = q.popleft()
+        for a in range(4):
+            if room == TOWER:
+                if a == FORWARD:
+                    return first if first is not None else a
+                continue
+            n = None
+            if a == SEARCH:
+                n = (room, key or room == CAVE, lamp or room == world.lamp_room)
+            else:
+                t = world.exits[room][a]
+                if not (t == WALL or (t == CAVE and not lamp) or (room == GATE and a == FORWARD and not key)):
+                    n = (t, key, lamp)
+            if n is not None and n not in seen:
+                seen.add(n)
+                q.append((n, first if first is not None else a))
+    raise ValueError("no path to the tower")

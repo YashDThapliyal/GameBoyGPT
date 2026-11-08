@@ -1,11 +1,12 @@
 """Every SM83 kernel against the independent integer reference: edge cases plus seeded random vectors."""
+import os
 import random
 import pytest
 from kernel_harness import *
 from reference import fixed_point as fp
 from export_weights import from_blob
 
-VARIANT = "V0"
+VARIANT = os.environ.get("GBGPT_VARIANT", "V0")
 EDGES = [-127, -126, -64, -1, 0, 1, 2, 63, 64, 126, 127]
 
 

@@ -54,7 +54,7 @@ def glyph_rows(ch: str, bold: bool = False) -> np.ndarray:
         v = int(hx, 16)
         v6 = (v << 1 | v) if bold else v << 1
         for x in range(6):
-            out[y, x + 1] = bool(v6 & (1 << (5 - x)))
+            out[y + 1, x + 1] = bool(v6 & (1 << (5 - x)))
     return out
 
 
@@ -350,9 +350,9 @@ def title_screen() -> np.ndarray:
     rect(img, x0, 12, x0 + 20, 72, 2)
     rect(img, x0 + 13, 12, x0 + 20, 72, 3)
     rect(img, x0 + 3, 12, x0 + 4, 72, 1)
-    rect(img, x0 - 3, 8, x0 + 23, 13, 3)
+    rect(img, x0 - 3, 8, x0 + 23, 13, 2)
     for k in range(4):
-        rect(img, x0 - 3 + k * 8, 3, x0 + 2 + k * 8, 8, 3)
+        rect(img, x0 - 3 + k * 8, 3, x0 + 2 + k * 8, 8, 2)
     rect(img, x0 + 7, 20, x0 + 11, 28, 0)
     rect(img, x0 + 7, 40, x0 + 11, 48, 0)
     for x in range(0, 160, 16):

@@ -1,4 +1,5 @@
 """Phase 1 gate: ROM boots in DMG mode, and assembly world rules track reference/game.py exactly."""
+import os
 import random
 import sys
 from pathlib import Path
@@ -8,7 +9,7 @@ sys.path[:0] = [str(ROOT), str(ROOT / "tools")]
 from run_emulator import GB
 from reference import game as g
 
-ROM = ROOT / "build" / "gameboygpt.gb"
+ROM = ROOT / "build" / os.environ.get("GBGPT_VARIANT", "V0") / "gameboygpt.gb"
 ST_TITLE, ST_MENU, ST_REVEAL = 1, 3, 6
 BUTTON_FOR_ACTION = {g.LEFT: ("up", "left"), g.RIGHT: ("up", "right"), g.FORWARD: ("down", "left"), g.SEARCH: ("down", "right")}
 
@@ -47,6 +48,7 @@ def test_header_is_dmg_mbc5_with_valid_checksum():
     for b in rom[0x134:0x14D]:
         chk = (chk - b - 1) & 0xFF
     assert chk == rom[0x14D]
+    assert len(rom) == 32768 << rom[0x148], "declared ROM size must match the file"
 
 
 @pytest.mark.parametrize("seed", [1, 7, 500, 4242, 60000])

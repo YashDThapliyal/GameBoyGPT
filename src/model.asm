@@ -123,6 +123,7 @@ BlockAfterKV::
     call MatVec
     ld a, 3
     ld [wMB_Phase], a
+PhAttn::
     ld de, wQ
     ld bc, wA
     xor a
@@ -133,6 +134,7 @@ BlockAfterKV::
     call AttendHead
     ld a, 4
     ld [wMB_Phase], a
+PhProj::
     ld hl, TO
     ld de, wA
     ld bc, wO
@@ -146,6 +148,7 @@ BlockAfterKV::
     call Norm
     ld a, 5
     ld [wMB_Phase], a
+PhFfn::
     ld hl, TF1
     ld de, wN2
     ld bc, wF
@@ -166,6 +169,7 @@ BlockAfterKV::
     call Norm
     ld a, 6
     ld [wMB_Phase], a
+PhOut::
     jp OutputLogits
 
 ; OutputLogits: wN3 -> wLogits. Vanilla computes every row, then the sampler applies the mask.

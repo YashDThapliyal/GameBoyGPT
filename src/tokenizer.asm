@@ -29,6 +29,16 @@ BuildPrompt::
     ld [hl+], a
     ld a, 5
     ld [wSeqLen], a
+    ; mirror the exact input ids for replay traces (instrumentation only)
+    ld hl, wSeq
+    ld de, wMB_LastTokens
+    ld b, 5
+.mirror:
+    ld a, [hl+]
+    ld [de], a
+    inc de
+    dec b
+    jr nz, .mirror
     ret
 
 IF !DEF(TEST_ROM)

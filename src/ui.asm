@@ -575,63 +575,132 @@ StatsScreen::
     ld a, ST_MENU
     jp SetState
 
-; ---- Stats content (values measured on this device; N/A until an event has run) ----
+; ---- Stats content (measured on this device from LCD frames; zero until an event has run) ----
 StrS1: db "RUN STATS", 0
 StrS2: db "EVENTS", 0
-StrS3: db "LAST EVENT", 0
-StrS4: db "FRAMES", 0
-StrS5: db "TOKENS", 0
-StrS6: db "CAP HITS", 0
-StrS7: db "SEL NEW RUN  A BACK", 0
+StrS3: db "CAP", 0
+StrS4: db "MODEL 14784 PARAMS", 0
+StrS5: db "SEC/EVENT", 0
+StrS6: db "SEC/TOKEN", 0
+StrS7: db "TOKENS", 0
+StrS8: db "BANK SW", 0
+StrS9: db "SEL NEW RUN  A BACK", 0
 
 DrawStats::
-    ld hl, StrS1
+    ld hl, StrVariant
     ld b, TEXT_ROW
     ld c, TEXT_COL
     call PrintAt
-    ld hl, StrVariant
+    ld hl, StrS4
     ld b, TEXT_ROW + 1
     ld c, TEXT_COL
     call PrintAt
     ld hl, StrS2
-    ld b, TEXT_ROW + 3
+    ld b, TEXT_ROW + 2
     ld c, TEXT_COL
     call PrintAt
     ld a, [wMB_Events]
-    ld hl, wBgMap + (TEXT_ROW + 3) * SCREEN_W + 12
+    ld hl, wBgMap + (TEXT_ROW + 2) * SCREEN_W + 8
     call PrintDec2
     ld hl, StrS3
+    ld b, TEXT_ROW + 2
+    ld c, 12
+    call PrintAt
+    ld a, [wTotalFallbacks]
+    ld hl, wBgMap + (TEXT_ROW + 2) * SCREEN_W + 16
+    call PrintDec2
+    ; centiseconds = frames * 5 / 3 (nominal 60 Hz; the LCD's true rate differs by 0.4%)
+    ld a, [wLastEventFrames]
+    ld l, a
+    ld a, [wLastEventFrames + 1]
+    ld h, a
+    ld d, h
+    ld e, l
+    add hl, hl
+    add hl, hl
+    add hl, de           ; frames * 5
+    ld c, 3
+    call DivHLByC
+    push hl
+    push hl
+    ld hl, StrS5
     ld b, TEXT_ROW + 4
     ld c, TEXT_COL
     call PrintAt
-    ld hl, StrS4
+    pop de
+    ld hl, wBgMap + (TEXT_ROW + 4) * SCREEN_W + 11
+    call PrintCenti
+    pop hl
+    ld a, [wLastEventTokens]
+    or a
+    jr z, .notok
+    ld c, a
+    call DivHLByC
+.notok:
+    push hl
+    ld hl, StrS6
     ld b, TEXT_ROW + 5
-    ld c, TEXT_COL + 1
+    ld c, TEXT_COL
     call PrintAt
-    ld a, [wLastEventFrames]
-    ld e, a
-    ld a, [wLastEventFrames + 1]
-    ld d, a
+    pop de
     ld hl, wBgMap + (TEXT_ROW + 5) * SCREEN_W + 11
-    call PrintDec16
-    ld hl, StrS5
+    call PrintCenti
+    ld hl, StrS7
     ld b, TEXT_ROW + 6
-    ld c, TEXT_COL + 1
+    ld c, TEXT_COL
     call PrintAt
     ld a, [wLastEventTokens]
-    ld hl, wBgMap + (TEXT_ROW + 6) * SCREEN_W + 12
+    ld hl, wBgMap + (TEXT_ROW + 6) * SCREEN_W + 14
     call PrintDec2
-    ld hl, StrS6
+    ld hl, StrS8
     ld b, TEXT_ROW + 7
     ld c, TEXT_COL
     call PrintAt
-    ld a, [wTotalFallbacks]
-    ld hl, wBgMap + (TEXT_ROW + 7) * SCREEN_W + 12
-    call PrintDec2
-    ld hl, StrS7
+    ld a, [wLastEventBanks]
+    ld e, a
+    ld a, [wLastEventBanks + 1]
+    ld d, a
+    ld hl, wBgMap + (TEXT_ROW + 7) * SCREEN_W + 11
+    call PrintDec16
+    ld hl, StrS9
     ld b, TEXT_ROW + 9
     ld c, 0
     jp PrintAt
+
+; DivHLByC: hl = hl / c, unsigned, by restoring division. Clobbers a, b.
+DivHLByC:
+    xor a
+    ld b, 16
+.bit:
+    add hl, hl
+    rla
+    jr c, .sub           ; 9th bit set: remainder certainly exceeds c
+    cp c
+    jr c, .next
+.sub:
+    sub c
+    inc l
+.next:
+    dec b
+    jr nz, .bit
+    ret
+
+; PrintCenti: de = centiseconds, hl = shadow ptr; prints ddd.dd with leading digits. Clobbers a, bc, de.
+PrintCenti:
+    call PrintDec16
+    ; shift the last two digits right one cell to make room for the point
+    dec hl
+    ld a, [hl]
+    inc hl
+    ld [hl], a
+    dec hl
+    dec hl
+    ld a, [hl]
+    inc hl
+    ld [hl], a
+    dec hl
+    ld [hl], '.' - $20
+    ret
 
 ; PrintDec16: de = value, hl = shadow ptr. Five digits. Clobbers a, bc, de.
 PrintDec16:

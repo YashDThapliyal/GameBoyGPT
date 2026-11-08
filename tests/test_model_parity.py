@@ -1,4 +1,5 @@
 """End-to-end: logits and token traces on the SM83 equal the integer reference, bit for bit."""
+import os
 import random
 import pytest
 from kernel_harness import *
@@ -7,7 +8,7 @@ from reference import game as g
 from export_weights import from_blob
 from training import dataset as ds
 
-VARIANT = "V0"
+VARIANT = os.environ.get("GBGPT_VARIANT", "V0")
 
 
 @pytest.fixture(scope="module")
