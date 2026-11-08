@@ -18,3 +18,4 @@ generated/A_*/
 reports/pipeline.log
 checkpoints/sweep*
 configs/sweep*
+reports/sweep*

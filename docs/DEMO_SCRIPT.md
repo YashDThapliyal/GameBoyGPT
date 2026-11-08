@@ -1,5 +1,15 @@
 # Demo script
 
+## The recommended run: The Ring Keeper
+
+Chosen after scoring all 653 story paths and playing the best on the ROM. It's the shortest complete story with a real twist, about 76 seconds of generation.
+
+Hear the voice, Take his ring, Wade the shallows, Walk on, Climb the wall, Wake him, Show the ring.
+
+"Show the ring" appears only because you took it on the second choice. Wording varies with the seed; the story doesn't.
+
+## Script
+
 Numbers are filled from RESULTS.md at recording time. Don't state anything RESULTS.md doesn't show.
 
 **0-5 s.** Real emulator boot, title `8-BIT ADVENTURE`. Caption: "Emulated original Game Boy."

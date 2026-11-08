@@ -22,7 +22,7 @@ StrIntro2: db "the old tower.", 0
 StrIntro3: db "Choose with care.", 0
 StrIntro4: db "Read the signs.", 0
 StrChipA:  db "A", 0
-StrChipSe: db "SELECT", 0
+StrChipSt: db "START", 0
 StrChoose: db "choose", 0
 StrNext:   db "next", 0
 StrWrite:  db "Writing", 0
@@ -328,7 +328,7 @@ WaitNext:
 .w:
     call WaitVBlank
     call ConsumePressed
-    and (1 << PAD_A) | (1 << PAD_B)
+    and (1 << PAD_A) | (1 << PAD_B) | (1 << PAD_START)
     jr z, .w
     ret
 
@@ -356,7 +356,7 @@ ChoiceMenu:
     call PlaceCursor
     call ConsumePressed
     ld b, a
-    bit PAD_START, b
+    bit PAD_SELECT, b
     jr z, .nostart
     call StatsScreen
     ld a, [wEndFlag]
@@ -386,7 +386,8 @@ ChoiceMenu:
 .a2:
     ld a, c
     ld [wMenuSel], a
-    bit PAD_A, b
+    ld a, b
+    and (1 << PAD_A) | (1 << PAD_START)   ; a player who just pressed START on the title expects it to work here too
     jr z, .loop
     xor a
     ld [wOam], a          ; hide the pointer
@@ -614,7 +615,7 @@ EndingScreen:
 .w:
     call WaitVBlank
     call ConsumePressed
-    bit PAD_A, a
+    and (1 << PAD_A) | (1 << PAD_START)
     jr z, .w
     ret
 
@@ -638,9 +639,9 @@ StatsScreen::
     call WaitVBlank
     call ConsumePressed
     ld b, a
-    bit PAD_SELECT, b
+    bit PAD_START, b
     jr nz, .newrun
-    and (1 << PAD_A) | (1 << PAD_B) | (1 << PAD_START)
+    and (1 << PAD_A) | (1 << PAD_B) | (1 << PAD_SELECT)
     jr z, .w
     jr .restore
 .newrun:
@@ -666,6 +667,8 @@ MarkAllRows:
     ret
 
 StrS1: db "RUN STATS", 0
+StrNoRun1: db "Timings appear once", 0
+StrNoRun2: db "a passage is written", 0
 StrS5: db "Sec/event", 0
 StrS6: db "Sec/word", 0
 StrS7: db "Words", 0
@@ -686,6 +689,20 @@ DrawStats::
     ld b, 4
     ld c, 0
     call PrintAt
+    ; Nothing has been timed yet: say so instead of showing zeros that look broken.
+    ld a, [wMB_Events]
+    or a
+    jr nz, .haveTiming
+    ld hl, StrNoRun1
+    ld b, 7
+    ld c, 0
+    call PrintAt
+    ld hl, StrNoRun2
+    ld b, 9
+    ld c, 0
+    call PrintAt
+    jp .hints
+.haveTiming:
     ; centiseconds = frames * 5 / 3 (nominal 60 Hz; the LCD's true rate differs by 0.4%)
     ld a, [wLastEventFrames]
     ld l, a
@@ -753,13 +770,14 @@ DrawStats::
     ld a, [wTotalFallbacks]
     ld hl, wBgMap + 14 * SCREEN_W + 18
     call PrintDec2
-    ld hl, StrChipSe
+.hints:
+    ld hl, StrChipSt
     ld b, 16
     ld c, 0
     call PrintInvAt
     ld hl, StrNew
     ld b, 16
-    ld c, 7
+    ld c, 6
     call PrintAt
     ld hl, StrChipA
     ld b, 16

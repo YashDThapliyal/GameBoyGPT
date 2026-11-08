@@ -47,7 +47,7 @@ def test_stats_page_restores_screen_and_new_run_resets(gb):
     next_page(gb)
     gb.tick(8)
     before = gb.read("wBgMap", 360)
-    gb.press("start")
+    gb.press("select")
     gb.wait_state(ST_STATS, 60)
     gb.tick(14)
     assert gb.read("wBgMap", 360) != before
@@ -56,9 +56,9 @@ def test_stats_page_restores_screen_and_new_run_resets(gb):
     gb.tick(8)
     assert gb.read("wBgMap", 360) == before
     assert gb.read1("wMB_Turn") == 1
-    gb.press("start")
-    gb.wait_state(ST_STATS, 60)
     gb.press("select")
+    gb.wait_state(ST_STATS, 60)
+    gb.press("start")
     gb.wait_for(lambda: gb.read1("wMB_Turn") == 0, 600)
     gb.wait_state(ST_INTRO, 3000)
     gb.press("a")
@@ -95,3 +95,22 @@ def test_endings_found_counts_across_runs(gb):
     gb.wait_state(ST_MENU, 600)
     to_ending(flee)
     assert bin(gb.read1("wEndMask")).count("1") == 1, "the same ending twice still counts once"
+
+
+def test_start_confirms_like_a_on_every_screen(gb):
+    """Enter maps to START on a keyboard, and it starts the game, so players keep pressing it."""
+    gb.press("start")
+    gb.wait_for(lambda: gb.read1("wMB_State") == ST_REVEAL, 400000)
+    assert gb.read1("wMB_Turn") == 1, "START must pick the choice, not open the stats page"
+    gb.tick(8)
+    gb.press("start")
+    gb.wait_state(ST_MENU, 3000)
+
+
+def test_stats_before_any_passage_explains_itself_instead_of_showing_zeros(gb):
+    gb.press("select")
+    gb.wait_state(ST_STATS, 60)
+    gb.tick(14)
+    row = "".join(chr(t + 0x20) if t < 96 else "?" for t in gb.read("wBgMap", 19, 7 * 20))
+    assert row.startswith("Timings appear once")
+    assert all("Sec/" not in "".join(chr(t + 0x20) if t < 96 else "?" for t in gb.read("wBgMap", 20, r * 20)) for r in range(18))

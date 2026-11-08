@@ -106,7 +106,7 @@ def play(route: list[str], seed: int, greedy: bool, record: bool) -> tuple[list[
         if record and turn == 3:
             gb.tick(20)
             shot(gb, "items_change_choices")
-            gb.press("start")
+            gb.press("select")
             gb.tick(14)
             shot(gb, "stats_ship")
             gb.press("b")
@@ -132,7 +132,7 @@ def baseline_stats() -> None:
         gb.wait_state(ST_MENU, 3000)
         gb.tick(4)
     gb.tick(20)
-    gb.press("start")
+    gb.press("select")
     gb.tick(14)
     shot(gb, "stats_v0")
     gb.stop()

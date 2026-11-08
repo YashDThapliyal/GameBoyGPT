@@ -9,10 +9,10 @@ The game shows one thing at a time: read the story, press A, then choose.
 | Button | Action |
 |---|---|
 | Up, down | Move the pointer between choices |
-| A | Confirm, next |
+| A or START | Confirm, next |
 | B | Next |
-| START | Run stats page: build, seconds per word, seconds per event and bank switches measured on the device |
-| SELECT (on the stats page) | New run |
+| SELECT | Run stats page: build, seconds per word, seconds per event and bank switches measured on the device |
+| START (on the stats page) | New run |
 
 The dark band shows where you are, what you carry and your remaining lives. The bottom bar shows the act and turn.
 

@@ -1,49 +1,33 @@
-== commit code state for benchmark provenance
-== benchmark
-.venv/bin/python tools/benchmark.py --variants V0 V1 V2 V3 V4 V5 V5S V5Z A_QSQ A_NIB A_KV --rounds 3
-V0 12s host; PROMPT_A:7.313s/tok,117.01s/ev,match=SELF PROMPT_B:7.100s/tok,106.50s/ev,match=SELF PROMPT_C:6.889s/tok,96.45s/ev,match=SELF PROMPT_D:7.313s/tok,117.01s/ev,match=SELF
-V1 12s host; PROMPT_A:7.305s/tok,116.87s/ev,match=True PROMPT_B:7.092s/tok,106.38s/ev,match=True PROMPT_C:6.881s/tok,96.33s/ev,match=True PROMPT_D:7.304s/tok,116.87s/ev,match=True
-V2 7s host; PROMPT_A:4.152s/tok,66.44s/ev,match=True PROMPT_B:4.031s/tok,60.46s/ev,match=True PROMPT_C:3.910s/tok,54.74s/ev,match=True PROMPT_D:4.152s/tok,66.43s/ev,match=True
-V3 5s host; PROMPT_A:2.244s/tok,35.90s/ev,match=True PROMPT_B:2.173s/tok,32.60s/ev,match=True PROMPT_C:2.106s/tok,29.48s/ev,match=True PROMPT_D:2.243s/tok,35.88s/ev,match=True
-V4 4s host; PROMPT_A:2.204s/tok,35.26s/ev,match=True PROMPT_B:2.134s/tok,32.02s/ev,match=True PROMPT_C:2.069s/tok,28.97s/ev,match=True PROMPT_D:2.201s/tok,35.21s/ev,match=True
-V5 2s host; PROMPT_A:0.850s/tok,13.60s/ev,match=True PROMPT_B:0.849s/tok,12.73s/ev,match=True PROMPT_C:0.850s/tok,11.90s/ev,match=True PROMPT_D:0.848s/tok,13.57s/ev,match=True
-V5S 2s host; PROMPT_A:0.782s/tok,12.51s/ev,match=True PROMPT_B:0.780s/tok,11.70s/ev,match=True PROMPT_C:0.781s/tok,10.93s/ev,match=True PROMPT_D:0.779s/tok,12.47s/ev,match=True
-V5Z 2s host; PROMPT_A:0.739s/tok,11.83s/ev,match=True PROMPT_B:0.738s/tok,11.06s/ev,match=True PROMPT_C:0.739s/tok,10.35s/ev,match=True PROMPT_D:0.740s/tok,11.84s/ev,match=True
-A_QSQ 7s host; PROMPT_A:4.161s/tok,66.58s/ev,match=True PROMPT_B:4.039s/tok,60.59s/ev,match=True PROMPT_C:3.918s/tok,54.85s/ev,match=True PROMPT_D:4.161s/tok,66.57s/ev,match=True
-A_NIB 11s host; PROMPT_A:6.089s/tok,97.43s/ev,match=True PROMPT_B:5.912s/tok,88.68s/ev,match=True PROMPT_C:5.736s/tok,80.31s/ev,match=True PROMPT_D:6.089s/tok,97.43s/ev,match=True
-A_KV 6s host; PROMPT_A:3.078s/tok,49.24s/ev,match=True PROMPT_B:3.075s/tok,46.13s/ev,match=True PROMPT_C:3.075s/tok,43.05s/ev,match=True PROMPT_D:3.077s/tok,49.24s/ev,match=True
-== integrity
-.....                                                                    [100%]
-== demo
+== build
 .venv/bin/python tools/make_art.py
 scene unique tiles: [86, 87, 57, 69, 80, 87, 50, 57] title: 97
 .venv/bin/python tools/build.py V0 V1 V2 V3 V4 V5 V5S V5Z A_QSQ A_NIB A_KV
-build/V0/gameboygpt.gb 65536 99fd4d0857dbb448
+build/V0/gameboygpt.gb 65536 5743bb939284240b
 build/V0/test.gb 65536 b8236c0ae5e58f04
-build/V1/gameboygpt.gb 65536 251cd63a40eb692c
+build/V1/gameboygpt.gb 65536 5754b46e31ce6e1a
 build/V1/test.gb 65536 ba9abb52b0a138dd
-build/V2/gameboygpt.gb 65536 3124212ca18cfb23
+build/V2/gameboygpt.gb 65536 efee327dc3c1fae5
 build/V2/test.gb 65536 780eb9b4ad8b83ed
-build/V3/gameboygpt.gb 65536 be807ce350e6b537
+build/V3/gameboygpt.gb 65536 0a839c5a37513de7
 build/V3/test.gb 65536 7c725707ac30dd95
-build/V4/gameboygpt.gb 65536 059805a20e8d1e55
+build/V4/gameboygpt.gb 65536 8c6330b60f45a6f1
 build/V4/test.gb 65536 398d044751787e93
-build/V5/gameboygpt.gb 65536 2167083abb1c801d
+build/V5/gameboygpt.gb 65536 5a9465519a4b17db
 build/V5/test.gb 65536 f71ef2344893f659
-build/V5S/gameboygpt.gb 65536 9c3d6e9814267740
+build/V5S/gameboygpt.gb 65536 cea8a6437ee0f54a
 build/V5S/test.gb 65536 f024642b57e11feb
-build/V5Z/gameboygpt.gb 65536 5e21ea99336a8234
+build/V5Z/gameboygpt.gb 65536 03db35f59af2c28f
 build/V5Z/test.gb 65536 f10c5539fc241b29
-build/A_QSQ/gameboygpt.gb 65536 6d750158c05c5285
+build/A_QSQ/gameboygpt.gb 65536 cb8cf08a42ca8c29
 build/A_QSQ/test.gb 65536 0b8969d92c4d7adc
-build/A_NIB/gameboygpt.gb 65536 b7e4240a277e87ea
+build/A_NIB/gameboygpt.gb 65536 f1eb458ea38a341e
 build/A_NIB/test.gb 65536 4eb182e959a1c041
-build/A_KV/gameboygpt.gb 65536 d79f25fac3c9c49f
+build/A_KV/gameboygpt.gb 65536 29d272acd177e6dc
 build/A_KV/test.gb 65536 2bbcf63fcb3c1b90
 .venv/bin/python tools/build.py V0 V5Z --selftest
-build/V0/gameboygpt.gb 65536 99fd4d0857dbb448
+build/V0/gameboygpt.gb 65536 5743bb939284240b
 build/V0/test.gb 65536 b8236c0ae5e58f04
-build/V5Z/gameboygpt.gb 65536 5e21ea99336a8234
+build/V5Z/gameboygpt.gb 65536 03db35f59af2c28f
 build/V5Z/test.gb 65536 f10c5539fc241b29
 cp build/V5Z/gameboygpt.gb build/gameboygpt.gb
 cp build/V5Z/gameboygpt.sym build/gameboygpt.sym
@@ -53,29 +37,34 @@ mkdir -p release
 cp build/gameboygpt.gb build/gameboygpt_v0.gb release/
 cd release && shasum -a 256 gameboygpt.gb gameboygpt_v0.gb > SHA256SUMS
 cat release/SHA256SUMS
-5e21ea99336a8234a922d73419f6988b36553f5f3089e0313706c7e073019879  gameboygpt.gb
-99fd4d0857dbb448eeddb25cdb278746a83c1d7aee64bacffb4f59ee51754b3d  gameboygpt_v0.gb
-.venv/bin/python tools/capture_demo.py
- 1 OLD RUINS   Follow the light    You follow the light to ancient ruins. A lamp and a sword lie here.
- 2 COLD RIVER  Take the lamp       You grab the lamp. Look. The old bridge sags.
- 3 DEEP CAVE   Enter the cave      You enter the cave. Look. The dark hides a drop.
- 4 DEEP CAVE   Light the lamp      Your lamp shows a hidden door. Look. The chest has teeth.
- 5 PALE SHRINE Take the key        You grab the key. Look. The altar blade bleeds.
- 6 IRON GATE   Pray at the altar   You pray and feel safe. Look. The bars are sharp.
- 7 THE TOWER   Use the key         Your key opens the gate. Look. His hand rests on an axe.
- 8 THE TOWER   Wake him            You wake him and he looks at you. Look. His eyes go to the crown.
- 9 THE TOWER   Free him            You break his chains. He bows and the tower is free.
- 1 BLACK MARSH Hear the voice      You follow the voice into the marsh. A prisoner begs in the mud.
- 2 COLD RIVER  Take his ring       You grab his ring and leave him. The old bridge sags.
- 3 PALE SHRINE Wade the shallows   You wade the cold water. The altar blade weeps.
- 4 IRON GATE   Walk on             You slip past the altar. The bars are cruel.
- 5 THE TOWER   Climb the wall      You climb the wall and fall hard. His hand rests on an axe.
- 6 THE TOWER   Wake him            You wake him and he looks at you. His eyes go to the crown.
- 7 THE TOWER   Show the ring       He kneels to the ring. Now you guard the tower forever.
-== report
-.venv/bin/python tools/compare.py
-V0 7.163 s/token -> V5Z 0.739 s/token (9.69x)
-.venv/bin/python tools/render_dashboard.py
-wrote reports/dashboard.html with 132 rows
-PIPELINE OK
-EXIT 0
+03db35f59af2c28fd42db7dbc09d5fafe0ba359a77730e2f39e67e92a19fd300  gameboygpt.gb
+5743bb939284240b77f3e7a970694ab84b094f7676727e1c3e60827f07c7e2d8  gameboygpt_v0.gb
+== verify
+.venv/bin/python -m pytest tests/test_smoke.py tests/test_dataset.py tests/test_fixed_point.py tests/test_story.py tests/test_export.py tests/test_benchmark_integrity.py -q
+......................................sssss                              [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.12/site-packages/sdl2/_internal.py:24
+  /Users/yash/Documents/GameBoyGPT/.venv/lib/python3.12/site-packages/sdl2/_internal.py:24: UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+    warnings.warn(msg, warntype)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+mkdir -p reports/junit
+for v in V0 V5Z; do GBGPT_VARIANT=$v .venv/bin/python -m pytest tests/test_rom_game.py tests/test_buttons.py tests/test_generated_output.py tests/test_kernel_vectors.py tests/test_model_parity.py -q --junitxml=reports/junit/$v.xml || exit 1; done
+...............................................                          [100%]
+...............................................                          [100%]
+for v in V1 V2 V3 V4 V5 V5S A_QSQ A_NIB A_KV; do GBGPT_VARIANT=$v .venv/bin/python -m pytest tests/test_kernel_vectors.py tests/test_model_parity.py -q --junitxml=reports/junit/$v.xml || exit 1; done
+.........................                                                [100%]
+.........................                                                [100%]
+.........................                                                [100%]
+.........................                                                [100%]
+.........................                                                [100%]
+.........................                                                [100%]
+.........................                                                [100%]
+.........................                                                [100%]
+.........................                                                [100%]
+== second emulator
+test -x .third_party/SameBoy/build/bin/tester/sameboy_tester || { git clone https://github.com/LIJI32/SameBoy .third_party/SameBoy && git -C .third_party/SameBoy checkout ea667ad && /Library/Developer/CommandLineTools/usr/bin/make -C .third_party/SameBoy tester CONF=release; }
+.venv/bin/python tools/second_emulator.py --variants V0 V5Z
+V0 {'sameboy': {'frames': [7065, 6431, 5823, 7065], 'verdict': 'SELFTEST PASS'}, 'pyboy': {'frames': [7065, 6431, 5823, 7065], 'verdict': 'SELFTEST PASS'}}
+V5Z {'sameboy': {'frames': [714, 668, 625, 715], 'verdict': 'SELFTEST PASS'}, 'pyboy': {'frames': [714, 668, 625, 715], 'verdict': 'SELFTEST PASS'}}
+== commit code state for benchmark provenance
