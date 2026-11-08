@@ -16,3 +16,5 @@ assets/data/*.jsonl
 generated/V*/
 generated/A_*/
 reports/pipeline.log
+checkpoints/sweep*
+configs/sweep*

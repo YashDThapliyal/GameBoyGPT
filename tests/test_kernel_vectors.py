@@ -94,23 +94,24 @@ def test_norm(rig):
 
 def test_attention_weights(rig):
     rnd = random.Random(13)
-    cases = [[0], [127], [-127], [127, -127], [5] * 16, [127] + [-127] * 15, list(range(-8, 8))]
-    cases += [rand_vec(rnd, rnd.randint(1, 16), -m, m) for m in (2, 10, 40, 127) for _ in range(20)]
+    cases = [[0], [127], [-127], [127, -127], [5] * 16, [5] * 24, [127] + [-127] * 23, list(range(-12, 12))]
+    cases += [rand_vec(rnd, rnd.randint(1, 24), -m, m) for m in (2, 10, 40, 127) for _ in range(20)]
     for sc in cases:
         rig.gb.write("wScore", sc)
         rig.run(CMD_WEIGHTS, [len(sc)])
         assert rig.gb.read("wWeight", len(sc)) == fp.attention_weights(sc)
 
 
-@pytest.mark.parametrize("L", [1, 2, 5, 16])
-def test_attend_head(rig, L):
+@pytest.mark.parametrize("L", [1, 2, 5, 16, 24])
+def test_attend_head(rig, model, L):
     rnd = random.Random(L)
     hd = 16
+    model_ctx = model.ctx
     for head in (0, 1):
         for mag in (20, 127):
             q = rand_vec(rnd, hd, -mag, mag)
-            K = [rand_vec(rnd, 32, -mag, mag) for _ in range(16)]
-            V = [rand_vec(rnd, 32) for _ in range(16)]
+            K = [rand_vec(rnd, 32, -mag, mag) for _ in range(model_ctx)]
+            V = [rand_vec(rnd, 32) for _ in range(model_ctx)]
             rig.gb.write("wTestA", q)
             rig.gb.write("wKCache", [x for r in K for x in r])
             rig.gb.write("wVCache", [x for r in V for x in r])
@@ -135,10 +136,10 @@ def test_argmax_and_sampling(rig, model):
     rng = 0xACE1
     for trial in range(60):
         hi = 30000 if trial % 2 else 200
-        logits = [rnd.randint(-hi, hi) for _ in range(95)]
+        logits = [rnd.randint(-hi, hi) for _ in range(len(model.w_out))]
         if trial % 5 == 0:  # create ties and near-ties around the top
-            top = max(logits[27:])
-            for i in rnd.sample(range(27, 95), 6):
+            top = max(logits[model.first_gen:])
+            for i in rnd.sample(range(model.first_gen, len(model.w_out)), 6):
                 logits[i] = top - rnd.randint(0, model.sample_margin)
         rig.gb.write("wLogits", [b for v in logits for b in ((v & 255), (v >> 8) & 255)])
         rig.run(CMD_SAMPLE, [0])

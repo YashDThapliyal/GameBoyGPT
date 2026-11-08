@@ -175,6 +175,8 @@ MemCopy::
 
 ; VideoInit: LCD must be off. Loads font/UI/inverse tiles, clears map, enables VBlank.
 VideoInit::
+    ld a, BANK(FontTiles)
+    call BankSwitch
     ld hl, FontTiles
     ld de, $8000
     ld bc, TILE_ART * 16 ; font + UI + inverse font are contiguous in ROM0

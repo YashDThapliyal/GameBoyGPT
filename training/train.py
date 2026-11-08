@@ -30,10 +30,10 @@ def run(cfg: dict) -> dict:
     torch.manual_seed(cfg["seed"])
     torch.set_num_threads(cfg.get("threads", 4))
     rng = np.random.default_rng(cfg["seed"])
-    split = ds.make_split(cfg["n_train"], cfg["n_eval"], cfg["seed"])
+    split = ds.make_split(cfg["n_train"], cfg["n_eval"], cfg["seed"], cfg.get("train_on_all", False))
     arrays = {k: tuple(map(torch.from_numpy, ds.to_arrays(v))) for k, v in split.items()}
     (xtr, ytr), (xva, yva), (xte, yte) = arrays["train"], arrays["val"], arrays["test"]
-    c = Config(vocab=len(ds.VOCAB), **cfg["model"])
+    c = Config(vocab=len(ds.VOCAB), **cfg["model"])  # ctx comes from the config
     model = TinyTransformer(c)
     untrained = {"val_nll": nll(model, xva, yva, False), "uniform_nll": math.log(len(ds.VOCAB))}
     float_steps, qat_steps, bs = cfg["float_steps"], cfg["qat_steps"], cfg["batch"]

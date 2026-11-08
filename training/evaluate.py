@@ -8,14 +8,13 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path[:0] = [str(ROOT), str(ROOT / "tools")]
 from training import dataset as ds
 from reference import fixed_point as fp
-from reference import game as g
 from export_weights import quantize, from_blob
 
 
 def score(m, sits, greedy=True, samples=1, seed=7) -> dict:
-    keys = ("strict", "action", "room", "outcome")
+    keys = ("strict", "event", "closing")
     tot = dict.fromkeys(keys, 0)
-    capped, n, uniq, examples = 0, 0, set(), []
+    capped, n, uniq, examples, bad = 0, 0, set(), [], []
     rng = seed
     for s in sits:
         for _ in range(samples):
@@ -28,28 +27,29 @@ def score(m, sits, greedy=True, samples=1, seed=7) -> dict:
             capped += r["capped"]
             n += 1
             uniq.add(tuple(ids))
-            if len(examples) < 4:
-                examples.append((ds.ROOM_TOK[s[0]], ds.INV_TOK[s[1]], ds.ACT_TOK[s[2]], ds.OUT_TOK[s[3]], " ".join(ds.VOCAB[i] for i in ids)))
-    return {**{k: tot[k] / n for k in keys}, "capped": capped / n, "n": n, "unique": len(uniq), "examples": examples}
+            text = " ".join(ds.VOCAB[i] for i in ids)
+            if len(examples) < 6:
+                examples.append((s[0], s[1], s[2], text))
+            if not c["strict"] and len(bad) < 8:
+                bad.append((s[0], s[1], s[2], text))
+    return {**{k: tot[k] / n for k in keys}, "capped": capped / n, "n": n, "unique": len(uniq), "examples": examples, "failures": bad}
 
 
-def action_ablation(m, sits) -> dict:
-    """Do events change when ONLY the action token changes? WIN and LOSE sentences name no action, so they are
-    excluded here: the oracle's action check passes vacuously for them."""
-    named = [s for s in sits if s[3] not in (g.WIN, g.LOSE)]
-    changed = kept_original = uses_new = 0
+def conditioning_ablation(m, sits) -> dict:
+    """Does the text change when only the event, or only the carried items, change?"""
     rnd = random.Random(3)
-    for s in named:
-        a = fp.generate(m, ds.prompt_ids(*s))["generated"]
-        other = rnd.choice([x for x in range(4) if x != s[2]])
-        b = fp.generate(m, ds.prompt_ids(s[0], s[1], other, s[3]))["generated"]
-        words = [ds.VOCAB[t] for t in b if t != ds.EOS]
-        opens_with = lambda act: any(words[: len(c)] == c for c in ds.ACT_CLAUSES[act])
-        changed += a != b
-        kept_original += opens_with(s[2])
-        uses_new += opens_with(other)
-    n = len(named)
-    return {"n": n, "changed_rate": changed / n, "still_uses_original_action_phrase": kept_original / n, "uses_new_action_phrase": uses_new / n}
+    beats = sorted({s[0] for s in sits})
+    beat_changed = flag_changed = flag_pairs = 0
+    for s in sits:
+        base = fp.generate(m, ds.prompt_ids(*s))["generated"]
+        other = rnd.choice([b for b in beats if b != s[0]])
+        beat_changed += base != fp.generate(m, ds.prompt_ids(other, s[1], s[2]))["generated"]
+        same_beat = [x for x in sits if x[0] == s[0] and x[2] == s[2] and x[1] != s[1]]
+        if same_beat:
+            alt = rnd.choice(same_beat)
+            flag_pairs += 1
+            flag_changed += base != fp.generate(m, ds.prompt_ids(*alt))["generated"]
+    return {"beat_changed_rate": beat_changed / len(sits), "flags_changed_rate": flag_changed / max(flag_pairs, 1), "n": len(sits), "flag_pairs": flag_pairs}
 
 
 def novelty(m, sits, train_rows) -> dict:
@@ -65,7 +65,7 @@ def untrained_baseline(sits) -> dict:
     import tempfile, torch
     from training.model import Config, TinyTransformer
     torch.manual_seed(1234)
-    model = TinyTransformer(Config(vocab=len(ds.VOCAB)))
+    model = TinyTransformer(Config(vocab=len(ds.VOCAB), ctx=ds.CTX))
     with tempfile.TemporaryDirectory() as d:
         p = Path(d) / "untrained.pt"
         torch.save({"state": model.state_dict(), "model": model.c.as_dict()}, p)
@@ -79,16 +79,15 @@ def main():
     ap.add_argument("--out")
     a = ap.parse_args()
     m = from_blob(Path(a.blob).read_bytes()) if a.blob else quantize(Path(a.ckpt))
-    sits = [s for s in ds.situations() if ds.sentences(*s)]
-    heldout = [s for s in sits if s in ds.VAL_FAMILIES | ds.TEST_FAMILIES]
-    test = [s for s in sits if s in ds.TEST_FAMILIES]
-    train = [s for s in sits if s not in ds.VAL_FAMILIES | ds.TEST_FAMILIES]
+    sits = ds.situations()
+    test = sorted(ds.TEST_FAMILIES)
+    heldout = sorted(ds.VAL_FAMILIES | ds.TEST_FAMILIES)
     report = {
         "all_greedy": score(m, sits), "test_heldout_greedy": score(m, test), "heldout_all_greedy": score(m, heldout),
         "all_sampled": score(m, sits, greedy=False, samples=3), "test_heldout_sampled": score(m, test, greedy=False, samples=30),
         "untrained_all_greedy": untrained_baseline(sits),
-        "action_ablation": action_ablation(m, sits),
-        "novelty_test": novelty(m, test, ds.make_split(48000, 1, 1234)["train"]),
+        "conditioning": conditioning_ablation(m, sits),
+        "novelty_test": novelty(m, test, ds.make_split(60000, 1, 1234)["train"]),
     }
     print(json.dumps(report, indent=1))
     if a.out:

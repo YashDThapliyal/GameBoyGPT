@@ -32,15 +32,18 @@ def parse_screen(path) -> dict:
     if a.shape != (144, 160):
         raise ValueError(f"unexpected screenshot shape {a.shape}")
     ink = a < (int(a.min()) + int(a.max())) / 2
+    verdict = read_row(ink, 5)[2:15].strip()
+    if not verdict.startswith("SELFTEST"):
+        raise ValueError("self-test had not finished when the screen was read; increase the run length")
     frames = [int(read_row(ink, r)[2:7]) for r in range(4)]
-    return {"frames": frames, "verdict": read_row(ink, 5)[2:15].strip()}
+    return {"frames": frames, "verdict": verdict}
 
 
 def run_sameboy(rom: Path, seconds: int) -> dict:
     with tempfile.TemporaryDirectory() as d:
         tmp = Path(d) / "selftest.gb"
         shutil.copy(rom, tmp)
-        subprocess.run([TESTER, "--dmg", "--length", str(seconds), tmp], capture_output=True, text=True, timeout=1800)
+        subprocess.run([TESTER, "--dmg", "--length", str(seconds), tmp], capture_output=True, text=True, timeout=3000)
         shot = tmp.with_suffix(".bmp")
         if not shot.exists():
             raise RuntimeError("SameBoy tester wrote no screenshot")
@@ -68,7 +71,7 @@ def main():
     results = {}
     for v in a.variants:
         rom = ROOT / "build" / v / "selftest.gb"
-        seconds = 320 if v == "V0" else 60
+        seconds = 1200 if v == "V0" else 180  # long enough for the slowest build to finish all workloads
         results[v] = {"sameboy": run_sameboy(rom, seconds), "pyboy": run_pyboy(rom, seconds)}
         print(v, results[v], flush=True)
     (ROOT / "reports" / "second_emulator.json").write_text(json.dumps(results, indent=1))

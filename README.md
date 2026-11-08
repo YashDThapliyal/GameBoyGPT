@@ -1,6 +1,6 @@
 # GameBoyGPT: 8-Bit Adventure
 
-A choose-your-own-adventure game for the original 1989 Game Boy, where a tiny transformer running on the console's 8-bit CPU writes each story event, one word at a time. There is no server, GPU or lookup table of sentences: the attention, matrix math and sampling are all SM83 assembly.
+A branching adventure for the original 1989 Game Boy, where a tiny transformer running on the console's 8-bit CPU narrates the story as you play, one word at a time. There is no server, GPU or table of stored sentences: the attention, matrix math and sampling are all SM83 assembly.
 
 ![Emulator screenshot of the game](docs/figures/hero.png)
 
@@ -8,7 +8,9 @@ A choose-your-own-adventure game for the original 1989 Game Boy, where a tiny tr
 
 ![Real-time capture of the first turns](docs/figures/demo.gif)
 
-The project then asks a measurement question: **what actually makes neural text generation faster on a 4 MHz, 8-bit CPU with 8 KB of RAM?** Every optimization below was built separately, checked for identical output and timed in T-cycles.
+You choose your way through three acts to one of eight endings. What you pick up changes what you can do later, and the narration warns you which choices are dangerous, if you read closely.
+
+The project also asks a measurement question: **what actually makes neural text generation faster on a 4 MHz, 8-bit CPU with 8 KB of RAM?** Every optimization below was built separately, checked for identical output and timed in T-cycles.
 
 ## Results
 
@@ -28,13 +30,7 @@ Same model, same weights, same prompts. V0 is a plain baseline that recomputes K
 
 ![Optimization waterfall](docs/figures/waterfall.png)
 
-**What mattered, in order:**
-
-1. **Stop recomputing keys and values.** With one layer, K and V for a position never change, so the K/V cache is a 2.43x step at the point it was added and costs no extra RAM, since the buffer already existed.
-2. **Stop calling a multiply.** Inlining the MAC, holding `x` in HRAM and pruning output rows that decoding can never pick gave 1.81x. Quarter-square multiplication gave 1.76x before that.
-3. **Skip real zeros, read weights cheaply.** 62% of feed-forward activations are exactly zero after ReLU. Skipping those columns gave 1.07x, and reading weights through `pop` gave 1.09x.
-
-**What didn't matter:** the bank-aware ROM layout removed all 780 bank switches per token and saved 0.13%. A switch just isn't expensive next to the math.
+The full optimization story, including what didn't help, is in [docs/PERFORMANCE.md](docs/PERFORMANCE.md).
 
 ## Play it
 
@@ -42,37 +38,31 @@ ROMs are in [`release/`](release/): `gameboygpt.gb` is the fast build and `gameb
 
 | Button | Action |
 |---|---|
-| D-pad | Pick the action on that side: left, right, up for AHEAD, down for SEARCH |
+| Up, down | Move the pointer between choices |
 | A | Confirm, next |
 | START | Run stats, measured on the device |
 | SELECT on stats | New run |
 
 In `make play`, the keys are the arrow keys, `A`, `S` for B, Enter for START and Backspace for SELECT. Text looks sharpest if you leave the window at its opening size.
 
-Find a lamp, take the key from the cave, open the gate and climb the tower. The bottom bar shows your current goal. See [docs/GAMEPLAY.md](docs/GAMEPLAY.md).
+Try to find all eight endings. See [docs/GAMEPLAY.md](docs/GAMEPLAY.md).
 
 ## How it works
 
 ```
-Button press -> deterministic game rules -> outcome
+You pick a choice -> story engine updates items, wounds and scene
                                               |
-              <BOS> ROOM INVENTORY ACTION OUTCOME          symbolic prompt, 5 tokens
+                  <BOS> EVENT ITEMS FATE                   symbolic prompt, 4 tokens
                                               |
-                 1-layer transformer on the SM83           14,784 int8 weights in ROM
+                 1-layer transformer on the SM83           int8 weights in ROM
                  attention over all earlier tokens         K/V cache in WRAM
                                               |
                  next word, drawn immediately  <-- repeats until <EOS>
 ```
 
-| | |
-|---|---|
-| Model | 1 layer, d=32, 2 heads, FFN 64, context 16, vocabulary 95, 14,784 parameters |
-| Numbers | int8 weights and activations, 24-bit accumulators, power-of-two scales |
-| Hardware target | DMG, 4.194304 MHz. MBC5 ROM of 64 KiB, no cartridge RAM |
-| RAM | 2,825 of 8,192 bytes of built-in WRAM allocated |
-| Training | PyTorch on one CPU thread, about 3 minutes, byte-reproducible |
+**Authored versus generated.** The plot is written by hand: the scenes, choices, consequences and endings in `reference/story.py`, and the language the model trains on in `training/dataset.py`. The model doesn't invent plot. It's told what just happened and produces every word of the narration, with varying wording between playthroughs. It can't change what happens, so it can't break the game. The display only adds capital letters.
 
-The engine decides what happens: rooms, items, damage, winning. The model is told the outcome and narrates it, so it can't break the game. Every story word comes from a model token; the display only adds the final full stop and capitalizes the first letter. Titles, intro lines and menus are fixed text.
+See RESULTS.md for the exact model size, RAM and ROM use.
 
 The architecture is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), the equations in [docs/MODEL.md](docs/MODEL.md) and the rounding rules in [docs/NUMERICS.md](docs/NUMERICS.md). The long version of the story is [TECHNICAL_REPORT.md](TECHNICAL_REPORT.md).
 
@@ -100,9 +90,9 @@ make train             # optional: retrain; reproduces generated/model.bin byte 
 
 ## Limitations
 
-- **Emulator only.** No physical Game Boy has run this. The fastest build streams weights through the stack pointer with interrupts held off per row. It was designed to be safe on hardware and passes on SameBoy, but it's untested on silicon. `V5` avoids that trick at 0.73 s/token.
-- **A narrow language.** The model learned a small event grammar of 67 words. It's a real language model of a very small language, and it isn't conversational or general. Its 100% validity on held-out situations reflects how narrow the task is.
-- **Six seconds per event.** That's playable, but it isn't instant.
+- **Emulator only.** No physical Game Boy has run this. The fastest build streams weights through the stack pointer with interrupts held off per row. It was designed to be safe on hardware and passes on SameBoy, but it's untested on silicon. The `V5` build avoids that trick; RESULTS.md has its speed.
+- **An authored story in a narrow language.** The model learned a small hand-written language. It's a real language model of a very small language, and it isn't conversational or general. Its high validity reflects how narrow the task is, and replays differ in wording, not plot.
+- **Generation takes seconds per passage.** That's playable, but it isn't instant.
 - **Not attempted:** packed INT4 weights in ROM (studied on the reference only), ternary or codebook weights, automatic configuration search.
 
 ## Prior art

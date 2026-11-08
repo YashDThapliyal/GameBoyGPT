@@ -8,11 +8,11 @@ A decoder-only causal transformer, trained offline with PyTorch and run in SM83 
 | Hidden size `d` | 32 |
 | Heads | 2 (width 16 each) |
 | FFN width | 64 |
-| Context | 16 tokens |
-| Vocabulary | 95 tokens (see below) |
-| Parameters | 14,784 int8 |
+| Context | 24 tokens |
+| Vocabulary | 196 tokens (see below) |
+| Parameters | 21,504 int8 |
 
-Vocabulary: 1 `<BOS>`, 8 rooms, 3 inventory codes, 4 actions, 11 outcomes, `<EOS>`, then 67 words.
+Vocabulary: 1 `<BOS>`, the event tokens, one token per reachable combination of carried items, 2 fate tokens, `<EOS>`, then 141 words.
 
 ## Forward pass for the last position `t`
 
@@ -25,7 +25,7 @@ Vocabulary: 1 `<BOS>`, 8 rooms, 3 inventory codes, 4 actions, 11 outcomes, `<EOS
 | Attention | `a = concat(attend(q_h, K[0..t]_h, V[0..t]_h))` | 32 |
 | Residual | `x = sat8(e[t] + W_o a)` | 32 |
 | Feed-forward | `x2 = sat8(x + W_f2 relu(W_f1 norm(x)))` | 64 inside, 32 out |
-| Output | `logits = W_out norm(x2)` | 95 |
+| Output | `logits = W_out norm(x2)` | 196 |
 
 Exact rounding is in [NUMERICS.md](NUMERICS.md). Layers have no biases.
 
@@ -33,25 +33,34 @@ Exact rounding is in [NUMERICS.md](NUMERICS.md). Layers have no biases.
 
 ## Data and what the model is asked to do
 
-Input is a symbolic prompt: `<BOS> ROOM INV ACT OUT`. The deterministic engine has already decided the outcome, so the model narrates what happened and can't change it. It continues with up to 10 words plus `<EOS>`.
+Input is a symbolic prompt: `<BOS> EVENT ITEMS FATE`. The deterministic story engine has already decided what happened, so the model narrates it and can't change it. It continues with up to 19 tokens plus `<EOS>`.
 
-Training sentences come from a grammar in `training/dataset.py` that composes an action clause, an outcome clause, room nouns, adjectives and inventory phrases. A sampled event looks like:
+Training sentences come from `training/dataset.py`, which pairs a line about what just happened with the arrival text of the next scene. A sampled event looks like:
 
 ```
-<BOS> <R_CAVE> <I_LAMP> <A_FORWARD> <O_MOVE>  ->  YOU PRESS ON AND YOUR LAMP SHOWS SILENT BATS
+<BOS> <B_LIGHT_LAMP> <F_1> <LIVE>  ->  YOUR LAMP SHOWS A HIDDEN DOOR . LOOK . THE CHEST HAS TEETH .
 ```
 
-**At display time the only changes are a final full stop on `<EOS>` and a capital first letter.** Every word on screen is a token the model chose. Tokens are shown in lowercase, and the examples here use the uppercase vocabulary names. The title, intro lines, menu labels, goal hint and win/lose banners are static UI assets, not generated. The language is deliberately narrow: this is a grammar-learning model and not a general language model.
+- **The items change the words:** with the lamp the arrival opens "Look.", and with a friend "He warns."
+- **Danger is in the text:** the arrival line is the omen for that scene's dangerous choice.
+- **Wording varies:** synonym slots give each situation several valid wordings, and near-top sampling picks among them.
+
+**At display time the only change is capital letters at sentence starts.** Every word and full stop on screen is a token the model chose. Tokens are shown in lowercase. The title, intro lines, place names, choice labels and ending names are static UI assets, not generated.
+
+**What this is not.** The plot and the sentences are authored. The model learned this language; it doesn't invent story. "Coherence" here comes from the authored structure and a model reliable enough to reproduce it.
 
 ## Splits
 
-Held-out data are withheld *situations* `(room, inventory, action, outcome)`, never seen in training with any wording. Six families are for validation and nine for test. Nearly all held-out situations are novel combinations of parts the model saw separately. `tools/generalization_study.py` runs a harder test with a fresh model that never sees 40% of all situations.
+There are two models, because a shipping model should know every line while a generalization test must not.
+
+- **Shipping model** (`configs/release.yaml`): trained on every reachable situation. It must be strict-valid on all of them.
+- **Sibling model** (`configs/heldout.yaml`): identical recipe, with 32 situations withheld. Each is a known event with a combination of items never seen with that event. It is measured and never shipped.
 
 ## Training
 
-AdamW, gradient clipping at 1.0, cosine decay, 12,000 float steps then 8,000 quantization-aware steps with straight-through fake quantization that mirrors the integer rules. The checkpoint is selected by quantized validation NLL. Seeds are fixed and training runs single-threaded on CPU, because multithreaded runs produced different weights on the same seed. See `configs/release.yaml`.
+AdamW, gradient clipping at 1.0, cosine decay, 20,000 float steps then 12,000 quantization-aware steps with straight-through fake quantization that mirrors the integer rules. The checkpoint is selected by quantized validation NLL. Seeds are fixed and training runs single-threaded on CPU, because multithreaded runs produced different weights on the same seed.
 
-A smaller candidate (d=16, 1 head, FFN 32, 5,344 params) reached similar NLL and also generated grammar-valid text on the reference. The d=32 model shipped because it met the spec's release target and the measured latency allowed it. The smaller model's on-device latency was not measured. Two layers would not have gained validity since one layer already reaches the limit of this test, so they were not pursued.
+**Why this size.** The width stayed at 32 and the depth at one layer, because the first candidate at that size reached 98.6% strict validity greedy on the new language and more training closed the gap. Growth went only where the task needed it: a larger vocabulary and longer context. A second layer would also have needed engine work and more time per word, so it wasn't pursued.
 
 ## Export
 

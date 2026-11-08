@@ -29,7 +29,7 @@ def selftest_source(gen):
     lines = ['SECTION "selftest_cases", ROM0', "SelfTestCases::"]
     for sit in WORKLOADS.values():
         t = fp.generate(m, ds.prompt_ids(*sit))["tokens"]
-        lines.append(f"    db {len(t)}, " + ",".join(map(str, t + [0] * (16 - len(t)))))
+        lines.append(f"    db {len(t)}, " + ",".join(map(str, t + [0] * (m.ctx - len(t)))))
     (gen / "selftest_cases.asm").write_text("\n".join(lines) + "\n")
     with open(gen / "model_constants.inc", "a") as f:
         f.write(f"DEF SELFTEST_CASES EQU {len(WORKLOADS)}\n")

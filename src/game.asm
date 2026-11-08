@@ -1,361 +1,170 @@
-; game.asm - deterministic world. Truth lives here; the neural model only narrates outcomes.
-; Exact behaviour is mirrored by reference/game.py and checked by tests/test_rom_game.py.
+; game.asm - the branching story engine. Truth lives here; the neural model only narrates what happened.
+; Tables come from reference/story.py via tools/rom_layout.py, so ROM and reference cannot drift apart.
 INCLUDE "constants.inc"
+INCLUDE "model_constants.inc"
 
-SECTION "game_vars", WRAM0, ALIGN[8]
-wRng::       ds 2            ; little-endian LFSR state
-wRoom::      ds 1
-wLives::     ds 1
-wHasKey::    ds 1
-wHasLamp::   ds 1
-wTurn::      ds 1
-wLampRoom::  ds 1
-wAction::    ds 1
-wOutcome::   ds 1
-wPrevRoom::  ds 1
-wCycle::     ds 7
-wExits::     ds 8 * 3        ; [room][L,R,F]
+IF !DEF(TEST_ROM)
+SECTION "game_vars", WRAM0
+wScene::      ds 1
+wFlags::      ds 1
+wWounds::     ds 1
+wTurn::       ds 1
+wPrevArt::    ds 1
+wBeatTok::    ds 1           ; token id of what just happened
+wFate::       ds 1           ; 1 if this choice killed the player
+wChoiceId::   ds 1
+wNumChoices:: ds 1
+wChoices::    ds MAX_CHOICES ; ids of the choices visible now
+wEndMask::    ds 1           ; endings seen since power-on
 
 SECTION "game_code", ROM0
-; RngByte: advances the LFSR eight bits; returns low byte in a. Preserves bc, de, hl.
-RngByte::
-    push bc
-    ld a, [wRng]
-    ld c, a
-    ld a, [wRng + 1]
-    ld b, a
-    REPT 8
-    srl b
-    rr c
-    jr nc, :+
-    ld a, b
-    xor $B4
-    ld b, a
-:
-    ENDR
-    ld a, c
-    ld [wRng], a
-    ld a, b
-    ld [wRng + 1], a
-    ld a, c
-    pop bc
-    ret
-
-; ModC: a = a mod c. Clobbers flags.
-ModC:
-    cp c
-    ret c
-    sub c
-    jr ModC
-
-; ExitPtr: a = room, b = dir -> hl = &wExits[room][dir]. Clobbers a.
-ExitPtr:
-    ld h, a
-    add a
-    add h                ; room * 3
-    add b
-    add LOW(wExits)
+; ScenePtr: a = scene -> hl = its record. Clobbers a, de.
+ScenePtr::
     ld l, a
-    ld a, HIGH(wExits)
-    adc 0
-    ld h, a
-    ret
-
-; GenWorld: de = seed. Builds wCycle, wLampRoom, wExits and resets the run. Clobbers everything.
-GenWorld::
-    ld a, d
-    or e
-    jr nz, .seeded
-    ld e, 1
-.seeded:
-    ld a, e
-    ld [wRng], a
-    ld a, d
-    ld [wRng + 1], a
-    ; cycle = FOREST, shuffled(MARSH RIVER RUINS SHRINE CAVE), GATE
-    ld hl, wCycle
-    xor a
-    ld b, 7
-.init:
-    ld [hl+], a
-    inc a
-    dec b
-    jr nz, .init
-    ; Fisher-Yates over wCycle[1..5]: i = 4..1 indexes order[]
-    ld b, 4
-.shuffle:
-    call RngByte
-    ld c, b
-    inc c
-    call ModC            ; j
-    ; swap order[b], order[a]
-    ld hl, wCycle + 1
-    add l
-    ld l, a
+    ld h, 0
     ld d, h
-    ld e, l              ; de = &order[j]
-    ld hl, wCycle + 1
-    ld a, b
-    add l
-    ld l, a              ; hl = &order[i]
-    ld a, [de]
-    ld c, [hl]
-    ld [hl], a
-    ld a, c
-    ld [de], a
-    dec b
-    jr nz, .shuffle
-    ; cave index
-    ld hl, wCycle
-    ld c, 0
-.find:
-    ld a, [hl+]
-    cp ROOM_CAVE
-    jr z, .found
-    inc c
-    jr .find
-.found:
-    push bc              ; c = cave index
-    call RngByte
-    call ModC
-    ld hl, wCycle
-    add l
-    ld l, a
-    ld a, [hl]
-    ld [wLampRoom], a
-    ; exits: clear to wall
-    ld hl, wExits
-    ld b, 8 * 3
-    ld a, WALL
-.wall:
-    ld [hl+], a
-    dec b
-    jr nz, .wall
-    ; for i in 0..6
-    ld c, 0
-.each:
-    call BuildExitsFor
-    inc c
-    ld a, c
-    cp 7
-    jr nz, .each
-    ld a, ROOM_FOREST
-    ld [wExits + ROOM_GATE * 3 + ACT_LEFT], a
-    pop bc               ; c = cave index
-    ld a, c
-    cp 2
-    jr c, .noback
-    dec c
-    ld hl, wCycle
+    ld e, l
+    add hl, hl
+    add hl, hl
+    add hl, hl
     ld a, l
-    add c
+    sub e
     ld l, a
-    ld a, [hl]
-    ld b, ACT_RIGHT
-    call ExitPtr
-    ld [hl], ROOM_FOREST
-.noback:
-    ; run state
-    ld a, ROOM_FOREST
-    ld [wRoom], a
-    ld a, START_LIVES
-    ld [wLives], a
-    xor a
-    ld [wHasKey], a
-    ld [wHasLamp], a
-    ld [wTurn], a
-    ret
-
-; BuildExitsFor: c = cycle index. Preserves c. Clobbers a, b, de, hl.
-BuildExitsFor:
-    ld hl, wCycle
-    ld a, l
-    add c
-    ld l, a
-    ld d, [hl]           ; d = room
-    ; forward
-    ld a, c
-    cp 6
-    ld e, ROOM_TOWER
-    jr z, .fw
-    inc hl
-    ld e, [hl]
-.fw:
-    ld a, d
-    ld b, ACT_FORWARD
-    push de
-    call ExitPtr
-    pop de
-    ld [hl], e
-    ld b, ACT_LEFT
-    call .side
-    ld b, ACT_RIGHT
-.side:
-    call RngByte
-    and 3
-    ld e, a              ; roll
-    call RngByte
-    push bc
-    ld c, 7
-    call ModC
-    pop bc
-    ld hl, wCycle
-    add l
-    ld l, a
-    ld a, [hl]           ; target
-    cp d
-    jr z, .wall          ; target == room
-    ld h, a
-    ld a, e
-    or a
     ld a, h
-    jr nz, .set
-.wall:
-    ld a, WALL
-.set:
-    push af
-    ld a, d
-    push de
-    call ExitPtr
-    pop de
-    pop af
-    ld [hl], a
+    sbc d
+    ld h, a              ; scene * 7
+    ld de, StoryScenes
+    add hl, de
     ret
 
-; GameStep: wAction = action. Updates truth and sets wOutcome. Clobbers everything.
-GameStep::
-    ld a, [wRoom]
-    ld [wPrevRoom], a
-    cp ROOM_TOWER
-    jr nz, .notower
-    ld a, [wAction]
-    cp ACT_FORWARD
-    ld b, OUT_WIN
-    jp z, .set
-    cp ACT_SEARCH
-    ld b, OUT_HURT
-    jp z, .set
-    ld b, OUT_BLOCK
-    jp .set
-.notower:
-    ld a, [wAction]
-    cp ACT_SEARCH
-    jr nz, .move
-    ; search
-    ld a, [wRoom]
-    ld c, a
-    ld a, [wLampRoom]
-    cp c
-    jr nz, .nolamp
-    ld a, [wHasLamp]
-    or a
-    jr nz, .nolamp
-    ld a, 1
-    ld [wHasLamp], a
-    ld b, OUT_LAMP
-    jr .set
-.nolamp:
-    ld a, c
-    cp ROOM_CAVE
-    jr nz, .nokey
-    ld a, [wHasKey]
-    or a
-    jr nz, .nokey
-    ld a, 1
-    ld [wHasKey], a
-    ld b, OUT_KEY
-    jr .set
-.nokey:
-    ld b, OUT_NOTHING
-    ld a, c
-    cp ROOM_RUINS
-    jr nz, .set
-    call RngByte
-    and 7
-    jr nz, .set
-    ld b, OUT_HURT
-    jr .set
-.move:
-    ld b, a              ; dir
-    ld a, [wRoom]
-    call ExitPtr
-    ld a, [hl]
-    ld c, a              ; target
-    cp WALL
-    ld b, OUT_BLOCK
-    jr z, .set
-    cp ROOM_CAVE
-    jr nz, .notdark
-    ld a, [wHasLamp]
-    or a
-    ld b, OUT_DARK
-    jr z, .set
-.notdark:
-    ld a, [wRoom]
-    cp ROOM_GATE
-    jr nz, .notgate
-    ld a, [wAction]
-    cp ACT_FORWARD
-    jr nz, .notgate
-    ld a, [wHasKey]
-    or a
-    ld b, OUT_LOCKED
-    jr z, .set
-    ld a, ROOM_TOWER
-    ld [wRoom], a
-    ld b, OUT_OPEN
-    jr .set
-.notgate:
-    ld a, c
-    cp ROOM_MARSH
-    jr z, .hazard
-    cp ROOM_RIVER
-    jr nz, .go
-.hazard:
-    call RngByte
-    and 7
-    ld b, OUT_HURT
-    jr z, .set
-.go:
-    ld a, c
-    ld [wRoom], a
-    ld b, OUT_MOVE
-.set:
+; ChoicePtr: a = choice id -> hl = its record. Clobbers a, de.
+ChoicePtr::
+    ld l, a
+    ld h, 0
+    ld d, h
+    ld e, l
+    add hl, hl
+    add hl, hl
+    add hl, hl
+    add hl, de           ; id * 9
+    ld de, StoryChoices
+    add hl, de
+    ret
+
+; StartStory: resets the run to the first scene. Clobbers a.
+StartStory::
+    ld a, SCENE_START
+    ld [wScene], a
+    xor a
+    ld [wFlags], a
+    ld [wWounds], a
+    ld [wTurn], a
+    ld [wFate], a
+    ld [wBeatTok], a
+    ld [wChoiceId], a
+    ret
+
+; CollectChoices: fills wChoices with the choices the current flags allow. Clobbers everything.
+CollectChoices::
+    ld a, [wScene]
+    call ScenePtr
+    inc hl
+    inc hl
+    inc hl
+    inc hl               ; skip title, art, act
+    ld a, [hl+]
+    ld b, a              ; number of authored choices
+    ld c, [hl]           ; first choice id
+    xor a
+    ld [wNumChoices], a
     ld a, b
-    cp OUT_HURT
-    jr nz, .store
-    ld hl, wLives
-    dec [hl]
-    jr nz, .store
-    ld a, OUT_LOSE
-.store:
-    ld [wOutcome], a
+    or a
+    ret z
+.next:
+    push bc
+    ld a, c
+    call ChoicePtr
+    inc hl
+    inc hl               ; skip label
+    ld a, [wFlags]
+    ld e, a
+    ld a, [hl+]          ; requires
+    ld d, a
+    and e
+    cp d
+    jr nz, .skip
+    ld a, [hl]           ; forbids
+    and e
+    jr nz, .skip
+    pop bc
+    push bc
+    ld hl, wChoices
+    ld a, [wNumChoices]
+    add l
+    ld l, a
+    jr nc, .nc
+    inc h
+.nc:
+    ld [hl], c
+    ld hl, wNumChoices
+    inc [hl]
+.skip:
+    pop bc
+    inc c
+    dec b
+    jr nz, .next
+    ret
+
+; ApplyChoice: a = choice id. Updates flags and wounds, moves to the next scene, sets beat and fate.
+ApplyChoice::
+    ld [wChoiceId], a
+    call ChoicePtr
+    inc hl
+    inc hl
+    inc hl
+    inc hl               ; sets
+    ld a, [wFlags]
+    or [hl]
+    inc hl
+    ld e, a              ; flags | sets
+    ld a, [hl+]          ; clears
+    cpl
+    and e
+    ld [wFlags], a
+    ld a, [wWounds]
+    add [hl]
+    inc hl
+    ld [wWounds], a
+    ld d, [hl]           ; next scene
+    inc hl
+    ld a, [hl]
+    ld [wBeatTok], a
+    ld a, [wWounds]
+    cp MAX_WOUNDS
+    ld a, 0
+    jr c, .alive
+    ld d, SCENE_DEATH
+    inc a
+.alive:
+    ld [wFate], a
+    ld a, d
+    ld [wScene], a
     ld hl, wTurn
     inc [hl]
     ; fall through
-; SyncMailbox: mirrors game truth to the debug mailbox. Clobbers a.
+; SyncMailbox: mirrors game truth for the harness. Clobbers a.
 SyncMailbox::
     ld a, [wTurn]
     ld [wMB_Turn], a
-    ld a, [wRoom]
+    ld a, [wScene]
     ld [wMB_Room], a
-    ld a, [wLives]
+    ld a, [wWounds]
     ld [wMB_Lives], a
-    call InvCode
+    ld a, [wFlags]
     ld [wMB_Inv], a
-    ld a, [wAction]
+    ld a, [wChoiceId]
     ld [wMB_Action], a
-    ld a, [wOutcome]
+    ld a, [wBeatTok]
     ld [wMB_Outcome], a
     ret
-
-; InvCode: a = 0 none, 1 lamp, 2 lamp+key.
-InvCode::
-    ld a, [wHasKey]
-    or a
-    jr z, .k
-    ld a, 2
-    ret
-.k:
-    ld a, [wHasLamp]
-    ret
+ENDC

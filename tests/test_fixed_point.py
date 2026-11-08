@@ -59,17 +59,17 @@ def test_blob_round_trip_and_checksum(model):
 
 
 def test_generation_deterministic_and_causal(model):
-    p = ds.prompt_ids(0, 0, 0, 0)
+    p = ds.prompt_ids(*ds.situations()[0])
     a = fp.generate(model, p)
     assert a == fp.generate(model, p)
     assert len(a["tokens"]) <= model.ctx
     # Causality: logits at position t depend only on tokens up to t.
-    assert fp.step(model, a["tokens"][:6])[0] == fp.step(model, a["tokens"][:6])[0]
-    lg7 = fp.step(model, a["tokens"][:7])[0]
-    assert lg7 != fp.step(model, a["tokens"][:6])[0]
+    assert fp.step(model, a["tokens"][:5])[0] == fp.step(model, a["tokens"][:5])[0]
+    assert fp.step(model, a["tokens"][:6])[0] != fp.step(model, a["tokens"][:5])[0]
 
 
-def test_action_token_changes_logits(model):
-    a = fp.step(model, ds.prompt_ids(0, 0, 0, 0))[0]
-    b = fp.step(model, ds.prompt_ids(0, 0, 1, 0))[0]
+def test_event_token_changes_logits(model):
+    sits = ds.situations()
+    a = fp.step(model, ds.prompt_ids(*sits[0]))[0]
+    b = fp.step(model, ds.prompt_ids(*sits[-1]))[0]
     assert a != b

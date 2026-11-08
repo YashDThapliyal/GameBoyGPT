@@ -3,9 +3,9 @@
 ```
  OFFLINE (Mac: Python, PyTorch)                    ON THE CARTRIDGE (SM83 assembly only)
  ------------------------------                    -------------------------------------
- training/dataset.py  grammar, splits              game.asm       world truth: rooms, items, lives
- training/train.py    float + QAT training            |  outcome token
- tools/export_weights.py  int8 blob with SHA-256   tokenizer.asm  <BOS> ROOM INV ACT OUT
+ training/dataset.py  grammar, splits              game.asm       story truth: scene, items, wounds
+ training/train.py    float + QAT training            |  event token
+ tools/export_weights.py  int8 blob with SHA-256   tokenizer.asm  <BOS> EVENT ITEMS FATE
  tools/rom_layout.py  weights -> ROM layout           |
  reference/fixed_point.py  independent integers    model.asm      forward pass
       |                         |                     |- matvec.asm     dot, matvec, multiply
@@ -27,8 +27,8 @@
 | `boot.asm` | Vectors, header, hardware init, entry dispatch |
 | `video.asm` | VBlank ISR, shadow map, text primitives, palette fades, art loading |
 | `input.asm` | Joypad sampling in the ISR, edge latch |
-| `ui.asm` | State machine: TITLE, INTRO, MENU, PREFILL, GENERATING, REVEAL, UPDATE, ENDING, STATS |
-| `game.asm` | Deterministic world, seeded generation, rules |
+| `ui.asm` | State machine: TITLE, INTRO, MENU, PREFILL, GENERATING, REVEAL, UPDATE, ENDING, STATS. One job per screen |
+| `game.asm` | Story engine: filters choices by flags, applies consequences. Its tables are generated from `reference/story.py` |
 | `tokenizer.asm` | Prompt builder, word wrap, streaming narration |
 | `model.asm` | Forward pass, tensor buffers, output layer |
 | `matvec.asm` | Multiply variants, dot kernels, matvec |
@@ -55,8 +55,8 @@ Two bugs found by the emulator tests shaped this design. Six rows per VBlank ove
 
 | Risk | Outcome |
 |---|---|
-| Inference too slow | Baseline was already playable with patience; shipping build is about a word every two-thirds of a second |
-| RAM overflow | About a third of WRAM is allocated, see [MEMORY_MAP.md](MEMORY_MAP.md) |
+| Inference too slow | The baseline was playable with patience, and RESULTS.md has the shipping build's speed |
+| RAM overflow | Less than half of WRAM is allocated, see [MEMORY_MAP.md](MEMORY_MAP.md) |
 | Broken bank switching | Tensors are read from ROMX across layouts, with parity tests on each |
 | Quantization-induced nonsense | Avoided with QAT, and all quality numbers come from the integer reference |
 | Misleading benchmark timing | Cycle counter calibrated against hand-counted code, cross-checked with on-device frames and a second emulator |

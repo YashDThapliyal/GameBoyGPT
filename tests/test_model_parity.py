@@ -4,7 +4,6 @@ import random
 import pytest
 from kernel_harness import *
 from reference import fixed_point as fp
-from reference import game as g
 from export_weights import from_blob
 from training import dataset as ds
 
@@ -28,15 +27,16 @@ def load_seq(rig, seq):
     rig.gb.write("wSeqLen", [len(seq)])
 
 
-def read_logits(rig):
-    raw = rig.gb.read("wLogits", 190)
-    vals = [raw[i] | raw[i + 1] << 8 for i in range(0, 190, 2)]
+def read_logits(rig, model):
+    n = len(model.w_out)
+    raw = rig.gb.read("wLogits", n * 2)
+    vals = [raw[i] | raw[i + 1] << 8 for i in range(0, n * 2, 2)]
     return [v - 65536 if v > 32767 else v for v in vals]
 
 
 def scenarios(n, seed):
-    sits = [s for s in ds.situations() if ds.sentences(*s)]
-    heldout = [s for s in sits if s in ds.VAL_FAMILIES | ds.TEST_FAMILIES]
+    sits = ds.situations()
+    heldout = sorted(ds.VAL_FAMILIES | ds.TEST_FAMILIES)
     rnd = random.Random(seed)
     rest = rnd.sample([s for s in sits if s not in heldout], max(0, n - len(heldout)))
     return (heldout + rest)[:n]
@@ -45,11 +45,11 @@ def scenarios(n, seed):
 def test_step_logits_bit_exact(rig, model):
     rnd = random.Random(21)
     seqs = [ds.prompt_ids(*s) for s in scenarios(6, 2)]
-    seqs += [[rnd.randrange(95) for _ in range(L)] for L in (1, 2, 8, 16)]  # adversarial token streams, max length
+    seqs += [[rnd.randrange(len(model.w_out)) for _ in range(L)] for L in (1, 2, 8, 16, model.ctx)]  # adversarial streams, max length
     for seq in seqs:
         load_seq(rig, seq)
         rig.run(CMD_STEP)
-        assert read_logits(rig)[model.first_gen:] == fp.step(model, seq)[0][model.first_gen:]
+        assert read_logits(rig, model)[model.first_gen:] == fp.step(model, seq)[0][model.first_gen:]
 
 
 @pytest.mark.parametrize("greedy", [True, False])

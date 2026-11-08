@@ -1,12 +1,15 @@
 ; ui.asm - UX state machine: TITLE INTRO MENU PREFILL GENERATING REVEAL UPDATE ENDING STATS.
 ; One job per screen: read the story, press A, then choose. Text is double-spaced in a bold font.
 INCLUDE "constants.inc"
+INCLUDE "model_constants.inc"
 IF !DEF(TEST_ROM)
 
 SECTION "ui_vars", WRAM0
 wMenuSel::   ds 1
 wTextRowN::  ds 1          ; current line inside the story box
 wTextColN::  ds 1
+wCapNext::   ds 1
+wMenuRow:    ds 1
 wSaved::     ds SCREEN_W * SCREEN_H
 wEndFlag::   ds 1
 
@@ -14,50 +17,22 @@ SECTION "ui_strings", ROM0
 StrSub1:   db "A TINY TRANSFORMER", 0
 StrSub2:   db "STORY", 0
 StrStart:  db "PRESS START", 0
-StrIntro1: db "The tower waits", 0
-StrIntro2: db "past the mist.", 0
-StrIntro3: db "Find a lamp, then", 0
-StrIntro4: db "the key.", 0
-StrAsk:    db "What will you do?", 0
-StrItemL:  db "LEFT", 0
-StrItemR:  db "RIGHT", 0
-StrItemU:  db "AHEAD", 0
-StrItemD:  db "SEARCH", 0
+StrIntro1: db "The crown waits in", 0
+StrIntro2: db "the old tower.", 0
+StrIntro3: db "Choose with care.", 0
+StrIntro4: db "Read the signs.", 0
 StrChipA:  db "A", 0
 StrChipSe: db "SELECT", 0
 StrChoose: db "choose", 0
 StrNext:   db "next", 0
 StrWrite:  db "Writing", 0
-StrWin:    db "The tower is yours!", 0
-StrLose:   db "The mist takes you.", 0
 StrAgain:  db "new run", 0
 StrNew:    db "new", 0
 StrBack:   db "back", 0
-StrGoal0:  db "FIND LAMP", 0
-StrGoal1:  db "FIND KEY", 0
-StrGoal2:  db "GO TO GATE", 0
-StrGoal3:  db "CLIMB TOWER", 0
-; The action menu is a cross, like the D-pad: row, arrow column, arrow tile, label column, label. Indexed by action.
-DEF MENU_ITEM_SIZE EQU 6
-MenuItems:
-    db 12, 2, TILE_PAD_L, 4
-    dw StrItemL
-    db 12, 18, TILE_PAD_R, 12
-    dw StrItemR
-    db 10, 7, TILE_PAD_U, 9
-    dw StrItemU
-    db 14, 7, TILE_PAD_D, 9
-    dw StrItemD
-RoomNames:
-    dw .r0, .r1, .r2, .r3, .r4, .r5, .r6, .r7
-.r0: db "DARK FOREST", 0
-.r1: db "BLACK MARSH", 0
-.r2: db "COLD RIVER", 0
-.r3: db "OLD RUINS", 0
-.r4: db "PALE SHRINE", 0
-.r5: db "DEEP CAVE", 0
-.r6: db "IRON GATE", 0
-.r7: db "THE TOWER", 0
+StrEnding: db "ENDING", 0
+StrFound:  db "Found", 0
+StrOf:     db "of", 0
+StrAct:    db "ACT", 0
 
 SECTION "ui_code", ROM0
 ; SetState: a = ST_*. Mirrors state to mailbox.
@@ -69,7 +44,7 @@ GameMain::
     call TitleScreen
     call NewRun
 .turn:
-    call ActionMenu
+    call ChoiceMenu
     call PlayTurn
     ld a, [wEndFlag]
     or a
@@ -127,6 +102,7 @@ TitleScreen:
 NewRun::
     ld a, ST_UPDATE
     call SetState
+    ; Narration seed. World truth has no randomness, so this only changes the wording.
     ld a, [wMB_ForceSeed]
     or a
     jr z, .entropy
@@ -134,26 +110,25 @@ NewRun::
     ld e, a
     ld a, [wMB_Seed + 1]
     ld d, a
-    jr .gen
+    jr .seed
 .entropy:
     ldh a, [rDIV]
     ld e, a
     ldh a, [hFrames]
     ld d, a
-.gen:
-    call GenWorld
-    ; Narration RNG is separate from world RNG, so sampling can never change game truth.
-    ld a, [wRng]
-    xor $A5
+.seed:
+    ld a, d
+    or e
+    jr nz, .nz
+    inc e
+.nz:
+    ld a, e
     ld [wNarrRng], a
-    ld a, [wRng + 1]
-    xor $A5
+    ld a, d
     ld [wNarrRng + 1], a
+    call StartStory
     xor a
     ld [wEndFlag], a
-    ld [wOutcome], a
-    ld [wAction], a
-    ld a, ACT_FORWARD
     ld [wMenuSel], a
     call SyncMailbox
     call LoadRoomScreen
@@ -182,12 +157,13 @@ NewRun::
 LoadRoomScreen::
     call ScreenOff
     call ClearShadow
-    ld a, [wRoom]
+    call CurrentArt
+    ld [wPrevArt], a
     ld c, a
     add a
     add a
     add c
-    add c                ; room * 6
+    add c                ; art * 6
     ld c, a
     ld b, 0
     ld hl, SceneTable
@@ -199,41 +175,60 @@ LoadRoomScreen::
     call ScreenOn
     ret
 
-; DrawBand: room name, carried items and lives on the dark band under the scene.
+; CurrentArt: -> a = scene image of the current scene. Clobbers de, hl.
+CurrentArt:
+    ld a, [wScene]
+    call ScenePtr
+    inc hl
+    inc hl
+    ld a, [hl]
+    ret
+
+; DrawBand: place name, carried items and remaining lives on the dark band under the scene.
 DrawBand::
     ld b, BAND_ROW
     ld c, 1
     ld a, TILE_BAND
     call FillRows
-    ld a, [wRoom]
-    add a
-    ld e, a
-    ld d, 0
-    ld hl, RoomNames
-    add hl, de
+    ld a, [wScene]
+    call ScenePtr
     ld a, [hl+]
     ld h, [hl]
     ld l, a
     ld b, BAND_ROW
     ld c, 1
     call PrintInvAt
-    ld a, [wHasLamp]
-    or a
-    jr z, .nolamp
-    ld a, TILE_LAMP
-    ld [wBgMap + BAND_ROW * SCREEN_W + 13], a
-.nolamp:
-    ld a, [wHasKey]
-    or a
-    jr z, .nokey
-    ld a, TILE_KEY
-    ld [wBgMap + BAND_ROW * SCREEN_W + 14], a
-.nokey:
-    ld a, [wLives]
-    or a
+    ; one icon slot per item, so an item always appears in the same place
+    ld a, [wFlags]
+    ld b, a
+    ld hl, wBgMap + BAND_ROW * SCREEN_W + 12
+    ld c, TILE_LAMP
+    bit 0, b
+    call nz, .icon
+    inc hl
+    ld c, TILE_KEY
+    bit 1, b
+    call nz, .icon
+    inc hl
+    ld c, TILE_FRIEND
+    bit 2, b
+    call nz, .icon
+    inc hl
+    ld c, TILE_SWORD
+    bit 3, b
+    call nz, .icon
+    inc hl
+    ld c, TILE_RING
+    bit 4, b
+    call nz, .icon
+    ld a, [wWounds]
+    ld b, a
+    ld a, MAX_WOUNDS
+    sub b
     jr z, .done
+    jr c, .done
     ld d, a
-    ld hl, wBgMap + BAND_ROW * SCREEN_W + 18
+    ld hl, wBgMap + BAND_ROW * SCREEN_W + 19
 .hearts:
     ld [hl], TILE_HEART
     dec hl
@@ -242,36 +237,34 @@ DrawBand::
 .done:
     ld b, BAND_ROW
     jp MarkRow
+.icon:
+    ld [hl], c
+    ret
 
-; DrawStatus: current goal and turn counter on the inverse status row.
+; DrawStatus: act and turn on the inverse status row.
 DrawStatus::
     ld b, STATUS_ROW
     ld c, 1
     ld a, TILE_BAND
     call FillRows
-    ld hl, StrGoal0
-    ld a, [wHasLamp]
-    or a
-    jr z, .print
-    ld hl, StrGoal1
-    ld a, [wHasKey]
-    or a
-    jr z, .print
-    ld hl, StrGoal2
-    ld a, [wRoom]
-    cp ROOM_TOWER
-    jr nz, .print
-    ld hl, StrGoal3
-.print:
+    ld hl, StrAct
     ld b, STATUS_ROW
     ld c, 1
     call PrintInvAt
+    ld a, [wScene]
+    call ScenePtr
+    inc hl
+    inc hl
+    inc hl
+    ld a, [hl]
+    add TILE_INV + 27    ; acts are single digits
+    ld [wBgMap + STATUS_ROW * SCREEN_W + 5], a
     ld hl, StrTurnLbl
     ld b, STATUS_ROW
-    ld c, 12
+    ld c, 11
     call PrintInvAt
     ld a, [wTurn]
-    ld hl, wBgMap + STATUS_ROW * SCREEN_W + 17
+    ld hl, wBgMap + STATUS_ROW * SCREEN_W + 16
     call PrintDec2Inv
     ld b, STATUS_ROW
     jp MarkRow
@@ -309,6 +302,8 @@ ClearText::
     xor a
     ld [wTextRowN], a
     ld [wTextColN], a
+    inc a
+    ld [wCapNext], a
     ret
 
 ; ClearHint: blanks the hint row.
@@ -337,17 +332,16 @@ WaitNext:
     jr z, .w
     ret
 
-; ---- Action menu ----------------------------------------------------------
-; Pressing a direction selects the action drawn on that side. A confirms.
-ActionMenu:
+; ---- Choice menu ----------------------------------------------------------
+; One choice per double-spaced row. Up and down move the pointer, A confirms.
+ChoiceMenu:
     ld a, ST_MENU
     call SetState
+    call CollectChoices
+    xor a
+    ld [wMenuSel], a
     call ClearBody
-    ld hl, StrAsk
-    ld b, TEXT_ROW
-    ld c, TEXT_COL
-    call PrintAt
-    call DrawMenu
+    call DrawChoices
     ld hl, StrChipA
     ld b, HINT_ROW
     ld c, 11
@@ -359,6 +353,7 @@ ActionMenu:
     call ConsumePressed
 .loop:
     call WaitVBlank
+    call PlaceCursor
     call ConsumePressed
     ld b, a
     bit PAD_START, b
@@ -369,96 +364,103 @@ ActionMenu:
     jr nz, .loop
     xor a
     ld [wEndFlag], a      ; new run requested from the stats page
+    ld [wOam], a
     call NewRun
-    jr ActionMenu
+    jr ChoiceMenu
 .nostart:
     ld a, [wMenuSel]
     ld c, a
-    bit PAD_LEFT, b
-    jr z, .a1
-    ld c, ACT_LEFT
-.a1:
-    bit PAD_RIGHT, b
-    jr z, .a2
-    ld c, ACT_RIGHT
-.a2:
     bit PAD_UP, b
-    jr z, .a3
-    ld c, ACT_FORWARD
-.a3:
+    jr z, .a1
+    or a
+    jr z, .a1
+    dec c
+.a1:
     bit PAD_DOWN, b
-    jr z, .a4
-    ld c, ACT_SEARCH
-.a4:
+    jr z, .a2
+    ld a, [wNumChoices]
+    dec a
+    cp c
+    jr z, .a2
+    inc c
+.a2:
     ld a, c
-    ld hl, wMenuSel
-    cp [hl]
-    jr z, .same
-    ld [hl], a
-    push bc
-    call DrawMenu
-    pop bc
-.same:
+    ld [wMenuSel], a
     bit PAD_A, b
     jr z, .loop
+    xor a
+    ld [wOam], a          ; hide the pointer
     ld a, [wMenuSel]
-    ld [wAction], a
-    ret
+    ld e, a
+    ld d, 0
+    ld hl, wChoices
+    add hl, de
+    ld a, [hl]
+    jp ApplyChoice
 
-; DrawMenu: the four actions, with the selected label in the inverse font. Clobbers everything.
-DrawMenu:
-    ld hl, MenuItems
+; DrawChoices: every visible choice on its row. Clobbers everything.
+DrawChoices:
     xor a
 .item:
+    ld c, a
+    ld a, [wNumChoices]
+    cp c
+    ret z
+    ret c
+    ld a, c
     push af
-    push hl
-    ld d, a               ; item index
-    ld a, [hl+]
-    ld b, a               ; row
-    ld a, [hl+]
-    ld c, a               ; arrow column
-    ld a, [hl+]
-    ld e, a               ; arrow tile
-    ld a, [hl+]
-    push af               ; label column
+    ld e, a
+    ld d, 0
+    ld hl, wChoices
+    add hl, de
+    ld a, [hl]
+    call ChoicePtr
     ld a, [hl+]
     ld h, [hl]
-    ld l, a               ; label
-    push hl
-    push de
-    call RowPtr
-    pop de
-    ld [hl], e
-    call MarkRow
-    pop hl
+    ld l, a
     pop af
-    ld c, a
-    ld a, [wMenuSel]
-    cp d
-    jr z, .sel
+    push af
+    add a
+    add TEXT_ROW
+    ld b, a
+    ld c, 2
     call PrintAt
-    jr .next
-.sel:
-    call PrintInvAt
-.next:
-    pop hl
-    ld de, MENU_ITEM_SIZE
-    add hl, de
     pop af
     inc a
-    cp 4
-    jr nz, .item
+    jr .item
+
+; PlaceCursor: bobbing pointer sprite beside the selected choice.
+PlaceCursor:
+    ld a, [wMenuSel]
+    add a
+    add TEXT_ROW
+    add a
+    add a
+    add a                ; row * 8
+    add 16
+    ld [wOam], a
+    ld c, 8 + 7
+    ldh a, [hFrames]
+    and 16
+    jr z, .n
+    inc c
+.n:
+    ld a, c
+    ld [wOam + 1], a
+    ld a, TILE_CURSOR
+    ld [wOam + 2], a
+    xor a
+    ld [wOam + 3], a
     ret
 
 ; ---- Turn -----------------------------------------------------------------
 PlayTurn:
     ld a, ST_UPDATE
     call SetState
-    call GameStep
-    ; Room changed? show the new place before narrating the arrival.
-    ld a, [wRoom]
+    ; ChoiceMenu has applied the choice, so the screen can show where you are now.
+    call CurrentArt
     ld b, a
-    ld a, [wPrevRoom]
+    ld a, [wPrevArt]
     cp b
     jr z, .same
     call LoadRoomScreen
@@ -469,16 +471,16 @@ PlayTurn:
 .ready:
     call ClearText
     call NarrateEvent     ; PREFILL -> GENERATING: writes words into the story box
-    call DrawBand         ; a found lamp or key shows up as soon as it is narrated
-    call DrawStatus
     ld a, ST_REVEAL
     call SetState
-    ld a, [wOutcome]
-    cp OUT_WIN
-    jr z, .end
-    cp OUT_LOSE
-    jr nz, .wait
-.end:
+    ; an ending scene has no choices
+    ld a, [wScene]
+    call ScenePtr
+    ld de, 6
+    add hl, de
+    ld a, [hl]
+    cp 255
+    jr z, .wait
     ld a, 1
     ld [wEndFlag], a
 .wait:
@@ -513,9 +515,7 @@ ThinkingDone::
 
 ; ThinkingProgress: a = tokens generated so far. Bar of 8 tiles, 4 ticks each, driven by real progress.
 ThinkingProgress::
-    ld b, a
-    add a
-    add b                ; tokens * 3 ticks: 11 tokens fill the 32-tick bar
+    add a                ; tokens * 2 ticks: the longest event fills the 32-tick bar
     ld b, a
     ld hl, wBgMap + HINT_ROW * SCREEN_W + 9
     ld c, 8
@@ -541,23 +541,74 @@ ThinkingProgress::
 EndingScreen:
     ld a, ST_ENDING
     call SetState
+    ; which ending is this, and how many have you seen?
+    ld a, [wScene]
+    call ScenePtr
+    ld de, 6
+    add hl, de
+    ld c, [hl]           ; ending index
+    ld b, 1
+    ld a, c
+    or a
+    jr z, .bit0
+.shift:
+    sla b
+    dec a
+    jr nz, .shift
+.bit0:
+    ld a, [wEndMask]
+    or b
+    ld [wEndMask], a
+    push bc
     call ClearBody
-    ld a, [wOutcome]
-    cp OUT_WIN
-    ld hl, StrWin
-    jr z, .p
-    ld hl, StrLose
-.p:
-    ld b, 10
-    ld c, 0
+    ld hl, StrEnding
+    ld b, 9
+    ld c, 1
     call PrintAt
+    pop bc
+    ld a, c
+    add a
+    ld e, a
+    ld d, 0
+    ld hl, EndingNames
+    add hl, de
+    ld a, [hl+]
+    ld h, [hl]
+    ld l, a
+    ld b, 11
+    ld c, 1
+    call PrintAt
+    ld hl, StrFound
+    ld b, 14
+    ld c, 1
+    call PrintAt
+    ; population count of the mask, shown as "n of 8"
+    ld a, [wEndMask]
+    ld c, a
+    ld b, 8
+    xor a
+.pop:
+    srl c
+    adc 0
+    dec b
+    jr nz, .pop
+    add '0' - $20
+    ld [wBgMap + 14 * SCREEN_W + 7], a
+    ld hl, StrOf
+    ld b, 14
+    ld c, 9
+    call PrintAt
+    ld a, NUM_ENDINGS + '0' - $20
+    ld [wBgMap + 14 * SCREEN_W + 12], a
+    ld b, 14
+    call MarkRow
     ld hl, StrChipA
-    ld b, 13
-    ld c, 5
+    ld b, HINT_ROW
+    ld c, 10
     call PrintInvAt
     ld hl, StrAgain
-    ld b, 13
-    ld c, 7
+    ld b, HINT_ROW
+    ld c, 12
     call PrintAt
     call ConsumePressed
 .w:
@@ -571,6 +622,8 @@ EndingScreen:
 StatsScreen::
     ld a, ST_STATS
     call SetState
+    xor a
+    ld [wOam], a
     ld hl, wBgMap
     ld de, wSaved
     ld bc, SCREEN_W * SCREEN_H
@@ -613,7 +666,6 @@ MarkAllRows:
     ret
 
 StrS1: db "RUN STATS", 0
-StrS4: db "Model: 14784 params", 0
 StrS5: db "Sec/event", 0
 StrS6: db "Sec/word", 0
 StrS7: db "Words", 0
@@ -630,7 +682,7 @@ DrawStats::
     ld b, 2
     ld c, TEXT_COL
     call PrintAt
-    ld hl, StrS4
+    ld hl, StrModelParams
     ld b, 4
     ld c, 0
     call PrintAt

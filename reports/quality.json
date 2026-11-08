@@ -1,246 +1,343 @@
 {
   "all_greedy": {
     "strict": 1.0,
-    "action": 1.0,
-    "room": 1.0,
-    "outcome": 1.0,
+    "event": 1.0,
+    "closing": 1.0,
     "capped": 0.0,
-    "n": 283,
-    "unique": 159,
+    "n": 210,
+    "unique": 79,
     "examples": [
       [
-        "<R_FOREST>",
-        "<I_NONE>",
-        "<A_LEFT>",
-        "<O_MOVE>",
-        "YOU GO LEFT AND THE PALE ROOTS WAIT"
+        "ASK_CROWN",
+        0,
+        0,
+        "he laughs and lifts his axe . the stairs crumble behind him ."
       ],
       [
-        "<R_FOREST>",
-        "<I_NONE>",
-        "<A_LEFT>",
-        "<O_BLOCK>",
-        "YOU GO LEFT BUT NO PATH IS BY THE FERNS"
+        "ASK_CROWN",
+        1,
+        0,
+        "he laughs and lifts his axe . look . the stairs crumble behind him ."
       ],
       [
-        "<R_FOREST>",
-        "<I_NONE>",
-        "<A_LEFT>",
-        "<O_DARK>",
-        "YOU GO LEFT BUT YOU NEED A LAMP"
+        "ASK_CROWN",
+        3,
+        0,
+        "he laughs and lifts his axe . look . the stairs crumble behind him ."
       ],
       [
-        "<R_FOREST>",
-        "<I_NONE>",
-        "<A_LEFT>",
-        "<O_HURT>",
-        "YOU GO LEFT AND THE PALE ROOTS BITE"
+        "ASK_CROWN",
+        4,
+        0,
+        "he laughs and lifts his axe . he warns . the stairs crumble behind him ."
+      ],
+      [
+        "ASK_CROWN",
+        6,
+        0,
+        "he laughs and lifts his axe . he warns . the stairs crumble behind him ."
+      ],
+      [
+        "ASK_CROWN",
+        8,
+        0,
+        "he laughs and lifts his axe . the stairs crumble behind him ."
       ]
-    ]
+    ],
+    "failures": []
   },
   "test_heldout_greedy": {
     "strict": 1.0,
-    "action": 1.0,
-    "room": 1.0,
-    "outcome": 1.0,
+    "event": 1.0,
+    "closing": 1.0,
     "capped": 0.0,
-    "n": 9,
-    "unique": 9,
+    "n": 20,
+    "unique": 17,
     "examples": [
       [
-        "<R_FOREST>",
-        "<I_BOTH>",
-        "<A_RIGHT>",
-        "<O_MOVE>",
-        "YOU GO RIGHT AND YOUR KEY HUMS BY PALE ROOTS"
+        "ASK_CROWN",
+        11,
+        0,
+        "he laughs and lifts his axe . look . the stairs crumble behind him ."
       ],
       [
-        "<R_MARSH>",
-        "<I_BOTH>",
-        "<A_FORWARD>",
-        "<O_MOVE>",
-        "YOU WALK ON AND YOUR KEY HUMS BY COLD LEECHES"
+        "BREAK_CROWN",
+        2,
+        0,
+        "you break the crown and the mist lifts at last ."
       ],
       [
-        "<R_RIVER>",
-        "<I_LAMP>",
-        "<A_FORWARD>",
-        "<O_BLOCK>",
-        "YOU WALK ON BUT NO PATH IS BY THE RAPIDS"
+        "CROSS_BRIDGE",
+        1,
+        0,
+        "the bridge breaks and you fall . look . the altar blade bleeds ."
       ],
       [
-        "<R_RUINS>",
-        "<I_NONE>",
-        "<A_LEFT>",
-        "<O_MOVE>",
-        "YOU GO LEFT AND THE COLD ARCHES SIGH"
+        "FRIEND_HOLDS",
+        8,
+        0,
+        "your friend holds him and falls . the crown glows ."
+      ],
+      [
+        "OPEN_GATE",
+        11,
+        0,
+        "your key opens the gate . look . his hand rests on an axe ."
+      ],
+      [
+        "PRAY",
+        6,
+        0,
+        "you pray and feel safe . he warns . the bars are cruel ."
       ]
-    ]
+    ],
+    "failures": []
   },
   "heldout_all_greedy": {
     "strict": 1.0,
-    "action": 1.0,
-    "room": 1.0,
-    "outcome": 1.0,
+    "event": 1.0,
+    "closing": 1.0,
     "capped": 0.0,
-    "n": 15,
-    "unique": 15,
+    "n": 32,
+    "unique": 24,
     "examples": [
       [
-        "<R_FOREST>",
-        "<I_BOTH>",
-        "<A_RIGHT>",
-        "<O_MOVE>",
-        "YOU GO RIGHT AND YOUR KEY HUMS BY PALE ROOTS"
+        "ASK_CROWN",
+        8,
+        0,
+        "he laughs and lifts his axe . the stairs crumble behind him ."
       ],
       [
-        "<R_FOREST>",
-        "<I_BOTH>",
-        "<A_SEARCH>",
-        "<O_NOTHING>",
-        "YOU LOOK BUT FIND ONLY SILENT FERNS"
+        "ASK_CROWN",
+        11,
+        0,
+        "he laughs and lifts his axe . look . the stairs crumble behind him ."
       ],
       [
-        "<R_MARSH>",
-        "<I_NONE>",
-        "<A_RIGHT>",
-        "<O_BLOCK>",
-        "YOU GO RIGHT BUT NO PATH IS BY THE REEDS"
+        "BREAK_CROWN",
+        2,
+        0,
+        "you break the crown and the mist lifts at last ."
       ],
       [
-        "<R_MARSH>",
-        "<I_BOTH>",
-        "<A_FORWARD>",
-        "<O_MOVE>",
-        "YOU WALK ON AND YOUR KEY HUMS BY COLD LEECHES"
+        "CLIMB_WALL",
+        16,
+        0,
+        "you climb the wall and fall hard . his hand rests on an axe ."
+      ],
+      [
+        "CLIMB_WALL",
+        24,
+        0,
+        "you climb the wall and fall hard . his hand rests on an axe ."
+      ],
+      [
+        "CROSS_BRIDGE",
+        0,
+        0,
+        "the bridge breaks and you fall . the altar blade bleeds ."
       ]
-    ]
+    ],
+    "failures": []
   },
   "all_sampled": {
     "strict": 1.0,
-    "action": 1.0,
-    "room": 1.0,
-    "outcome": 1.0,
+    "event": 1.0,
+    "closing": 1.0,
     "capped": 0.0,
-    "n": 849,
-    "unique": 536,
+    "n": 630,
+    "unique": 133,
     "examples": [
       [
-        "<R_FOREST>",
-        "<I_NONE>",
-        "<A_LEFT>",
-        "<O_MOVE>",
-        "YOU GO LEFT AND THE PALE FERNS STIR"
+        "ASK_CROWN",
+        0,
+        0,
+        "he laughs and lifts his axe . the stairs crumble behind him ."
       ],
       [
-        "<R_FOREST>",
-        "<I_NONE>",
-        "<A_LEFT>",
-        "<O_MOVE>",
-        "YOU TURN LEFT AND THE SILENT FERNS STIR"
+        "ASK_CROWN",
+        0,
+        0,
+        "he laughs and lifts his axe . the stairs crumble behind him ."
       ],
       [
-        "<R_FOREST>",
-        "<I_NONE>",
-        "<A_LEFT>",
-        "<O_MOVE>",
-        "YOU TURN LEFT AND THE DARK FERNS STIR"
+        "ASK_CROWN",
+        0,
+        0,
+        "he laughs and lifts his axe . the stairs crumble behind him ."
       ],
       [
-        "<R_FOREST>",
-        "<I_NONE>",
-        "<A_LEFT>",
-        "<O_BLOCK>",
-        "YOU TURN LEFT BUT THE ROOTS STOP YOU"
+        "ASK_CROWN",
+        1,
+        0,
+        "he laughs and lifts his axe . look . the stairs crumble behind him ."
+      ],
+      [
+        "ASK_CROWN",
+        1,
+        0,
+        "he laughs and lifts his axe . look . the stairs crumble behind him ."
+      ],
+      [
+        "ASK_CROWN",
+        1,
+        0,
+        "he laughs and lifts his axe . look . the stairs crumble behind him ."
       ]
-    ]
+    ],
+    "failures": []
   },
   "test_heldout_sampled": {
     "strict": 1.0,
-    "action": 1.0,
-    "room": 1.0,
-    "outcome": 1.0,
+    "event": 1.0,
+    "closing": 1.0,
     "capped": 0.0,
-    "n": 270,
-    "unique": 122,
+    "n": 600,
+    "unique": 30,
     "examples": [
       [
-        "<R_FOREST>",
-        "<I_BOTH>",
-        "<A_RIGHT>",
-        "<O_MOVE>",
-        "YOU GO RIGHT AND YOUR KEY HUMS BY COLD ROOTS"
+        "ASK_CROWN",
+        11,
+        0,
+        "he laughs and lifts his axe . look . the stairs crumble behind him ."
       ],
       [
-        "<R_FOREST>",
-        "<I_BOTH>",
-        "<A_RIGHT>",
-        "<O_MOVE>",
-        "YOU TURN RIGHT AND YOUR KEY HUMS BY DARK ROOTS"
+        "ASK_CROWN",
+        11,
+        0,
+        "he laughs and lifts his axe . look . the stairs crumble behind him ."
       ],
       [
-        "<R_FOREST>",
-        "<I_BOTH>",
-        "<A_RIGHT>",
-        "<O_MOVE>",
-        "YOU TURN RIGHT AND YOUR KEY HUMS BY DARK ROOTS"
+        "ASK_CROWN",
+        11,
+        0,
+        "he laughs and lifts his axe . look . the stairs crumble behind him ."
       ],
       [
-        "<R_FOREST>",
-        "<I_BOTH>",
-        "<A_RIGHT>",
-        "<O_MOVE>",
-        "YOU GO RIGHT AND YOUR KEY HUMS BY PALE ROOTS"
+        "ASK_CROWN",
+        11,
+        0,
+        "he laughs and lifts his axe . look . the stairs crumble behind him ."
+      ],
+      [
+        "ASK_CROWN",
+        11,
+        0,
+        "he laughs and lifts his axe . look . the stairs crumble behind him ."
+      ],
+      [
+        "ASK_CROWN",
+        11,
+        0,
+        "he laughs and lifts his axe . look . the stairs crumble behind him ."
       ]
-    ]
+    ],
+    "failures": []
   },
   "untrained_all_greedy": {
     "strict": 0.0,
-    "action": 0.2049469964664311,
-    "room": 0.04946996466431095,
-    "outcome": 0.08833922261484099,
-    "capped": 1.0,
-    "n": 283,
-    "unique": 219,
+    "event": 0.0,
+    "closing": 0.0,
+    "capped": 0.9571428571428572,
+    "n": 210,
+    "unique": 201,
     "examples": [
       [
-        "<R_FOREST>",
-        "<I_NONE>",
-        "<A_LEFT>",
-        "<O_MOVE>",
-        "NO STIR LEECHES YOU HUMS STOP LEECHES STIR ON LOCKED LEECHES"
+        "ASK_CROWN",
+        0,
+        0,
+        "falls safe begs hides ancient enter here falls beside beside takes pray stairs grab at waits key altar old breaks"
       ],
       [
-        "<R_FOREST>",
-        "<I_NONE>",
-        "<A_LEFT>",
-        "<O_BLOCK>",
-        "KEY STIR LEECHES YOU LOOM SHADOWS BONES RAPIDS PALE STIR LEECHES"
+        "ASK_CROWN",
+        1,
+        0,
+        "falls safe begs hides ancient enter here falls beside beside takes pray drop safe begs grab at to grab at"
       ],
       [
-        "<R_FOREST>",
-        "<I_NONE>",
-        "<A_LEFT>",
-        "<O_DARK>",
-        "KEY STIR LEECHES YOU HUMS STOP LEECHES YOU HUMS OPENS YOU"
+        "ASK_CROWN",
+        3,
+        0,
+        "falls safe begs feel waits go ancient enter key now enter key altar walk old wake beside sags feel looks"
       ],
       [
-        "<R_FOREST>",
-        "<I_NONE>",
-        "<A_LEFT>",
-        "<O_HURT>",
-        "YOU STIR LEECHES YOU HUMS STOP LEECHES YOU HUMS OPENS YOU"
+        "ASK_CROWN",
+        4,
+        0,
+        "weeps key weeps key ruins ring icy are falls king glows key altar to weeps here falls safe icy hard"
+      ],
+      [
+        "ASK_CROWN",
+        6,
+        0,
+        "weeps force weeps tower weeps it in voice old pray weeps key altar to to back wall voice bridge eyes"
+      ],
+      [
+        "ASK_CROWN",
+        8,
+        0,
+        "falls lifts falls king mud sharp bleeds tower weeps key altar walk stairs begs hides here falls safe icy breaks"
+      ]
+    ],
+    "failures": [
+      [
+        "ASK_CROWN",
+        0,
+        0,
+        "falls safe begs hides ancient enter here falls beside beside takes pray stairs grab at waits key altar old breaks"
+      ],
+      [
+        "ASK_CROWN",
+        1,
+        0,
+        "falls safe begs hides ancient enter here falls beside beside takes pray drop safe begs grab at to grab at"
+      ],
+      [
+        "ASK_CROWN",
+        3,
+        0,
+        "falls safe begs feel waits go ancient enter key now enter key altar walk old wake beside sags feel looks"
+      ],
+      [
+        "ASK_CROWN",
+        4,
+        0,
+        "weeps key weeps key ruins ring icy are falls king glows key altar to weeps here falls safe icy hard"
+      ],
+      [
+        "ASK_CROWN",
+        6,
+        0,
+        "weeps force weeps tower weeps it in voice old pray weeps key altar to to back wall voice bridge eyes"
+      ],
+      [
+        "ASK_CROWN",
+        8,
+        0,
+        "falls lifts falls king mud sharp bleeds tower weeps key altar walk stairs begs hides here falls safe icy breaks"
+      ],
+      [
+        "ASK_CROWN",
+        9,
+        0,
+        "falls safe begs hides hides only tower weeps enter here enter key altar holds sharp begs hides voice old go"
+      ],
+      [
+        "ASK_CROWN",
+        11,
+        0,
+        "falls safe begs feel waits go ancient enter tower crumble beside cut drop safe ring beside take kneel breaks him"
       ]
     ]
   },
-  "action_ablation": {
-    "n": 225,
-    "changed_rate": 1.0,
-    "still_uses_original_action_phrase": 0.0,
-    "uses_new_action_phrase": 1.0
+  "conditioning": {
+    "beat_changed_rate": 1.0,
+    "flags_changed_rate": 0.425,
+    "n": 210,
+    "flag_pairs": 200
   },
   "novelty_test": {
-    "text_seen_in_train_for_any_prompt": 0.3333333333333333,
+    "text_seen_in_train_for_any_prompt": 0.9,
     "exact_prompt_plus_text_in_train": 0.0
   }
 }

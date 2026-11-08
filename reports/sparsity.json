@@ -1,6 +1,6 @@
 {
- "situations": 283,
- "forward_steps": 2662,
- "activations": 170368,
- "zero_share": 0.6187488260706235
+ "situations": 210,
+ "forward_steps": 2993,
+ "activations": 191552,
+ "zero_share": 0.5813512779819578
 }

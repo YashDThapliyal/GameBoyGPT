@@ -3,36 +3,33 @@
 INCLUDE "constants.inc"
 INCLUDE "model_constants.inc"
 
-DEF TOK_BOS   EQU 0
-DEF TOK_ROOM0 EQU 1
-DEF TOK_INV0  EQU 9
-DEF TOK_ACT0  EQU 12
-DEF TOK_OUT0  EQU 16
-
 SECTION "tok_code", ROM0
-; BuildPrompt: wSeq/wSeqLen from authoritative game state. Clobbers a, hl.
+IF !DEF(TEST_ROM)
+; BuildPrompt: wSeq/wSeqLen from authoritative game state: <BOS> BEAT FLAGS FATE. Clobbers a, de, hl, b.
 BuildPrompt::
     ld hl, wSeq
-    ld a, TOK_BOS
+    xor a
+    ld [hl+], a          ; <BOS> is id 0
+    ld a, [wBeatTok]
     ld [hl+], a
-    ld a, [wRoom]
-    add TOK_ROOM0
+    push hl
+    ld a, [wFlags]
+    ld e, a
+    ld d, 0
+    ld hl, FlagTokens
+    add hl, de
+    ld a, [hl]
+    pop hl
     ld [hl+], a
-    call InvCode
-    add TOK_INV0
+    ld a, [wFate]
+    add TOK_FATE0
     ld [hl+], a
-    ld a, [wAction]
-    add TOK_ACT0
-    ld [hl+], a
-    ld a, [wOutcome]
-    add TOK_OUT0
-    ld [hl+], a
-    ld a, 5
+    ld a, PROMPT_LEN
     ld [wSeqLen], a
     ; mirror the exact input ids for replay traces (instrumentation only)
     ld hl, wSeq
     ld de, wMB_LastTokens
-    ld b, 5
+    ld b, PROMPT_LEN
 .mirror:
     ld a, [hl+]
     ld [de], a
@@ -41,7 +38,6 @@ BuildPrompt::
     jr nz, .mirror
     ret
 
-IF !DEF(TEST_ROM)
 ; NarrateEvent: runs the neural model on the Game Boy CPU and streams words into the story box.
 NarrateEvent::
     call ThinkingPanel
@@ -51,7 +47,6 @@ NarrateEvent::
     ld a, ST_GENERATING
     call SetState
     xor a
-    ld c, 11
     call ThinkingProgress
     call GenerateTokens
     jr nc, .ok
@@ -61,7 +56,7 @@ NarrateEvent::
     ld hl, wTotalFallbacks
     inc [hl]
     ld a, '.'
-    call AppendChar
+    call AppendRaw
 .ok:
     call EventTimerStop
     ld a, [wMB_NumTokens]
@@ -73,41 +68,40 @@ NarrateEvent::
 ; TokenHook: a = new token id. Called by the generator after each token; preserves nothing.
 TokenHook::
     ld b, a
-    push bc
     ; mirror sequence for the harness
     ld a, [wMB_NumTokens]
-    add 4
+    add PROMPT_LEN - 1
     ld e, a
     ld d, 0
     ld hl, wMB_LastTokens
     add hl, de
     ld [hl], b
-    pop bc
     ld a, b
     cp TOK_EOS
-    jr nz, .word
-    ld a, '.'
-    call AppendChar
-    jr .prog
-.word:
-    call AppendWord
-.prog:
+    call nz, AppendWord
     ld a, [wMB_NumTokens]
-    ld c, 11
     jp ThinkingProgress
 
-; AppendWord: a = token id >= first word. Wraps at TEXT_WIDTH. Clobbers everything.
+; AppendWord: a = token id above <EOS>. Wraps at TEXT_WIDTH. A full stop sticks to the word before it and
+; makes the next letter a capital. Clobbers everything.
 AppendWord:
     sub TOK_FIRST_GEN
-    add a
-    ld e, a
-    ld d, 0
-    ld hl, WordPtrs
+    ld l, a
+    ld h, 0
+    add hl, hl           ; 16-bit: the word table is larger than 128 entries
+    ld de, WordPtrs
     add hl, de
     ld a, [hl+]
     ld h, [hl]
     ld l, a              ; hl = word
-    ; length
+    ld a, [hl]
+    cp '.'
+    jr nz, .word
+    call AppendRaw
+    ld a, 1
+    ld [wCapNext], a
+    ret
+.word:
     push hl
     ld b, 0
 .len:
@@ -144,24 +138,23 @@ AppendWord:
     pop de
     jr .put
 
-; AppendChar: a = ASCII, no wrapping (punctuation sticks to the word).
-AppendChar:
-    jr AppendRaw
-
 ; AppendRaw: a = ASCII at the text cursor. Clobbers a, bc, de, hl.
 AppendRaw:
     ld c, a
     ld a, [wTextRowN]
     cp TEXT_ROWS
     ret nc               ; never draw past the story box, even for an ungrammatical event
-    ld b, a
-    ld a, [wTextColN]
-    or b
+    ld a, [wCapNext]
+    or a
     ld a, c
-    jr nz, .plain
+    jr z, .plain
     cp 'a'
     jr c, .plain
-    sub 'a' - 'A'        ; first letter of the event
+    sub 'a' - 'A'
+    ld c, a
+    xor a
+    ld [wCapNext], a
+    ld a, c
 .plain:
     sub $20
     push af

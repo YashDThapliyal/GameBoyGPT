@@ -2,10 +2,10 @@
   "config": {
     "seed": 1234,
     "threads": 1,
-    "n_train": 48000,
+    "n_train": 60000,
     "n_eval": 4000,
     "model": {
-      "ctx": 16,
+      "ctx": 24,
       "d": 32,
       "heads": 2,
       "ffn": 64,
@@ -14,26 +14,27 @@
     "batch": 256,
     "lr": 0.004,
     "weight_decay": 0.001,
-    "float_steps": 12000,
-    "qat_steps": 8000,
-    "eval_every": 1000,
-    "out": "checkpoints/release.pt"
+    "float_steps": 20000,
+    "qat_steps": 12000,
+    "eval_every": 2000,
+    "out": "checkpoints/release.pt",
+    "train_on_all": true
   },
   "model": {
-    "vocab": 95,
-    "ctx": 16,
+    "vocab": 196,
+    "ctx": 24,
     "d": 32,
     "heads": 2,
     "ffn": 64,
     "layers": 1
   },
-  "params": 14784,
+  "params": 21504,
   "untrained": {
-    "val_nll": 5.274969666774007,
-    "uniform_nll": 4.553876891600541
+    "val_nll": 5.917098082726006,
+    "uniform_nll": 5.278114659230517
   },
-  "best_val_nll_quant": 0.3036156969207566,
-  "test_nll_quant": 0.3101390790542717,
-  "test_nll_float": 0.3100334035502883,
-  "train_seconds": 162.3197979927063
+  "best_val_nll_quant": 0.008153648735256007,
+  "test_nll_quant": 0.03160412448269504,
+  "test_nll_float": 0.031681423053874835,
+  "train_seconds": 468.97121381759644
 }

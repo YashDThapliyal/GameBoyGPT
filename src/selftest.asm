@@ -26,16 +26,16 @@ SelfTestMain::
     call ClearText
     ld a, [wStCase]
     call StCasePtr
-    inc hl               ; skip length: the prompt is always the first 5 ids
+    inc hl               ; skip length: the prompt is always first
     ld de, wSeq
-    ld b, 5
+    ld b, PROMPT_LEN
 .copy:
     ld a, [hl+]
     ld [de], a
     inc de
     dec b
     jr nz, .copy
-    ld a, 5
+    ld a, PROMPT_LEN
     ld [wSeqLen], a
     call ModelReset
     call EventTimerStart
@@ -98,16 +98,13 @@ SelfTestMain::
 
 ; StCasePtr: a = case -> hl. Clobbers a, de.
 StCasePtr:
-    ld l, a
-    ld h, 0
-    ld d, h
-    ld e, l
-    add hl, hl
-    add hl, hl
-    add hl, hl
-    add hl, hl
-    add hl, de           ; * 17
-    ld de, SelfTestCases
+    ld hl, SelfTestCases
+    ld de, CASE_SIZE
+    or a
+    ret z
+.step:
     add hl, de
+    dec a
+    jr nz, .step
     ret
 ENDC

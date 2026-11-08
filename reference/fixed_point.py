@@ -13,7 +13,8 @@ NORM_SHIFT = 5
 W_SHIFT = 7
 SAMPLE_CANDIDATES = 4
 EXP_LUT = tuple(round(127 * math.exp(-d / 16)) for d in range(128))
-RECIP_LUT = tuple(min(127, round(2 ** 14 / (8 * i + 4))) for i in range(256))
+RECIP_LUT = tuple(min(127, round(2 ** 14 / (16 * i + 8))) for i in range(256))
+RECIP_SHIFT = 4  # 24 positions x 127 fits an 8-bit index after this shift
 NORM_LUT = tuple(min(127, round(512 / max(m, 1))) for m in range(128))
 
 
@@ -50,7 +51,7 @@ def norm(x) -> list[int]:
 def attention_weights(scores) -> list[int]:
     top = max(scores)
     raw = [EXP_LUT[top - s] if top - s < 128 else 0 for s in scores]
-    r = RECIP_LUT[sum(raw) >> 3]
+    r = RECIP_LUT[sum(raw) >> RECIP_SHIFT]
     return [(w * r + (1 << (W_SHIFT - 1))) >> W_SHIFT for w in raw]
 
 

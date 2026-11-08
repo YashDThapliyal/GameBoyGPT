@@ -232,8 +232,8 @@ ScoresToWeights::
     inc hl
     dec b
     jr nz, .raw
-    ; idx = sum >> 3, r = RecipLut[idx]
-    REPT 3
+    ; idx = sum >> 4, r = RecipLut[idx]
+    REPT 4
     srl d
     rr e
     ENDR

@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path[:0] = [str(ROOT), str(ROOT / "tools"), str(ROOT / "tests")]
 from kernel_harness import KernelRig, CMD_GENERATE, CMD_STEP, CMD_DOT, CMD_MUL, CMD_MATVEC
 from run_emulator import GB
-from reference import game as g
+from reference import story as st
 from training import dataset as ds
 
 HZ = 4194304
@@ -18,10 +18,10 @@ CSV_FIELDS = ("version,git_commit,rom_sha256,model_sha256,emulator,emulator_vers
               "nominal_seconds_per_token,seconds_per_event,bank_switches,peak_wram_bytes,peak_sram_bytes,rom_bytes,"
               "token_match_baseline,heldout_nll,action_valid_rate,notes").split(",")
 WORKLOADS = {
-    "PROMPT_A": (g.FOREST, 0, g.LEFT, g.MOVE),      # forest, no key, LEFT
-    "PROMPT_B": (g.CAVE, 2, g.SEARCH, g.KEY),       # cave, lantern (then key found), SEARCH
-    "PROMPT_C": (g.TOWER, 2, g.FORWARD, g.WIN),     # tower, key, FORWARD
-    "PROMPT_D": (g.RIVER, 0, g.RIGHT, g.MOVE),      # river, no inventory, RIGHT
+    "PROMPT_A": ("HEAR_VOICE", 0, 0),                     # first choice in the story, nothing carried
+    "PROMPT_B": ("LIGHT_LAMP", st.LAMP, 0),               # the cave, with the lamp
+    "PROMPT_C": ("TAKE_CROWN", st.LAMP | st.KEY, 0),      # an ending
+    "PROMPT_D": ("CROSS_BRIDGE", st.FRIEND, 0),           # hurt at the river, with a friend
 }
 PHASES = [("kv", "ForwardStep", "BlockAfterKV"), ("q", "BlockAfterKV", "PhAttn"), ("attention", "PhAttn", "PhProj"),
           ("proj_residual_norm", "PhProj", "PhFfn"), ("ffn_norm", "PhFfn", "PhOut"), ("output", "PhOut", "PickToken"),
@@ -131,9 +131,9 @@ def bench_variant(version: str, rounds: int, baseline_tokens: dict | None, quali
             rows.append(_row(version, game_rom, model_sha, name, len(r["tokens"]), rnd, tok, r["banks"], wram_game, r["stack"], match, nll, quality, "kernel mode: LCD off, IME off"))
             raw["workloads"].setdefault(name, []).append(r)
     # Context-length sensitivity: same prompt extended with fixed tokens, single step, no prior cache.
-    fixed = ds.prompt_ids(*WORKLOADS["PROMPT_A"]) + [ds.STOI[w] for w in ("YOU", "TURN", "LEFT", "AND", "THE", "COLD", "ROOTS", "STIR", "YOU", "GO", "LEFT")]
+    fixed = (ds.prompt_ids(*WORKLOADS["PROMPT_A"]) + [ds.STOI[w] for w in "you follow the voice into the marsh . a prisoner begs in the mud .".split()])[:ds.CTX]
     raw["context_step"] = {}
-    for L in (4, 8, 16):
+    for L in (4, 8, 16, 18):
         cycles = []
         for _ in range(rounds):
             rig.gb.write("wSeq", fixed[:L])
@@ -181,46 +181,43 @@ def _row(version, rom, model_sha, workload, ctx, rnd, per_token, banks, wram, st
 
 def ux_mode(version, rom, rows, model_sha, wram, nll, quality, baseline_tokens) -> dict:
     """Same model inside the real game loop: LCD on, VBlank ISR running, words drawn as they arrive."""
-    seed = 7
     gb = GB(rom)
     gb.wait_state(1, 2000)
     gb.tick(5)
     gb.write("wMB_ForceSeed", [1])
-    gb.write("wMB_Seed", [seed & 255, seed >> 8])
+    gb.write("wMB_Seed", [7, 0])
     gb.write("wMB_Greedy", [1])
     gb.press("start")
     gb.wait_state(2, 3000)
     gb.press("a")
     gb.wait_state(3, 600)
     gb.write("wStackBottom", [0xA5] * 0xF0)  # measures depth with the ISR and UI live, unlike kernel mode
-    w, s = g.gen_world(seed), None
-    s = g.start(w)
-    BUTTONS = {g.LEFT: ("left",), g.RIGHT: ("right",), g.FORWARD: ("up",), g.SEARCH: ("down",)}
     events = []
     t = Timers(gb)
     t.on("ProfileTokenStart", "ProfileTokenEnd", "NarrateEvent", "ThinkingDone")
+    s = st.State()
     for turn in range(5):
-        a = g.next_action(w, s)
-        s, out = g.step(w, s, a)
-        for b in BUTTONS[a]:
-            gb.press(b)
+        c = st.available(s)[0]
+        s = st.step(s, c)
+        gb.tick(4)
         n0 = len(t.log)
         banks0 = bank_counter(gb)
         gb.press("a")
         gb.wait_for(lambda: gb.read1("wMB_State") == 6, 400000)
         log = t.log[n0:]
-        starts = [c for n, c in log if n == "ProfileTokenStart"]
-        ends = [c for n, c in log if n == "ProfileTokenEnd"]
-        per = [e - st for st, e in zip(starts, ends)]
-        narr = [c for n, c in log if n == "NarrateEvent"][0]
-        done = [c for n, c in log if n == "ThinkingDone"][0]
+        starts = [c2 for n, c2 in log if n == "ProfileTokenStart"]
+        ends = [c2 for n, c2 in log if n == "ProfileTokenEnd"]
+        per = [e - st_ for st_, e in zip(starts, ends)]
+        narr = [c2 for n, c2 in log if n == "NarrateEvent"][0]
+        done = [c2 for n, c2 in log if n == "ThinkingDone"][0]
         frames = gb.read("wMB_EventFrames", 2)
         events.append({"turn": turn, "tokens": len(per), "tcycles_per_token": per, "event_tcycles": done - narr, "on_device_frames": frames[0] | frames[1] << 8,
                        "bank_switches": bank_counter(gb) - banks0})
         gb.tick(8)
         gb.press("a")
-        if not s.done:
-            gb.wait_state(3, 3000)
+        if st.BY_ID[s.scene].ending:
+            break
+        gb.wait_state(3, 3000)
     t.off()
     peak = stack_peak(gb)
     gb.stop()

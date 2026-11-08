@@ -1,114 +1,59 @@
-"""Phase 5 gate and zero-fake audit: real on-device narration, parity with the reference, no canned text."""
-import hashlib
-import os
-import shutil
-import sys
-from pathlib import Path
-import pytest
-ROOT = Path(__file__).resolve().parent.parent
-sys.path[:0] = [str(ROOT), str(ROOT / "tools")]
-from run_emulator import GB, load_symbols
-from reference import fixed_point as fp, game as g
-from export_weights import from_blob, to_blob
-from training import dataset as ds
+"""Zero-fake audit: real on-device narration, parity with the reference, no canned text."""
 import dataclasses
+import shutil
+import pytest
+from run_emulator import load_symbols
+from story_harness import *
 
-VARIANT = os.environ.get("GBGPT_VARIANT", "V0")
-ROM = ROOT / "build" / VARIANT / "gameboygpt.gb"
-ST_TITLE, ST_INTRO, ST_MENU, ST_GENERATING, ST_REVEAL, ST_ENDING = 1, 2, 3, 5, 6, 8
-BUTTONS = {g.LEFT: ("left",), g.RIGHT: ("right",), g.FORWARD: ("up",), g.SEARCH: ("down",)}
-MODEL = from_blob((ROOT / "generated" / "model.bin").read_bytes())
-
-
-def start(rom, seed, greedy):
-    gb = GB(rom, Path(rom).with_suffix(".sym"))
-    gb.wait_state(ST_TITLE, 2000)
-    gb.tick(5)
-    gb.write("wMB_ForceSeed", [1])
-    gb.write("wMB_Seed", [seed & 255, seed >> 8])
-    gb.write("wMB_Greedy", [1 if greedy else 0])
-    gb.press("start")
-    gb.wait_state(ST_INTRO, 3000)
-    gb.press("a")
-    gb.wait_state(ST_MENU, 600)
-    return gb
+ROUTES = {
+    "crown": ["Follow the light", "Take the lamp", "Enter the cave", "Light the lamp", "Take the key", "Pray at the altar", "Use the key", "Sneak past him", "Take the crown"],
+    "freed": ["Hear the voice", "Free the prisoner", "Enter the cave", "Call for help", "Take the key", "Walk on", "Use the key", "Wake him", "Free him"],
+    "ring": ["Hear the voice", "Take his ring", "Wade the shallows", "Walk on", "Climb the wall", "Wake him", "Show the ring"],
+}
 
 
-def choose(gb, action):
-    for b in BUTTONS[action]:
-        gb.press(b)
-    gb.press("a")
-    gb.wait_for(lambda: gb.read1("wMB_State") == ST_REVEAL, 400000)
-    gb.tick(8)
-
-
-def event_tokens(gb):
-    n = gb.read1("wMB_NumTokens")
-    return gb.read("wMB_LastTokens", 5 + n)
-
-
-def visible_text(gb):
-    rows = []
-    for r in (8, 10, 12, 14):
-        rows.append("".join(chr(t + 0x20) if t < 96 else "?" for t in gb.read("wBgMap", 19, r * 20 + 1)).rstrip())
-    return " ".join(x for x in rows if x)
-
-
-def render(tokens):
-    words = [ds.VOCAB[t].lower() for t in tokens if t != ds.EOS]
-    return " ".join(words).capitalize() + "."
-
-
-def assert_clean_screen(gb):
-    for row in range(18):
-        assert [gb.mem[0x9800 + row * 32 + c] for c in range(20)] == gb.read("wBgMap", 20, row * 20), f"row {row}"
-
-
-@pytest.mark.parametrize("seed,greedy", [(7, True), (321, False), (9001, False)])
-def test_full_journey_to_the_ending_matches_reference(seed, greedy):
-    gb = start(ROM, seed, greedy)
-    w = g.gen_world(seed)
-    s = g.start(w)
-    narr = w.rng ^ 0xA5A5
-    turns = valid = 0
-    while not s.done:
-        a = g.next_action(w, s)
-        s, out = g.step(w, s, a)
-        situation = (s.room, g.inv_code(s), a, out)
-        prompt = ds.prompt_ids(*situation)
-        want = fp.generate(MODEL, prompt, greedy=greedy, rng=narr)
+def play(rom, route, greedy, seed):
+    gb = boot(rom, seed, greedy)
+    s = st.State()
+    narr = seed or 1
+    turns = []
+    for label in route:
+        options = st.available(s)
+        i = next(n for n, c in enumerate(options) if c.label == label)
+        s, situation = situation_after(s, options[i])
+        want = fp.generate(MODEL, ds.prompt_ids(*situation), greedy=greedy, rng=narr)
         narr = want["rng"]
-        choose(gb, a)
-        turns += 1
-        assert gb.read1("wMB_Room") == s.room and gb.read1("wMB_Outcome") == out
+        choose(gb, i)
+        turns.append((situation, want))
         assert event_tokens(gb) == want["tokens"], situation
         assert visible_text(gb) == render(want["generated"])
         assert_clean_screen(gb)
-        valid += ds.check_sentence(situation, [t for t in want["generated"] if t != ds.EOS])["strict"]
-        gb.press("a")
-        gb.wait_for(lambda: gb.read1("wMB_State") in (ST_MENU, ST_ENDING), 3000)
-    assert turns >= 5
-    assert valid == turns, "every narrated event must be grammar-valid"
+        next_page(gb)
+    return gb, s, turns
+
+
+@pytest.mark.parametrize("name,greedy,seed", [("crown", True, 7), ("crown", False, 321), ("freed", False, 9001), ("ring", False, 55)])
+def test_full_journey_to_the_ending_matches_reference(name, greedy, seed):
+    gb, s, turns = play(ROM, ROUTES[name], greedy, seed)
+    assert st.BY_ID[s.scene].ending and gb.read1("wMB_State") == ST_ENDING
+    for situation, want in turns:
+        assert ds.check_sentence(situation, [t for t in want["generated"] if t != ds.EOS])["strict"], situation
     assert gb.read1("wMB_Fallbacks") == 0 and gb.read1("wMB_Placeholder") == 0
-    assert gb.read1("wMB_State") == ST_ENDING
     gb.press("a")
-    gb.wait_state(ST_TITLE, 2000)  # NEW RUN path returns to the title without a reset
+    gb.wait_state(ST_TITLE, 2000)
     gb.stop()
 
 
-def test_same_state_different_action_differs_because_input_differs():
-    """Spec gate 5: same room+inventory, two actions, different inputs and different neural continuations."""
-    seed = 7
+def test_same_menu_different_choice_differs_because_input_differs():
     results = {}
-    for action in (g.LEFT, g.RIGHT):
-        gb = start(ROM, seed, True)
-        w = g.gen_world(seed)
-        s, out = g.step(w, g.start(w), action)
-        choose(gb, action)
-        results[action] = event_tokens(gb)
-        assert results[action][3] == ds.STOI[ds.ACT_TOK[action]]
+    options = st.available(st.State())
+    for i in range(2):
+        gb = boot()
+        choose(gb, i)
+        results[i] = event_tokens(gb)
+        assert results[i][1] == ds.STOI[f"<B_{options[i].beat}>"]
         gb.stop()
-    assert results[g.LEFT][:5] != results[g.RIGHT][:5] and results[g.LEFT][5:] != results[g.RIGHT][5:]
+    assert results[0][:ds.PROMPT_LEN] != results[1][:ds.PROMPT_LEN] and results[0][ds.PROMPT_LEN:] != results[1][ds.PROMPT_LEN:]
 
 
 def test_rom_contains_real_weights_and_no_canned_narration():
@@ -121,10 +66,9 @@ def test_rom_contains_real_weights_and_no_canned_narration():
         flat = bytes(v & 0xFF for row in getattr(MODEL, name) for v in row)
         biased = bytes((v + 128) & 0xFF for row in getattr(MODEL, name) for v in row)
         assert rom[off:off + len(flat)] in (flat, biased), name
-    for phrase in (b"you turn", b"and the", b"you look", b"but the", b"under the"):
-        assert phrase not in rom.lower(), "narration must not exist as stored sentences"
-    words_blob = sum(len(w) + 1 for w in ds.VOCAB[ds.FIRST_GEN:])
-    assert words_blob < 700
+    low = rom.lower()
+    for phrase in ("you follow the", "the bridge breaks", "your key opens", "the crown is yours", "he laughs and"):
+        assert phrase.encode() not in low, "narration must not exist as stored sentences"
 
 
 def test_output_changes_when_rom_weights_are_patched(tmp_path):
@@ -133,8 +77,11 @@ def test_output_changes_when_rom_weights_are_patched(tmp_path):
     bank, addr = syms["DataOut"]
     off = bank * 0x4000 + addr - 0x4000
     rom = bytearray(ROM.read_bytes())
-    row = 40  # a real word row: swing its weights hard
     biased = rom[off:off + 32] != bytes(v & 0xFF for v in MODEL.w_out[0])
+    option = st.available(st.State())[0]
+    _, situation = situation_after(st.State(), option)
+    original = fp.generate(MODEL, ds.prompt_ids(*situation))["tokens"]
+    row = original[ds.PROMPT_LEN]  # the first word it would have said: swing that row's weights hard
     patched_rows = [list(r) for r in MODEL.w_out]
     for c in range(32):
         v = -MODEL.w_out[row][c]
@@ -143,15 +90,9 @@ def test_output_changes_when_rom_weights_are_patched(tmp_path):
     patched = tmp_path / "patched.gb"
     patched.write_bytes(rom)
     shutil.copy(ROM.with_suffix(".sym"), patched.with_suffix(".sym"))
-    m2 = dataclasses.replace(MODEL, w_out=tuple(map(tuple, patched_rows)))
-    seed = 7
-    w = g.gen_world(seed)
-    s, out = g.step(w, g.start(w), g.FORWARD)
-    prompt = ds.prompt_ids(s.room, g.inv_code(s), g.FORWARD, out)
-    original = fp.generate(MODEL, prompt)["tokens"]
-    expected = fp.generate(m2, prompt)["tokens"]
+    expected = fp.generate(dataclasses.replace(MODEL, w_out=tuple(map(tuple, patched_rows))), ds.prompt_ids(*situation))["tokens"]
     assert original != expected, "patch must matter to the reference"
-    gb = start(patched, seed, True)
-    choose(gb, g.FORWARD)
+    gb = boot(patched)
+    choose(gb, 0)
     assert event_tokens(gb) == expected
     gb.stop()

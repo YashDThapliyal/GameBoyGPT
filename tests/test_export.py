@@ -19,10 +19,9 @@ def test_geometry_and_parameter_count_match_the_on_screen_claim():
     m = from_blob(BLOB.read_bytes())
     fields = ("tok", "pos", "w_q", "w_k", "w_v", "w_o", "w_f1", "w_f2", "w_out")
     params = sum(len(getattr(m, f)) * len(getattr(m, f)[0]) for f in fields)
-    assert params == 14784
-    assert "14784 params" in (ROOT / "src" / "ui.asm").read_text()
-    assert (m.d, m.heads, m.head_dim, m.ctx) == (32, 2, 16, 16)
-    assert len(m.w_out) == len(ds.VOCAB) == 95 and m.eos == ds.EOS == m.first_gen == 27
+    assert f"Model: {params} params" in (ROOT / "generated" / "V0" / "luts.asm").read_text()
+    assert (m.d, m.heads, m.head_dim, m.ctx) == (32, 2, 16, ds.CTX)
+    assert len(m.w_out) == len(ds.VOCAB) and m.eos == ds.EOS == m.first_gen
 
 
 def test_all_weights_in_multiply_range():
@@ -39,8 +38,8 @@ def test_accumulators_cannot_overflow_their_stated_width():
     assert (32 * 127 * 127 + 8) >> fp.LOGIT_SHIFT < 1 << 15, "int16 logits"
     # Sparse aggregation uses 16-bit accumulators: bound sum(w') over every reachable raw-weight sum.
     worst = 0
-    for s in range(127, 127 * 16 + 1):
-        r = fp.RECIP_LUT[s >> 3]
-        # sum of (w*r+64)>>7 is at most (s*r + 64*16) / 128
-        worst = max(worst, (s * r + 64 * 16) // 128)
+    for s in range(127, 127 * ds.CTX + 1):
+        r = fp.RECIP_LUT[s >> fp.RECIP_SHIFT]
+        # sum of (w*r+64)>>7 is at most (s*r + 64*CTX) / 128
+        worst = max(worst, (s * r + 64 * ds.CTX) // 128)
     assert worst * 127 + 64 < 1 << 15, worst

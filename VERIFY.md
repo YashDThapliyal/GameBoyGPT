@@ -28,20 +28,21 @@ It rebuilds all 11 variants from source, runs every test, checks that rebuilt RO
 
 | Claim | Where it's checked | How to challenge it |
 |---|---|---|
-| Inference runs on the SM83 | `src/matvec.asm`, `attention.asm`, `model.asm`, `tests/test_generated_output.py` | Patch weights in the ROM and watch the text change: `test_output_changes_when_rom_weights_are_patched` |
+| Inference runs on the SM83 | `src/matvec.asm`, `src/attention.asm`, `src/model.asm`, `tests/test_generated_output.py` | Patch weights in the ROM and watch the text change: `test_output_changes_when_rom_weights_are_patched` |
 | No stored sentences | `test_rom_contains_real_weights_and_no_canned_narration` | Search the ROM yourself; words exist only as a vocabulary table |
 | Bit-exact arithmetic | `reference/fixed_point.py`, `tests/test_kernel_vectors.py`, `tests/test_model_parity.py` | Read the reference: plain Python integers, sharing no code with the trainer. Add your own vectors using `tests/kernel_harness.py` |
 | No host involvement | `src/selftest.asm`, `tools/second_emulator.py` | Run `build/V5Z/selftest.gb` in any DMG emulator and read the verdict on screen |
 | The timing is real | `tests/test_smoke.py`, `tools/benchmark.py` | `make benchmark` re-measures. Compare `reports/benchmark.csv` with on-screen frames at 70,224 T-cycles per frame |
 | Tokens match across builds | `token_match_baseline` in `reports/benchmark.csv` | `tests/test_benchmark_integrity.py` fails on any mismatch |
-| Quality numbers | `training/evaluate.py`, `reports/quality.json` | `make quality` recomputes them. Read `training/dataset.py` to judge how narrow the task is |
+| Quality numbers | `training/evaluate.py`, `reports/quality.json`, `reports/quality_heldout.json` | `make quality` and `make heldout` recompute them. Read `training/dataset.py` to judge how narrow the task is |
+| Story integrity | `reference/story.py`, `tests/test_story.py`, `tests/test_rom_game.py` | The graph tests search every reachable state. ROM tables are generated from the same file |
 | Training reproduces | `configs/release.yaml` | `make train`, then compare the blob hash. Byte equality was confirmed on one machine and may not hold across machines or PyTorch builds |
 
 ## What this does not establish
 
 - **Physical hardware.** Everything here ran on emulators. The shipping build's SP-based weight stream is the part most likely to matter on real silicon. `V5` avoids it.
 - **PPU timing on every screen.** PyBoy's memory reads don't model PPU access locks, and SameBoy only runs the self-test ROM, not full gameplay.
-- **General language ability.** The model learned a small grammar, as `training/dataset.py` shows.
+- **General language ability or creativity.** The plot and sentences are authored, and the model learned them, as `reference/story.py` and `training/dataset.py` show.
 - **Readability of the UI.** Only a person can judge this; tests check correctness, not clarity.
 
 ## Also useful

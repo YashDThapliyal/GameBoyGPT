@@ -21,7 +21,7 @@ wMB_Greedy::       ds 1     ; harness: nonzero forces argmax decoding
 wMB_Placeholder::  ds 1     ; nonzero if a static placeholder event was shown
 wMB_BankSwitches:: ds 3
 wMB_EventFrames::  ds 2     ; on-device timing of last event, in LCD frames
-wMB_LastTokens::   ds 16    ; prompt + generated ids of the current event
+wMB_LastTokens::   ds 24    ; prompt + generated ids of the current event
 wMB_LogitSum::     ds 2     ; 16-bit wrapping sum of the masked logits of the last step
 wMB_Cmd::          ds 1     ; test ROM command
 wMB_CmdSeq::       ds 1     ; harness increments to request execution

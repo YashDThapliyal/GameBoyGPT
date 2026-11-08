@@ -1,45 +1,7 @@
-"""Phase 1 gate: ROM boots in DMG mode, and assembly world rules track reference/game.py exactly."""
-import os
+"""ROM boots in DMG mode, and the assembly story engine tracks reference/story.py through every kind of path."""
 import random
-import sys
-from pathlib import Path
 import pytest
-ROOT = Path(__file__).resolve().parent.parent
-sys.path[:0] = [str(ROOT), str(ROOT / "tools")]
-from run_emulator import GB
-from reference import game as g
-
-ROM = ROOT / "build" / os.environ.get("GBGPT_VARIANT", "V0") / "gameboygpt.gb"
-ST_TITLE, ST_INTRO, ST_MENU, ST_REVEAL = 1, 2, 3, 6
-BUTTON_FOR_ACTION = {g.LEFT: ("left",), g.RIGHT: ("right",), g.FORWARD: ("up",), g.SEARCH: ("down",)}
-
-
-def boot(seed):
-    gb = GB(ROM)
-    gb.wait_state(ST_TITLE, 2000)
-    gb.tick(5)
-    gb.write("wMB_ForceSeed", [1])
-    gb.write("wMB_Seed", [seed & 255, seed >> 8])
-    gb.write("wMB_Greedy", [1])
-    gb.press("start")
-    gb.wait_state(ST_INTRO, 3000)
-    gb.press("a")
-    gb.wait_state(ST_MENU, 600)
-    return gb
-
-
-def act(gb, action):
-    for b in BUTTON_FOR_ACTION[action]:
-        gb.press(b)
-    gb.press("a")
-    gb.wait_state(ST_REVEAL, 200000)
-
-
-def assert_vram_matches_shadow(gb):
-    gb.tick(8)
-    for row in range(18):
-        vram = [gb.mem[0x9800 + row * 32 + c] for c in range(20)]
-        assert vram == gb.read("wBgMap", 20, row * 20), f"row {row}"
+from story_harness import *
 
 
 def test_header_is_dmg_mbc5_with_valid_checksum():
@@ -53,38 +15,68 @@ def test_header_is_dmg_mbc5_with_valid_checksum():
     assert len(rom) == 32768 << rom[0x148], "declared ROM size must match the file"
 
 
-@pytest.mark.parametrize("seed", [1, 7, 500, 4242, 60000])
-def test_world_generation_matches_reference(seed):
-    gb = boot(seed)
-    w = g.gen_world(seed)
-    assert gb.read("wCycle", 7) == list(w.cycle)
-    assert gb.read("wLampRoom") == [w.lamp_room]
-    assert gb.read("wExits", 24) == [x for e in w.exits for x in e]
-    assert gb.read("wRng", 2) == [w.rng & 255, w.rng >> 8]
+def assert_state(gb, s):
+    assert gb.read1("wMB_Room") == SCENE_INDEX[s.scene]
+    assert gb.read1("wMB_Inv") == s.flags
+    assert gb.read1("wMB_Lives") == s.wounds
+    assert gb.read1("wMB_Turn") == s.turn
+
+
+@pytest.mark.parametrize("seed", [1, 2, 3, 4])
+def test_random_playthroughs_match_reference(seed):
+    gb = boot(greedy=True, seed=seed)
+    rnd = random.Random(seed)
+    s = st.State()
+    while not st.BY_ID[s.scene].ending:
+        options = st.available(s)
+        assert gb.read1("wNumChoices") == len(options)
+        i = rnd.randrange(len(options))
+        s = st.step(s, options[i])
+        choose(gb, i)
+        assert_state(gb, s)
+        assert_clean_screen(gb)
+        next_page(gb)
+    assert gb.read1("wMB_State") == ST_ENDING
     gb.stop()
 
 
-@pytest.mark.parametrize("seed", [3, 99])
-def test_scripted_turns_match_reference_and_render_cleanly(seed):
-    gb = boot(seed)
-    w = g.gen_world(seed)
-    s = g.start(w)
-    rnd = random.Random(seed)
-    turns = 0
-    while not s.done and turns < 8:
-        a = rnd.randrange(4)
-        s, out = g.step(w, s, a)
-        act(gb, a)
-        turns += 1
-        assert gb.read1("wMB_Room") == s.room
-        assert gb.read1("wMB_Outcome") == out
-        assert gb.read1("wMB_Lives") == s.lives
-        assert gb.read1("wMB_Inv") == g.inv_code(s)
-        assert gb.read1("wMB_Turn") == s.turn
-        assert gb.read("wRng", 2) == [s.rng & 255, s.rng >> 8]
-        assert_vram_matches_shadow(gb)
-        gb.press("a")
-        if not s.done:
-            gb.wait_state(ST_MENU, 2000)
-    assert turns >= 5 or s.done
+def test_menu_only_offers_what_you_have_earned():
+    """Same scene, different earlier choice, different menu: the lamp is what opens the cave."""
+    def reach_cave(first):
+        gb = boot()
+        s = st.State()
+        for label in first:
+            options = st.available(s)
+            i = next(n for n, c in enumerate(options) if c.label == label)
+            s = st.step(s, options[i])
+            choose(gb, i)
+            next_page(gb)
+        return gb, s
+    with_lamp, a = reach_cave(["Follow the light", "Take the lamp", "Enter the cave"])
+    with_sword, b = reach_cave(["Follow the light", "Take the sword", "Enter the cave"])
+    assert a.scene == b.scene == "cave"
+    assert "Light the lamp" in [c.label for c in st.available(a)]
+    assert "Light the lamp" not in [c.label for c in st.available(b)]
+    assert with_lamp.read1("wNumChoices") == len(st.available(a))
+    assert with_sword.read1("wNumChoices") == len(st.available(b))
+    assert with_lamp.read("wChoices", 2) != with_sword.read("wChoices", 2)
+    with_lamp.stop()
+    with_sword.stop()
+
+
+def test_three_wounds_end_the_run_in_the_rom():
+    gb = boot()
+    s = st.State()
+    route = ["Hear the voice", "Leave him", "Cross the bridge", "Take the blade", "Force the bars"]
+    route_alt = ["Follow the light", "Take the sword", "Cross the bridge", "Pray at the altar", "Force the bars", "Strike him", "Fight on"]
+    for label in route_alt:
+        options = st.available(s)
+        i = next(n for n, c in enumerate(options) if c.label == label)
+        s = st.step(s, options[i])
+        choose(gb, i)
+        assert_state(gb, s)
+        next_page(gb)
+        if st.BY_ID[s.scene].ending:
+            break
+    assert s.scene == st.DEATH_SCENE and gb.read1("wMB_State") == ST_ENDING
     gb.stop()
