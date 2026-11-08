@@ -1,0 +1,6 @@
+# V6T = V5Z + per-token multiplication tables for the output head, in cartridge RAM bank 1.
+display: V6T HEAD TABLES
+layout: bank_aware
+biased: true
+tables: [qsq_table]
+defines: [BANK_SKIP, MUL_QSQ, FAST_DOT, ATTN_SPARSE, KV_CACHE, SP_STREAM, ZERO_SKIP, HEAD_TABLES]

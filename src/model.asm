@@ -193,6 +193,11 @@ OutputLogits::
     ld de, wN3
     ld bc, wZ
     call MatVec
+IF DEF(HEAD_TABLES)
+    ld a, [wRowMode]
+    or a
+    jp nz, OutputWithTables
+ENDC
 IF DEF(FAST_DOT)
     ; Only rows the decoder can choose at this position are computed.
     ld de, wZ
@@ -285,6 +290,206 @@ ELSE
     ret
 ENDC
 
+IF DEF(HEAD_TABLES)
+; ---- Head tables: the output head has hundreds of rows but only MODEL_K inputs, and those inputs stay fixed for the whole
+; pass. So each input gets a 256-entry table of its products with every biased weight, and a MAC becomes one lookup.
+; Tables live in cartridge RAM bank 1. Saves live in bank 0, and RAM is enabled only during this pass.
+SECTION "head_tables", SRAM[$A000], BANK[1]
+sHeadTab: ds MODEL_K * 512
+
+SECTION "head_vars", WRAM0
+wTabWeights: ds 2
+wTabLogit:   ds 2
+
+SECTION "head_code", ROM0
+; BuildHeadTables: entry[b] = (b - 128) * z + 32768 for each z in wZ. Unsigned, so a running sum needs no sign logic.
+BuildHeadTables:
+    ld hl, sHeadTab
+    ld a, MODEL_K
+    ldh [hLoop], a
+    push hl
+    ld hl, wZ
+    ld a, l
+    ld [wTabLogit], a
+    ld a, h
+    ld [wTabLogit + 1], a
+    pop hl
+.table:
+    push hl
+    ld hl, wTabLogit
+    ld a, [hl+]
+    ld h, [hl]
+    ld l, a
+    ld a, [hl+]          ; z
+    ld c, a
+    rlca
+    sbc a
+    ld b, a              ; bc = z, sign extended
+    ld a, l
+    ld [wTabLogit], a
+    ld a, h
+    ld [wTabLogit + 1], a
+    pop hl
+    ; start = 32768 - 128 * z. z is bc: 128 * z is z << 7, which only touches two bytes for |z| <= 127.
+
+    push hl
+    ld h, b
+    ld l, c
+    REPT 7
+    add hl, hl
+    ENDR
+    ld a, l
+    cpl
+    add 1
+    ld e, a
+    ld a, h
+    cpl
+    adc $80
+    ld d, a
+    pop hl
+.entry:
+    ld a, e
+    ld [hl], a
+    inc h
+    ld a, d
+    ld [hl], a
+    dec h
+    ld a, e
+    add c
+    ld e, a
+    ld a, d
+    adc b
+    ld d, a
+    inc l
+    jr nz, .entry
+    inc h
+    inc h
+    ldh a, [hLoop]
+    dec a
+    ldh [hLoop], a
+    jr nz, .table
+    ret
+
+MACRO HMAC                  ; \1 = input index; \2 = register holding the biased weight
+    ld h, HIGH(sHeadTab) + 2 * (\1)
+    ld l, \2
+    ld a, [hl]
+    add e
+    ld e, a
+    inc h
+    ld a, [hl]
+    adc d
+    ld d, a
+    jr nc, :+
+    ldh a, [hAcc + 2]
+    inc a
+    ldh [hAcc + 2], a
+:
+ENDM
+
+; OutputWithTables: wZ -> wLogits for EOS, slots and words. Same logits as the other paths, bit for bit.
+OutputWithTables:
+    ld a, $0A
+    ld [MBC5_RAMG], a
+    ld a, 1
+    ld [MBC5_RAMB], a
+    call BuildHeadTables
+    ld a, BANK(DataOut)
+    call BankSwitch
+    ld hl, wTabWeights
+    ld a, LOW(DataOut + TOK_EOS * MODEL_K)
+    ld [hl+], a
+    ld [hl], HIGH(DataOut + TOK_EOS * MODEL_K)
+    ld hl, wTabLogit
+    ld a, LOW(wLogits + TOK_EOS * 2)
+    ld [hl+], a
+    ld [hl], HIGH(wLogits + TOK_EOS * 2)
+    ld hl, wRowsLeft
+    ld a, LOW(MODEL_VOCAB - TOK_EOS)
+    ld [hl+], a
+    ld [hl], HIGH(MODEL_VOCAB - TOK_EOS)
+.row:
+    xor a
+    ldh [hAcc + 2], a
+    ld hl, wTabWeights
+    ld a, [hl+]
+    ld h, [hl]
+    ld l, a
+    di
+    ld [wSaveSP], sp
+    ld sp, hl
+    ld de, 0
+    FOR I, 0, MODEL_K, 2
+    pop bc
+    HMAC I, c
+    HMAC I + 1, b
+    ENDR
+    ld hl, sp + 0
+    ld a, l
+    ld [wTabWeights], a
+    ld a, h
+    ld [wTabWeights + 1], a
+    ld a, [wSaveSP]
+    ld l, a
+    ld a, [wSaveSP + 1]
+    ld h, a
+    ld sp, hl
+    ei
+    ; acc = sum + k * 32768, so remove the bias from the top byte; then (acc + 8) >> 4
+    ld a, e
+    add 8
+    ld e, a
+    ld a, d
+    adc 0
+    ld d, a
+    ldh a, [hAcc + 2]
+    adc LOW(-(MODEL_K / 2))
+    ld b, a
+    ld a, e
+    swap a
+    and $0F
+    ld e, a
+    ld a, d
+    swap a
+    ld c, a
+    and $F0
+    or e
+    ld e, a              ; low byte of the logit
+    ld a, c
+    and $0F
+    ld c, a
+    ld a, b
+    swap a
+    and $F0
+    or c
+    ld d, a              ; high byte
+    ld hl, wTabLogit
+    ld a, [hl+]
+    ld h, [hl]
+    ld l, a
+    ld a, e
+    ld [hl+], a
+    ld a, d
+    ld [hl+], a
+    ld a, l
+    ld [wTabLogit], a
+    ld a, h
+    ld [wTabLogit + 1], a
+    ld hl, wRowsLeft
+    ld a, [hl]
+    sub 1
+    ld [hl+], a
+    ld a, [hl]
+    sbc 0
+    ld [hl-], a
+    or [hl]
+    jp nz, .row
+    xor a
+    ld [MBC5_RAMG], a
+    ret
+ENDC
+
+SECTION "model_code_tail", ROM0
 ; ModelReset: invalidates per-event state before a new prompt.
 ModelReset::
     xor a

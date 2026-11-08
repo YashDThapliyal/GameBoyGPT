@@ -30,7 +30,7 @@ class GB:
         rom = Path(rom)
         self.rom = rom
         self.syms = load_symbols(Path(sym) if sym else rom.with_suffix(".sym"))
-        ram = None if ram_file == "auto" else ram_file if ram_file is not None else io.BytesIO(bytes(0x2000))
+        ram = None if ram_file == "auto" else ram_file if ram_file is not None else io.BytesIO(bytes(0x8000))
         self.pyboy = PyBoy(str(rom), window="null", cgb=False, sound_emulated=False, log_level="ERROR", ram_file=ram)
         self.mem = self.pyboy.memory
 

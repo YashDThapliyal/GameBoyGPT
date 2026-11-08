@@ -24,6 +24,7 @@ MAX_LINES = 4
 EMOTIONS = ("NEUTRAL", "SMUG", "ANGRY", "AMUSED", "SURPRISED", "THINKING", "GLITCH", "DEFEATED")
 RUNTIME_SLOTS = {"<NAME>": 8, "<LIKE>": 8, "<WORD>": 8, "<NI>": 2, "<NP>": 2, "<NT>": 2}  # widest printed form
 PUNCT = (".", ",", "!", "?", ":")
+TAIL_RATE = 0.7
 
 
 def _groups() -> list[tuple[str, ...]]:
@@ -217,8 +218,10 @@ def sample_response(s: cv.Situation, rnd: random.Random, allow_heldout: bool = F
             parts.append(_choose_filled(rnd, rnd.choice(cp.OPENERS[s.mood]), allow_heldout))
         parts.append(_choose_filled(rnd, rnd.choice(_body_pool(s)), allow_heldout))
         pools = _tail_pools(s)
-        if pools and rnd.random() < 0.6 and s.mood != "DYING":
-            parts.append(_choose_filled(rnd, rnd.choice(rnd.choice(pools)), allow_heldout))
+        if pools and rnd.random() < TAIL_RATE and s.mood != "DYING":
+            # What is newest in memory comes first: a repeat, then a tally the player just added to.
+            pool = pools[0] if rnd.random() < 0.5 else rnd.choice(pools)
+            parts.append(_choose_filled(rnd, rnd.choice(pool), allow_heldout))
         words = [w for part in parts for w in tokenize(part)]
         tokens = [f"<E_{emotion}>"] + words + ["<EOS>"]
         if len(tokens) <= MAX_RESPONSE and rendered_lines(tokens) <= MAX_LINES:

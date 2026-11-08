@@ -1,4 +1,5 @@
 """The SM83 parser and conversation memory against reference/conversation.py on thousands of inputs."""
+import os
 import random
 import pytest
 from kernel_harness import *
@@ -20,7 +21,7 @@ def random_text(rnd):
 
 @pytest.fixture(scope="module")
 def rig():
-    r = KernelRig("V5Z")
+    r = KernelRig(os.environ.get("GBGPT_VARIANT", "V6T"))
     yield r
     r.stop()
 

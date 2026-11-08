@@ -20,10 +20,13 @@ OUT = ROOT / "reports" / "study"
 CLOCK = 4194304
 T_PER_MAC = 232     # measured V5S kernel, docs/PERFORMANCE.md
 T_PER_ROW = 170     # entry, shift and store per output element, estimated from the kernel listing
+T_PER_TABLE_MAC = 76   # V6T head tables, from the kernel listing; measured on the shipped model in RESULTS.md
+T_PER_TABLE_BUILD = 18000  # one 256-entry table per bottleneck input, per token
 CANDIDATES = {
     "d32_k8": dict(d=32, ffn=64, layers=1, k=8),
     "d32_k12": dict(d=32, ffn=64, layers=1, k=12),
     "d32_k16": dict(d=32, ffn=64, layers=1, k=16),
+    "d32_k32": dict(d=32, ffn=64, layers=1, k=32),
     "d32_full": dict(d=32, ffn=64, layers=1, k=0),
     "d32_f32_k12": dict(d=32, ffn=32, layers=1, k=12),
     "d32_L2_k12": dict(d=32, ffn=64, layers=2, k=12),
@@ -51,6 +54,10 @@ def projected(c: dict, tokens: float) -> dict:
     rows = len(dl.VOCAB) - dl.FIRST_GEN
     m = macs_per_token(c, rows, dl.PROMPT_LEN + tokens / 2)
     t_tok = m["macs"] * T_PER_MAC + m["rows"] * T_PER_ROW
+    k = c.get("k", 0)
+    tables = bool(k) and not c.get("gru") and k <= 16
+    if tables:  # k x vocab MACs move to the table kernel
+        t_tok += k * T_PER_TABLE_BUILD - rows * k * (T_PER_MAC - T_PER_TABLE_MAC)
     t_prompt = (m["prompt_macs"] * T_PER_MAC + m["prompt_rows"] * T_PER_ROW) * dl.PROMPT_LEN
     d = c["d"]
     feasible = []
@@ -61,7 +68,7 @@ def projected(c: dict, tokens: float) -> dict:
     if c.get("gru"):
         feasible.append("engine not implemented; no reference or kernels")
     return {"s_per_token": t_tok / CLOCK, "first_token_s": (t_prompt + t_tok) / CLOCK, "s_per_response": (t_prompt + t_tok * tokens) / CLOCK,
-            "macs_per_token": m["macs"], "blockers": feasible}
+            "macs_per_token": m["macs"], "head_tables": tables, "blockers": feasible}
 
 
 def nll(model, x, y, quant, bs=1024) -> float:

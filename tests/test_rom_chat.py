@@ -37,7 +37,7 @@ class Tracker:
 def test_cartridge_header_declares_dmg_mbc5_ram_battery():
     rom = ROM.read_bytes()
     assert rom[0x143] & 0x80 == 0, "no CGB flag"
-    assert rom[0x147] == 0x1B and rom[0x149] == 0x02
+    assert rom[0x147] == 0x1B and rom[0x149] == 0x03
 
 
 def test_boots_through_intro_to_menu_on_its_own():

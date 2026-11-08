@@ -10,7 +10,7 @@ from export_weights import from_blob
 from reference import conversation as cv
 from training import dialogue as dl
 
-VARIANT = os.environ.get("GBGPT_VARIANT", "V5Z")
+VARIANT = os.environ.get("GBGPT_VARIANT", "V6T")
 ROM = ROOT / "build" / VARIANT / "gameboygpt.gb"
 ST_INTRO, ST_MENU, ST_KEYBOARD, ST_THINKING, ST_STREAMING, ST_READ, ST_INSPECT, ST_POWERDOWN = 1, 2, 3, 4, 5, 6, 7, 8
 MODEL = from_blob((ROOT / "generated" / "model.bin").read_bytes())

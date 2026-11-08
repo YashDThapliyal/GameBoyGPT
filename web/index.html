@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>System Override</title>
+<link rel="icon" href="data:,">
+<meta name="description" content="A neural network running on an emulated 1989 handheld's 8-bit CPU, inside a browser.">
+<link rel="stylesheet" href="css/shell.css">
+<script src="vendor/binjgb/binjgb.js"></script>
+</head>
+<body>
+<main class="bench">
+  <div class="stage">
+    <section class="device" id="device" aria-label="Virtual handheld">
+      <button class="power" id="power" type="button" aria-pressed="false" aria-label="Power switch"><span class="power-knob"></span></button>
+      <div class="power-label" aria-hidden="true">off / on</div>
+      <div class="seam" aria-hidden="true"></div>
+      <div class="bezel">
+        <div class="bezel-stripes" aria-hidden="true"><span>dot matrix, four shades of green</span></div>
+        <div class="led-wrap" aria-hidden="true"><i class="led" id="led"></i><span>power</span></div>
+        <div class="lcd" id="lcd">
+          <canvas id="screen" width="160" height="144" aria-label="Emulated 160 by 144 display"></canvas>
+          <div class="lcd-grid" aria-hidden="true"></div>
+          <div class="lcd-glass" aria-hidden="true"></div>
+          <div class="lcd-msg" id="lcdMsg" role="status"></div>
+        </div>
+      </div>
+      <div class="brand" aria-hidden="true"><b>Override</b><small>handheld intelligence</small></div>
+      <div class="dpad" aria-label="Direction pad">
+        <button data-pad="up" aria-label="Up"></button>
+        <button data-pad="left" aria-label="Left"></button>
+        <span class="dpad-hub" aria-hidden="true"></span>
+        <button data-pad="right" aria-label="Right"></button>
+        <button data-pad="down" aria-label="Down"></button>
+      </div>
+      <div class="ab">
+        <div class="ab-well"><button class="round" data-pad="b" aria-label="B"></button><span>B</span></div>
+        <div class="ab-well"><button class="round" data-pad="a" aria-label="A"></button><span>A</span></div>
+      </div>
+      <div class="pills">
+        <div><button class="pill" data-pad="select" aria-label="Select"></button><span>select</span></div>
+        <div><button class="pill" data-pad="start" aria-label="Start"></button><span>start</span></div>
+      </div>
+      <div class="grille" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    </section>
+    <p class="keys">Arrow keys, <kbd>X</kbd> for A, <kbd>Z</kbd> for B, <kbd>Enter</kbd> for Start, <kbd>Shift</kbd> for Select.</p>
+  </div>
+
+  <aside class="panel">
+    <h1>System Override</h1>
+    <p class="lede">An arrogant neural network, running on an 8-bit CPU from 1989. It insults you when you talk to it.</p>
+
+    <div class="row-buttons">
+      <button id="btnPower" type="button">Turn on</button>
+      <button id="btnReset" type="button" disabled>Reset</button>
+      <button id="btnFull" type="button">Full screen</button>
+      <button id="btnSound" type="button" aria-pressed="true">Sound on</button>
+    </div>
+
+    <h2>Happening inside the emulated chip</h2>
+    <dl class="facts" id="live">
+      <div><dt>Doing</dt><dd id="lvState">Powered off</dd></div>
+      <div><dt>Mood it was given</dt><dd id="lvMood">None yet</dd></div>
+      <div><dt>Last response</dt><dd id="lvLast">None yet</dd></div>
+      <div><dt>Tokens generated</dt><dd id="lvTotal">0</dd></div>
+    </dl>
+    <p class="note">Read each moment from the emulator's work RAM. Times are emulated seconds at 4.19 MHz, counted by the ROM's own frame counter.</p>
+
+    <h2>Tokens from the last response</h2>
+    <div class="tokens" id="tokens"><p class="empty">Pick something to say on the handheld. Each word shows up here with its token id as the model produces it.</p></div>
+
+    <h2>What this build is</h2>
+    <dl class="facts" id="build"></dl>
+
+    <h2>Display</h2>
+    <div class="toggles">
+      <label><input type="checkbox" id="optTint" checked> Green tint</label>
+      <label><input type="checkbox" id="optGrid" checked> Pixel grid</label>
+      <label><input type="checkbox" id="optGlow" checked> Glass glow</label>
+      <label><input type="checkbox" id="optGhost"> Ghosting</label>
+      <label><input type="checkbox" id="optClean"> Clean test display</label>
+    </div>
+
+    <h2>What is real here</h2>
+    <p class="note">The plastic is CSS and does nothing but look the part. The screen shows the real ROM's machine code running in <a href="vendor/binjgb/LICENSE">binjgb</a>, an open-source emulator compiled to WebAssembly. No JavaScript takes part in generating the text and nothing is sent over the network. The model understands only a narrow set of topics. This has not been tested on a physical console.</p>
+  </aside>
+</main>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

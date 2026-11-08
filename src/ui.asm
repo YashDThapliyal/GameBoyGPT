@@ -45,14 +45,14 @@ LogoToShadow:
     jp BankSwitch
 
 SECTION "ui_vars", WRAM0
-wMenuSel:    ds 1
+wMenuSel::   ds 1
 wTextRowN:   ds 1
 wTextColN:   ds 1
 wKeyRow:     ds 1
 wKeyCol:     ds 1
 wRepeatT:    ds 1
 wNumBuf:     ds 4
-wReturning:  ds 1
+wReturning:: ds 1
 wRng8:       ds 1
 wSkip:       ds 1
 wWipeArm:    ds 1

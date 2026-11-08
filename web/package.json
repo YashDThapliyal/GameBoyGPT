@@ -1,0 +1,1 @@
+{ "name": "system-override-web", "private": true, "type": "module", "description": "Dev dependency for browser tests only. The page itself has no build step.", "devDependencies": { "playwright": "1.56.1" } }

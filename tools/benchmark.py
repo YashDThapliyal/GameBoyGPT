@@ -1,34 +1,30 @@
 #!/usr/bin/env python3
 """Cycle benchmarks. Timing comes from PyBoy's T-cycle counter sampled by hooks on ROM labels (calibrated by
-tests/test_smoke.py); nothing here uses host time. One emulator runs at a time. Raw traces go to reports/raw/.
+tests/test_smoke.py); nothing here uses host time. Same weights, prompts and greedy decoding for every variant.
+
+kernel mode: test ROM, LCD off, interrupts off. Pure inference.
+game mode:   the real ROM through its real menu, with VBlank, animation and word drawing running.
 """
 from __future__ import annotations
-import argparse, csv, hashlib, json, re, statistics, subprocess, sys, time
+import argparse, csv, hashlib, json, re, statistics, subprocess, sys
 from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path[:0] = [str(ROOT), str(ROOT / "tools"), str(ROOT / "tests")]
-from kernel_harness import KernelRig, CMD_GENERATE, CMD_STEP, CMD_DOT, CMD_MUL, CMD_MATVEC
+from kernel_harness import KernelRig, CMD_GENERATE, CMD_STEP, CMD_PARSE, ids16, read_ids
 from run_emulator import GB
-from reference import story as st
-from training import dataset as ds
+from reference import conversation as cv, fixed_point as fp
+from export_weights import from_blob
+from training import dialogue as dl
+from workloads import WORKLOADS
 
 HZ = 4194304
-CSV_FIELDS = ("version,git_commit,rom_sha256,model_sha256,emulator,emulator_version,hardware_mode,workload,context_len,"
-              "output_tokens,round,first_token_tcycles,decode_tcycles_total,decode_tcycles_median,decode_tcycles_p95,"
-              "nominal_seconds_per_token,seconds_per_event,bank_switches,peak_wram_bytes,peak_sram_bytes,rom_bytes,"
-              "token_match_baseline,heldout_nll,action_valid_rate,notes").split(",")
-WORKLOADS = {
-    "PROMPT_A": ("HEAR_VOICE", 0, 0),                     # first choice in the story, nothing carried
-    "PROMPT_B": ("LIGHT_LAMP", st.LAMP, 0),               # the cave, with the lamp
-    "PROMPT_C": ("TAKE_CROWN", st.LAMP | st.KEY, 0),      # an ending
-    "PROMPT_D": ("CROSS_BRIDGE", st.FRIEND, 0),           # hurt at the river, with a friend
-}
-PHASES = [("kv", "ForwardStep", "BlockAfterKV"), ("q", "BlockAfterKV", "PhAttn"), ("attention", "PhAttn", "PhProj"),
-          ("proj_residual_norm", "PhProj", "PhFfn"), ("ffn_norm", "PhFfn", "PhOut"), ("output", "PhOut", "PickToken"),
-          ("decode", "PickToken", "ProfileTokenEnd")]
+FRAME_T = 70224
+CSV_FIELDS = "version,git_commit,rom_sha256,model_sha256,emulator,hardware_mode,workload,round,prompt_len,output_tokens,first_token_tcycles,token_tcycles_median,token_tcycles_p95,total_tcycles,seconds_per_token,seconds_per_response,bank_switches,stack_peak_bytes,wram_bytes,sram_bytes,rom_bytes,token_match_baseline,matches_reference,mode".split(",")
+PHASES = [("kv", "ForwardStep", "BlockAfterKV"), ("query", "BlockAfterKV", "PhAttn"), ("attention", "PhAttn", "PhProj"), ("projection_norm", "PhProj", "PhFfn"),
+          ("feed_forward_norm", "PhFfn", "PhOut"), ("output_head", "PhOut", "PickToken"), ("decode", "PickToken", "ProfileTokenEnd")]
 
 
-def sha(path: Path) -> str:
+def sha(path) -> str:
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
@@ -36,21 +32,16 @@ def git_commit() -> str:
     return subprocess.run(["git", "rev-parse", "--short", "HEAD"], capture_output=True, text=True, cwd=ROOT).stdout.strip()
 
 
-def pyboy_version() -> str:
-    import importlib.metadata as md
-    return md.version("pyboy")
+def wram_bytes(map_path: Path) -> int:
+    return int(re.search(r"WRAM0: (\d+) bytes used", map_path.read_text()).group(1))
 
 
-def static_wram(map_path: Path) -> int:
-    """Bytes allocated to WRAM0 by the linker, from its own map file."""
-    text = map_path.read_text()
-    m = re.search(r"WRAM0 bank #0:(.*?)(?:\n\n|\Z)", text, re.S)
-    m2 = re.search(r"TOTAL EMPTY: \$([0-9a-f]+) bytes", m.group(1), re.I) if m else None
-    return 0x2000 - int(m2.group(1), 16) if m2 else -1
+def sram_bytes(map_path: Path) -> int:
+    m = re.search(r"SRAM: (\d+) bytes used", map_path.read_text())
+    return int(m.group(1)) if m else 0
 
 
 def stack_peak(gb: GB) -> int:
-    """High-water mark of the 256-byte stack region, from a fill pattern the harness wrote before the run."""
     base = gb.addr("wStackBottom")
     for i in range(0x100):
         if gb.mem[base + i] != 0xA5:
@@ -59,7 +50,7 @@ def stack_peak(gb: GB) -> int:
 
 
 class Timers:
-    """Attach cycle-recording hooks. Hook callbacks read the emulator counter and add no emulated cycles."""
+    """Cycle-recording hooks. Callbacks read the emulator counter and add no emulated cycles."""
 
     def __init__(self, gb: GB):
         self.gb, self.log, self.labels = gb, [], []
@@ -93,164 +84,129 @@ def bank_counter(gb: GB) -> int:
     return b[0] | b[1] << 8 | b[2] << 16
 
 
-def run_kernel_workload(rig: KernelRig, situation, prompt_override=None) -> dict:
+def run_kernel(rig: KernelRig, sit: cv.Situation) -> dict:
     gb = rig.gb
-    prompt = prompt_override or ds.prompt_ids(*situation)
-    gb.write("wSeq", prompt)
+    prompt = dl.prompt_ids(sit)
+    gb.write("wSeq", ids16(prompt))
     gb.write("wSeqLen", [len(prompt)])
     gb.write("wMB_Greedy", [1])
-    gb.write("wStackBottom", [0xA5] * 0xF0)  # the live frames near the top are never scanned as free
+    gb.write("wStackBottom", [0xA5] * 0xF0)
     t = Timers(gb)
     t.on("ProfileTokenStart", "ProfileTokenEnd", *{x for p in PHASES for x in p[1:]})
     banks0 = bank_counter(gb)
-    rig.run(CMD_GENERATE, max_frames=200000)
+    rig.run(CMD_GENERATE, max_frames=400000)
     t.off()
-    per_token = t.pairs("ProfileTokenStart", "ProfileTokenEnd")
-    phases = {name: sum(t.pairs(a, b)) for name, a, b in PHASES}
-    n = gb.read1("wSeqLen")
-    return {"tokens": gb.read("wSeq", n), "per_token": per_token, "phases": phases, "banks": bank_counter(gb) - banks0, "stack": stack_peak(gb)}
+    per = t.pairs("ProfileTokenStart", "ProfileTokenEnd")
+    return {"tokens": read_ids(gb, gb.read1("wSeqLen")), "per_token": per, "phases": {n: sum(t.pairs(a, b)) for n, a, b in PHASES}, "banks": bank_counter(gb) - banks0, "stack": stack_peak(gb)}
 
 
-def fmt(v):
-    return "NA" if v is None else v
+def row(version, rom, model_sha, name, rnd, r, match, ref_ok, mode, map_path) -> dict:
+    per = r["per_token"]
+    rest = per[1:] or per
+    total = sum(per)
+    return {"version": version, "git_commit": git_commit(), "rom_sha256": sha(rom), "model_sha256": model_sha, "emulator": "PyBoy", "hardware_mode": "DMG (cgb=False)", "workload": name, "round": rnd,
+            "prompt_len": dl.PROMPT_LEN, "output_tokens": len(per), "first_token_tcycles": per[0], "token_tcycles_median": int(statistics.median(rest)), "token_tcycles_p95": sorted(rest)[int(round(0.95 * (len(rest) - 1)))],
+            "total_tcycles": total, "seconds_per_token": round(sum(rest) / len(rest) / HZ, 6), "seconds_per_response": round(total / HZ, 6), "bank_switches": r["banks"], "stack_peak_bytes": r["stack"],
+            "wram_bytes": wram_bytes(map_path), "sram_bytes": sram_bytes(map_path), "rom_bytes": Path(rom).stat().st_size, "token_match_baseline": match, "matches_reference": ref_ok, "mode": mode}
 
 
-def bench_variant(version: str, rounds: int, baseline_tokens: dict | None, quality: dict, nll: float | None) -> tuple[list[dict], dict]:
+def bench_variant(version: str, rounds: int, baseline: dict | None, model) -> tuple[list[dict], dict]:
     rom = ROOT / "build" / version / "test.gb"
-    game_rom = ROOT / "build" / version / "gameboygpt.gb"
+    game = ROOT / "build" / version / "gameboygpt.gb"
     model_sha = sha(ROOT / "generated" / "model.bin")
     rows, raw = [], {"version": version, "workloads": {}}
-    wram = static_wram(rom.with_suffix(".map"))
-    wram_game = static_wram(game_rom.with_suffix(".map"))
     rig = KernelRig(version)
     for name, sit in WORKLOADS.items():
+        want = fp.generate(model, dl.prompt_ids(sit))["tokens"]
         for rnd in range(rounds):
-            r = run_kernel_workload(rig, sit)
-            tok = r["per_token"]
-            match = None if baseline_tokens is None else baseline_tokens.get(name) == r["tokens"]
-            rows.append(_row(version, game_rom, model_sha, name, len(r["tokens"]), rnd, tok, r["banks"], wram_game, r["stack"], match, nll, quality, "kernel mode: LCD off, IME off"))
+            r = run_kernel(rig, sit)
+            match = "SELF" if baseline is None else baseline.get(name) == r["tokens"]
+            rows.append(row(version, rom, model_sha, name, rnd, r, match, r["tokens"] == want, "kernel", game.with_suffix(".map")))
             raw["workloads"].setdefault(name, []).append(r)
-    # Context-length sensitivity: same prompt extended with fixed tokens, single step, no prior cache.
-    fixed = (ds.prompt_ids(*WORKLOADS["PROMPT_A"]) + [ds.STOI[w] for w in "you follow the voice into the marsh . a prisoner begs in the mud .".split()])[:ds.CTX]
+    # One forward pass at each context length, same token stream, cold cache: cost as the conversation fills the context.
+    stream = dl.prompt_ids(WORKLOADS["GREET"]) + list(range(dl.FIRST_WORD, dl.FIRST_WORD + dl.CTX))
     raw["context_step"] = {}
-    for L in (4, 8, 16, 18):
-        cycles = []
-        for _ in range(rounds):
-            rig.gb.write("wSeq", fixed[:L])
-            rig.gb.write("wSeqLen", [L])
-            cycles.append(rig.run(CMD_STEP, max_frames=20000))
-        raw["context_step"][L] = cycles
-    # Kernel microbenchmarks at exact label boundaries.
-    t = Timers(rig.gb)
-    t.on("TestMulSite", "TestMulEnd", "TestDotSite", "TestDotEnd")
-    for a, b in ((1, 1), (127, 127), (-127, 127), (85, 85), (-1, -1), (0, 0)):
-        rig.run(CMD_MUL, [a & 255, b & 255])
-    rig.gb.write("wTestA", [(i * 37 % 255) - 127 for i in range(64)])
-    rig.gb.write("wTestB", [(i * 91 % 255) - 127 for i in range(64)])
-    for n in (16, 32, 64):
-        rig.run(CMD_DOT, [n])
-    t.off()
-    raw["micro"] = {"mul_tcycles": t.pairs("TestMulSite", "TestMulEnd"), "dot_16_32_64_tcycles": t.pairs("TestDotSite", "TestDotEnd")}
-    # Real kernel on real weights: tensor index 2 (w_q) is 32x32 = 1024 MACs, tensor 7 (w_f2) is 32x64 = 2048 MACs.
-    rig.gb.write("wTestA", [(i * 37 % 255) - 127 for i in range(64)])
-    raw["micro"]["matvec_q_1024mac_tcycles"] = rig.run(CMD_MATVEC, [2])
-    raw["micro"]["matvec_f2_2048mac_tcycles"] = rig.run(CMD_MATVEC, [7])
+    for L in (9, 16, 24, dl.CTX):
+        rig.gb.write("wSeq", ids16(stream[:L]))
+        rig.gb.write("wSeqLen", [L])
+        rig.gb.write("wRowMode", [1])
+        raw["context_step"][L] = rig.run(CMD_STEP, max_frames=60000)
+    # Typed input does not change the prompt length. Its cost is the parser, measured at each input length.
+    raw["parser"] = {}
+    for n in (0, 5, 18, cv.MAX_INPUT):
+        text = ("PIZZA MARGHERITA WITH NO CHEESE PLEASE"[:n]).ljust(n)
+        rig.gb.write("wInput", [ord(c) for c in text] + [0])
+        rig.gb.write("wInputLen", [n])
+        raw["parser"][n] = rig.run(CMD_PARSE)
     rig.stop()
-    raw["ux_mode"] = ux_mode(version, game_rom, rows, model_sha, wram_game, nll, quality, baseline_tokens)
-    raw["rom_sha256"] = sha(game_rom)
-    raw["model_sha256"] = model_sha
-    (ROOT / "reports" / "raw").mkdir(parents=True, exist_ok=True)
-    for name in WORKLOADS:
-        (ROOT / "reports" / "raw" / f"trace_{version}_{name}.json").write_text(json.dumps(raw["workloads"][name], indent=0))
     return rows, raw
 
 
-def _row(version, rom, model_sha, workload, ctx, rnd, per_token, banks, wram, stack, match, nll, quality, notes):
-    first = per_token[0]
-    rest = per_token[1:] or per_token
-    total = sum(per_token)
-    p95 = sorted(rest)[max(0, int(round(0.95 * (len(rest) - 1))))]
-    return {"version": version, "git_commit": git_commit(), "rom_sha256": sha(rom), "model_sha256": model_sha, "emulator": "PyBoy",
-            "emulator_version": pyboy_version(), "hardware_mode": "DMG (cgb=False)", "workload": workload, "context_len": ctx,
-            "output_tokens": len(per_token), "round": rnd, "first_token_tcycles": first, "decode_tcycles_total": total,
-            "decode_tcycles_median": int(statistics.median(rest)), "decode_tcycles_p95": p95,
-            "nominal_seconds_per_token": round(total / len(per_token) / HZ, 6), "seconds_per_event": round(total / HZ, 6),
-            "bank_switches": banks, "peak_wram_bytes": wram, "peak_sram_bytes": 0, "rom_bytes": Path(rom).stat().st_size,
-            "token_match_baseline": fmt(match), "heldout_nll": fmt(nll), "action_valid_rate": fmt(quality.get("action")), "notes": f"{notes}; stack_peak={stack}"}
-
-
-def ux_mode(version, rom, rows, model_sha, wram, nll, quality, baseline_tokens) -> dict:
-    """Same model inside the real game loop: LCD on, VBlank ISR running, words drawn as they arrive."""
-    gb = GB(rom)
-    gb.wait_state(1, 2000)
-    gb.tick(5)
-    gb.write("wMB_ForceSeed", [1])
-    gb.write("wMB_Seed", [7, 0])
-    gb.write("wMB_Greedy", [1])
-    gb.press("start")
-    gb.wait_state(2, 3000)
-    gb.press("a")
-    gb.wait_state(3, 600)
-    gb.write("wStackBottom", [0xA5] * 0xF0)  # measures depth with the ISR and UI live, unlike kernel mode
-    events = []
+def game_mode(version: str, model) -> dict:
+    """The real ROM through its real menu. Sampled decoding, pinned seed. Latency runs from the confirming press to each token."""
+    from chat_harness import action, boot, generated, next_page, pin, say
+    rom = ROOT / "build" / version / "gameboygpt.gb"
+    gb = boot(rom=rom)
+    gb.write("wStackBottom", [0xA5] * 0xF0)
     t = Timers(gb)
-    t.on("ProfileTokenStart", "ProfileTokenEnd", "NarrateEvent", "ThinkingDone")
-    s = st.State()
-    for turn in range(5):
-        c = st.available(s)[0]
-        s = st.step(s, c)
-        gb.tick(4)
+    t.on("ProfileTokenStart", "ProfileTokenEnd", "BuildPrompt")
+    events = []
+    plan = [("action", 0), ("action", 1), ("action", 2), ("say", "MY NAME IS BOB"), ("action", 3), ("say", "WHAT IS YOUR CPU"), ("action", 4), ("say", "I WILL DESTROY YOU")] * 2
+    state = cv.State()
+    for i, (kind, what) in enumerate(plan):
+        seed = 0x6100 + i * 13
+        pin(gb, seed)
         n0 = len(t.log)
         banks0 = bank_counter(gb)
-        gb.press("a")
-        gb.wait_for(lambda: gb.read1("wMB_State") == 6, 400000)
+        if kind == "action":
+            action(gb, what)
+            parsed = cv.Parsed(cv.ACTION_INTENT[what], "NONE")
+        else:
+            say(gb, what)
+            parsed = cv.parse(what)
+        before, state = state, cv.apply_turn(state, parsed)
+        want = fp.generate(model, dl.prompt_ids(cv.situation(before, state)), greedy=False, rng=seed)["generated"]
         log = t.log[n0:]
-        starts = [c2 for n, c2 in log if n == "ProfileTokenStart"]
-        ends = [c2 for n, c2 in log if n == "ProfileTokenEnd"]
-        per = [e - st_ for st_, e in zip(starts, ends)]
-        narr = [c2 for n, c2 in log if n == "NarrateEvent"][0]
-        done = [c2 for n, c2 in log if n == "ThinkingDone"][0]
-        frames = gb.read("wMB_EventFrames", 2)
-        events.append({"turn": turn, "tokens": len(per), "tcycles_per_token": per, "event_tcycles": done - narr, "on_device_frames": frames[0] | frames[1] << 8,
-                       "bank_switches": bank_counter(gb) - banks0})
-        gb.tick(8)
-        gb.press("a")
-        if st.BY_ID[s.scene].ending:
-            break
-        gb.wait_state(3, 3000)
+        start = next(c for n, c in log if n == "BuildPrompt")
+        ends = [c for n, c in log if n == "ProfileTokenEnd"]
+        starts = [c for n, c in log if n == "ProfileTokenStart"]
+        per = [b - a for a, b in zip(starts, ends)]
+        frames = gb.read("wLastEventFrames", 2)
+        events.append({"input": str(what), "tokens": len(per), "first_token_s": (ends[0] - start) / HZ, "first_word_s": (ends[1] - start) / HZ if len(ends) > 1 else None, "response_s": (ends[-1] - start) / HZ,
+                       "tcycles_per_token": per, "on_device_frames": frames[0] | frames[1] << 8, "bank_switches": bank_counter(gb) - banks0, "matches_reference": generated(gb) == want})
+        next_page(gb)
     t.off()
     peak = stack_peak(gb)
     gb.stop()
-    return {"events": events, "stack_peak": peak}
+    gen = [x for e in events for x in e["tcycles_per_token"][1:]]
+    return {"events": events, "stack_peak": peak, "seconds_per_token": sum(gen) / len(gen) / HZ, "seconds_per_response": statistics.mean(e["response_s"] for e in events),
+            "first_token_s": statistics.mean(e["first_token_s"] for e in events), "first_word_s": statistics.mean(e["first_word_s"] for e in events), "mean_tokens": statistics.mean(e["tokens"] for e in events),
+            "all_match_reference": all(e["matches_reference"] for e in events)}
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--variants", nargs="+", default=["V0"])
-    ap.add_argument("--rounds", type=int, default=3)
+    ap.add_argument("--rounds", type=int, default=1)
+    ap.add_argument("--game", nargs="*", default=["V6T"])
     a = ap.parse_args()
-    # Held-out figures come from the sibling model: the shipping model trains on every situation, so nothing is unseen by it.
-    held = json.loads((ROOT / "reports" / "quality_heldout.json").read_text())
-    nll = json.loads((ROOT / "checkpoints" / "heldout.report.json").read_text())["test_nll_quant"]
-    q = {"action": held["test_heldout_greedy"]["event"]}
+    model = from_blob((ROOT / "generated" / "model.bin").read_bytes())
     raw_path = ROOT / "reports" / "benchmark.json"
-    db = json.loads(raw_path.read_text()) if raw_path.exists() else {"variants": {}}
     csv_path = ROOT / "reports" / "benchmark.csv"
+    db = json.loads(raw_path.read_text()) if raw_path.exists() else {"variants": {}, "game": {}}
     existing = list(csv.DictReader(open(csv_path))) if csv_path.exists() else []
-    baseline = None
-    if "V0" in db["variants"]:
-        baseline = {k: v[0]["tokens"] for k, v in db["variants"]["V0"]["workloads"].items()}
+    baseline = {k: v[0]["tokens"] for k, v in db["variants"]["V0"]["workloads"].items()} if "V0" in db["variants"] else None
     for v in a.variants:
-        t0 = time.time()
-        rows, raw = bench_variant(v, a.rounds, None if v == "V0" else baseline, q, nll)
+        rows, raw = bench_variant(v, a.rounds, None if v == "V0" else baseline, model)
         if v == "V0":
             baseline = {k: x[0]["tokens"] for k, x in raw["workloads"].items()}
-            for r in rows:
-                r["token_match_baseline"] = "SELF"
         existing = [r for r in existing if r["version"] != v] + rows
         db["variants"][v] = raw
-        s = [r for r in rows if r["round"] == 0]
-        print(v, f"{time.time() - t0:.0f}s host;", " ".join(f"{r['workload']}:{r['nominal_seconds_per_token']:.3f}s/tok,{r['seconds_per_event']:.2f}s/ev,match={r['token_match_baseline']}" for r in s), flush=True)
+        print(v, " ".join(f"{r['workload']}:{r['seconds_per_token']:.3f}s/tok,{r['seconds_per_response']:.1f}s,match={r['token_match_baseline']},ref={r['matches_reference']}" for r in rows if r["round"] == 0), flush=True)
+    for v in a.game:
+        db["game"][v] = game_mode(v, model)
+        g = db["game"][v]
+        print("game", v, {k: g[k] for k in ("seconds_per_token", "seconds_per_response", "first_token_s", "first_word_s", "mean_tokens", "stack_peak", "all_match_reference")}, flush=True)
     with open(csv_path, "w", newline="") as f:
         w = csv.DictWriter(f, CSV_FIELDS)
         w.writeheader()
