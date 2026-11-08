@@ -84,7 +84,7 @@ rmSync(TMP, { recursive: true, force: true });
 const f = (args) => execFileSync("ffmpeg", ["-y", "-loglevel", "error", ...args]);
 const rawSeconds = Number(execFileSync("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", `${OUT}/raw.webm`]).toString());
 f(["-ss", String(Math.max(0, rawSeconds - seconds - 0.1)), "-i", `${OUT}/raw.webm`, "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "20", "-movflags", "+faststart", `${OUT}/system_override_demo.mp4`]);
-f(["-i", `${OUT}/system_override_demo.mp4`, "-vf", "crop=500:720:200:0,fps=12,scale=320:-1:flags=neighbor,split[a][b];[a]palettegen=max_colors=48[p];[b][p]paletteuse=dither=none", `${OUT}/system_override_demo.gif`]);
+f(["-i", `${OUT}/system_override_demo.mp4`, "-vf", "crop=500:720:140:0,fps=12,scale=320:-1:flags=neighbor,split[a][b];[a]palettegen=max_colors=48[p];[b][p]paletteuse=dither=none", `${OUT}/system_override_demo.gif`]);
 rmSync(`${OUT}/raw.webm`);
 const expectFile = { seconds, first, second };
 console.log(JSON.stringify(expectFile));

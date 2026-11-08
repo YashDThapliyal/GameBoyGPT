@@ -55,12 +55,9 @@ export class Handheld {
     this.raf = requestAnimationFrame((t) => this.step(t));
   }
 
+  /** Stops the machine. Its WebAssembly instance is dropped whole: reusing one after emulator_delete corrupts binjgb's heap. */
   shutdown() {
     cancelAnimationFrame(this.raf);
-    if (!this.e) return;
-    this.m._emulator_delete(this.e);
-    this.m._joypad_delete(this.joypad);
-    this.m._free(this.romPtr);
     this.e = 0;
   }
 
@@ -129,6 +126,12 @@ export class Handheld {
 
   /** Reads memory through the emulator's debug interface. Has no effect on the running ROM. */
   peek(addr) { return this.m._emulator_read_mem(this.e, addr); }
+
+  /** Writes one byte of emulated memory. Used only to hand typed text to the ROM's input buffer. */
+  poke(addr, value) { this.m._emulator_write_mem(this.e, addr, value); }
+
+  /** Emulated time since boot, independent of the display's refresh rate. */
+  seconds() { return (this.ticks() - this.ticksStart) / TICKS_PER_SECOND; }
 
   withExtRam(cb) {
     const m = this.m;

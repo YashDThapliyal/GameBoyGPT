@@ -144,6 +144,51 @@ const pinSeed = (page, seed) => page.evaluate((s) => {
     await hold(page, "a");
     await waitState(page, 2, 5000);
   });
+  await check("typing in the page's box leaves the joypad alone until it is sent", async () => {
+    const before = await readU8(page, "wMenuSel");
+    await page.locator("#say").click();
+    await page.keyboard.type("xz");
+    await page.keyboard.press("ArrowDown");
+    await page.waitForTimeout(200);
+    assert.equal(await state(page), 2);
+    assert.equal(await readU8(page, "wMenuSel"), before);
+    assert.equal(await page.locator("#say").inputValue(), "xz");
+    await page.locator("#say").fill("");
+    await page.evaluate(() => document.activeElement.blur());
+  });
+  await check("a typed message reaches the ROM's parser and the panel shows what it heard", async () => {
+    const vocab = await page.evaluate(() => window.__override.build.vocab);
+    // The previous reply is still on screen after sending, so wait for the panel to start the new one first.
+    const replyTo = async (text) => {
+      await page.waitForFunction((t) => document.getElementById("lvYou").textContent === t, text, { timeout: 30000 });
+      await waitState(page, 6);
+      return seqTokens(page);
+    };
+    const send = async (text) => {
+      await page.locator("#say").fill(text);
+      await page.locator("#say").press("Enter");
+      return replyTo(text.toUpperCase());
+    };
+    let seq = await send("what is your cpu?");
+    assert.equal(vocab[seq[6]], "<I_TECH>");
+    assert.equal(vocab[seq[7]], "<T_CPU>");
+    await page.waitForTimeout(300);
+    assert.equal(await page.locator("#lvYou").innerText(), "WHAT IS YOUR CPU?");
+    assert.equal(await page.locator("#hdIntent").innerText(), "a hardware question");
+    assert.equal(await page.locator("#hdTopic").innerText(), "cpu");
+    assert.equal(await page.locator("#strip i").count(), seq.length - 9);
+    await page.screenshot({ path: `${SHOTS}/web_typed.png` });
+    // Sent straight from the reply screen, without going back to the menu by hand.
+    seq = await send("do you have a soul");
+    assert.equal(vocab[seq[6]], "<I_UNKNOWN>");
+    await page.waitForTimeout(300);
+    assert.equal(await page.locator("#hdIntent").innerText(), "nothing it recognizes");
+    await page.getByRole("button", { name: "You are dumb" }).click();
+    seq = await replyTo("YOU ARE DUMB");
+    assert.equal(vocab[seq[6]], "<I_INSULT>");
+    await hold(page, "a");
+    await waitState(page, 2, 5000);
+  });
   await check("the page stays responsive during inference", async () => {
     await hold(page, "down");
     await hold(page, "a");
@@ -158,6 +203,7 @@ const pinSeed = (page, seed) => page.evaluate((s) => {
     await hold(page, "a");
   });
   await check("clean display mode shows plain gray with no overlays, and options restore", async () => {
+    await page.locator("#more").evaluate((el) => { el.open = true; });
     await page.locator("#optClean").check();
     await page.waitForTimeout(300);
     const v = await page.evaluate(() => ({ grid: getComputedStyle(document.querySelector(".lcd-grid")).display, glass: getComputedStyle(document.querySelector(".lcd-glass")).display, px: Array.from(document.getElementById("screen").getContext("2d").getImageData(159, 70, 1, 1).data).slice(0, 3) }));
@@ -172,6 +218,7 @@ const pinSeed = (page, seed) => page.evaluate((s) => {
     assert.ok(turns >= 3);
     await page.locator("#btnPower").click();
     await page.reload();
+    await page.locator("#more").evaluate((el) => { el.open = true; });
     await page.locator("#btnPower").click();
     await page.waitForFunction(() => window.__override?.gb?.e);
     await page.waitForTimeout(2500);
@@ -183,6 +230,47 @@ const pinSeed = (page, seed) => page.evaluate((s) => {
     await page.locator("#btnReset").click();
     await page.waitForFunction(() => window.__override?.gb?.e);
     await page.waitForTimeout(800);
+    assert.equal(await page.locator("#lcdMsg").innerText(), "");
+    assert.equal(await page.locator("#btnPower").innerText(), "Turn off");
+    assert.deepEqual(errors, []);
+  });
+  await check("sending a message with the console off boots it and gets through the intro", async () => {
+    await page.locator("#btnPower").click();
+    await page.locator("#say").fill("hello");
+    await page.locator("#say").press("Enter");
+    await page.waitForFunction(() => window.__override?.gb?.e);
+    await waitState(page, 6);
+    const vocab = await page.evaluate(() => window.__override.build.vocab);
+    assert.equal(vocab[(await seqTokens(page))[6]], "<I_GREET>");
+    assert.deepEqual(errors, []);
+  });
+  await check("switching off in the middle of a reply leaves Send usable", async () => {
+    await page.locator("#say").fill("tell me a joke");
+    await page.locator("#say").press("Enter");
+    await waitState(page, 5);
+    assert.equal(await page.locator("#send").isDisabled(), true);
+    await page.locator("#btnPower").click();
+    assert.equal(await page.locator("#send").isDisabled(), false);
+    await page.locator("#btnPower").click();
+    await page.waitForFunction(() => window.__override?.gb?.e);
+  });
+  await check("power cycling after replies boots cleanly every time and keeps its memory", async () => {
+    await page.waitForTimeout(1500);
+    const turns = await page.evaluate(() => { const w = window.__override; return w.gb.peek(w.build.debug.wTurns); });
+    assert.ok(turns >= 1);
+    for (let i = 0; i < 4; i++) {
+      await page.locator("#btnPower").click();
+      await page.locator("#btnPower").click();
+      await page.waitForFunction(() => window.__override?.gb?.e);
+      await page.waitForTimeout(1500);
+      assert.equal(await page.locator("#lcdMsg").innerText(), "");
+      assert.equal(await page.locator("#btnPower").innerText(), "Turn off");
+      assert.equal(await page.evaluate(() => { const w = window.__override; return w.gb.peek(w.build.debug.wTurns); }), turns);
+    }
+    await page.locator("#say").fill("hello");
+    await page.locator("#say").press("Enter");
+    await page.waitForFunction(() => document.getElementById("lvState").textContent === "Writing its reply", null, { timeout: 45000 });
+    await waitState(page, 6);
     assert.deepEqual(errors, []);
   });
   await browser.close();

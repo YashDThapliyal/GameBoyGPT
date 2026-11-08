@@ -2,16 +2,20 @@
 import { Handheld } from "./emulator.js";
 import { bindControls } from "./controls.js";
 import { Panel } from "./panel.js";
+import { Composer, cleanText } from "./composer.js";
 
 const $ = (id) => document.getElementById(id);
 const SAVE_KEY = "system-override-save-v1";
 const PREF_KEY = "system-override-display-v1";
 const POWER_FLASH_MS = 350;
+const PANEL_WIDTH = 460;
+const PANEL_GAP = 56;
+const PAGE_PADDING = 48;
 const params = new URLSearchParams(location.search);
 
-let moduleP = null;
 let gb = null;
 let panel = null;
+let composer = null;
 let romBytes = null;
 let tickCount = 0;
 let audioCtx = null;
@@ -50,6 +54,10 @@ async function fetchBytes(url) {
 async function prepare() {
   const build = await (await fetch("rom/build.json")).json();
   panel = new Panel(build);
+  composer = new Composer(() => gb, build.addresses, (text) => {
+    $("say").value = text;
+    panel.say("That message didn't reach the chip. Press Reset under the options below, then send it again.");
+  });
   window.__override = { build, get gb() { return gb; } };
   romBytes = await fetchBytes(`rom/${build.rom}`);
 }
@@ -62,8 +70,8 @@ async function powerOn() {
   try {
     audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
     audioCtx.resume().catch(() => {});
-    moduleP = moduleP || Binjgb();
-    const module = await moduleP;
+    // A fresh instance per power-on, like a console losing its RAM. The cartridge save comes back from storage.
+    const module = await Binjgb();
     if (!on) return;
     gb = new Handheld(module, $("screen"), onFrame);
     gb.volume = $("btnSound").getAttribute("aria-pressed") === "true" ? 0.5 : 0;
@@ -73,6 +81,7 @@ async function powerOn() {
     setTimeout(() => $("lcd").classList.add("on"), POWER_FLASH_MS);
   } catch (err) {
     on = false;
+    gb = null;
     syncPower();
     showMessage(`Could not start the emulator: ${err.message}. Reload the page to try again.`);
   }
@@ -81,12 +90,14 @@ async function powerOn() {
 function powerOff() {
   if (!on) return;
   storeSave(true);
+  composer?.cancel();
   on = false;
   gb?.shutdown();
   gb = null;
   $("lcd").classList.remove("on");
   panel?.off();
   syncPower();
+  syncSend();
 }
 
 function syncPower() {
@@ -97,9 +108,28 @@ function syncPower() {
 }
 
 function onFrame() {
+  composer.step();
   if (++tickCount % 6) return;
-  panel.update(gb);
+  panel.update(gb, composer);
+  syncSend();
   storeSave();
+}
+
+function syncSend() {
+  const blocked = Boolean(panel?.generating || composer?.busy);
+  $("send").disabled = blocked;
+  $("send").textContent = blocked ? "Wait" : "Send";
+}
+
+/** Sends a message from the page, switching the handheld on first when needed. */
+async function sendMessage(raw) {
+  const text = cleanText(raw);
+  if (!text || !composer || panel.generating || composer.busy) return false;
+  if (!on) await powerOn();
+  if (!on) return false;
+  composer.send(text);
+  syncSend();
+  return true;
 }
 
 function applyPalette() {
@@ -134,7 +164,7 @@ function fit() {
   const full = document.fullscreenElement != null;
   document.documentElement.classList.toggle("fullscreen", full);
   const narrow = window.innerWidth <= 900;
-  const availW = narrow || full ? window.innerWidth - 8 : window.innerWidth - 400 - 48 - 48;
+  const availW = narrow || full ? window.innerWidth - 8 : window.innerWidth - PANEL_WIDTH - PANEL_GAP - PAGE_PADDING;
   const availH = (narrow ? Infinity : window.innerHeight - (full ? 8 : 70));
   const maxK = Math.min((availW - 12) / 192, (availH - 8) / 318, full ? 8 : 4);
   const k = Math.max(1, Math.floor(maxK * dpr) / dpr);
@@ -167,7 +197,16 @@ async function main() {
   for (const id of ["optTint", "optGrid", "optGlow", "optGhost", "optClean"]) $(id).addEventListener("change", applyDisplay);
   // A mouse click must not leave focus on a page button, or the next Enter (Start) would press it again.
   document.addEventListener("click", (ev) => {
-    if (ev.detail > 0 && ev.target.closest?.("button, input")) document.activeElement?.blur();
+    if (ev.detail > 0 && ev.target.closest?.("button, input[type=checkbox]")) document.activeElement?.blur();
+  });
+  $("composer").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    if (await sendMessage($("say").value)) $("say").value = "";
+    $("say").focus();
+  });
+  $("ideas").addEventListener("click", (ev) => {
+    const idea = ev.target.closest("button");
+    if (idea) sendMessage(idea.textContent);
   });
 
   try {

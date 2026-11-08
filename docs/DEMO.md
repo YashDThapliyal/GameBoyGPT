@@ -9,6 +9,8 @@
 - The two sampler seeds in `tools/demo_seeds.json`, written into emulated RAM through the emulator's debug interface before each response. `tools/find_demo_seeds.py` searched them on the reference for short replies where the second visibly remembers the first. Replies of this kind are common but not guaranteed: see the memory rates in RESULTS.md.
 - The fixed intro lines are skipped after about half a second each.
 
+**Recorded before the panel redesign.** `make demo` records the current page.
+
 **What's labelled:** the side panel in the footage is the page's real panel in a compact layout. Its live values come from emulated RAM and its build values from `web/rom/build.json`. The plastic is CSS, as the footage says on screen.
 
 To rerecord: `make demo`.

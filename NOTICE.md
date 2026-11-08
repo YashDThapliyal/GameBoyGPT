@@ -8,7 +8,7 @@
 |---|---|---|
 | `web/vendor/binjgb/binjgb.js`, `binjgb.wasm` | [binji/binjgb](https://github.com/binji/binjgb), commit in `web/vendor/binjgb/COMMIT` | MIT, `web/vendor/binjgb/LICENSE` |
 | `web/fonts/jost-*` | Jost, by Owen Earl, via Fontsource | SIL OFL 1.1, `web/fonts/OFL-Jost.txt` |
-| `web/fonts/barlow-condensed-*` | Barlow, by Jeremy Tribby, via Fontsource | SIL OFL 1.1, `web/fonts/OFL-Barlow.txt` |
+| `web/fonts/barlow-*` | Barlow, by Jeremy Tribby, via Fontsource | SIL OFL 1.1, `web/fonts/OFL-Barlow.txt` |
 
 **Reference images.** The user supplied two third-party pixel-art images as general style guidance. They are kept in `docs/references/`, excluded from git, and are not part of any release. Nothing was traced from them. No code was copied from the projects in [docs/PRIOR_ART.md](docs/PRIOR_ART.md); ideas taken from them are credited there.
 

@@ -18,7 +18,7 @@ make web            # then open http://127.0.0.1:8123/
 
 Or load `release/system_override.gb` in any emulator in DMG mode. It needs MBC5 with 32 KB of cartridge RAM, which the ROM's header declares.
 
-Pick an action, or choose TYPE and write something on the on-screen keyboard. Keys in the browser: arrows, X for A, Z for B, Enter for Start, Shift for Select.
+In the browser, type in the box beside the console and press Enter. The page hands your text to the ROM's own input buffer, and the panel shows what the keyword parser heard. On the console itself, pick an action or choose TYPE and use the on-screen keyboard. Keys for its buttons: arrows, X for A, Z for B, Enter for Start, Shift for Select.
 
 Things to try: insult it twice. Tell it `MY NAME IS ...`, or `I LIKE ...`. Press SHUT DOWN three times in a row. Press SELECT to see the token ids it just generated.
 

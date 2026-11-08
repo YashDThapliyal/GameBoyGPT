@@ -26,7 +26,7 @@ export function bindControls(root, getEmulator, onFirstInput) {
 
   window.addEventListener("keydown", (ev) => {
     const name = KEYMAP[ev.code];
-    if (!name || ev.metaKey || ev.ctrlKey || ev.altKey) return;
+    if (!name || ev.metaKey || ev.ctrlKey || ev.altKey || ev.target.closest?.("input[type=text]")) return;
     if (ev.code === "Enter" && ev.target.closest?.("button:not([data-pad])")) return;
     ev.preventDefault();
     if (!ev.repeat) set(name, true);

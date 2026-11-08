@@ -1,16 +1,24 @@
 @font-face { font-family: "Jost"; src: url("../fonts/jost-latin-600-italic.woff2") format("woff2"); font-weight: 600; font-style: italic; font-display: swap; }
+@font-face { font-family: "Barlow"; src: url("../fonts/barlow-latin-400-normal.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Barlow"; src: url("../fonts/barlow-latin-500-normal.woff2") format("woff2"); font-weight: 500; font-display: swap; }
 @font-face { font-family: "Barlow Condensed"; src: url("../fonts/barlow-condensed-latin-400-normal.woff2") format("woff2"); font-weight: 400; font-display: swap; }
 @font-face { font-family: "Barlow Condensed"; src: url("../fonts/barlow-condensed-latin-500-normal.woff2") format("woff2"); font-weight: 500; font-display: swap; }
 @font-face { font-family: "Barlow Condensed"; src: url("../fonts/barlow-condensed-latin-600-normal.woff2") format("woff2"); font-weight: 600; font-display: swap; }
 
 :root {
-  /* An anti-static mat on a repair bench. The handheld is the only pale object on it. */
-  --mat: #27463f;
-  --mat-deep: #1d3631;
-  --mat-line: #3b6158;
-  --ink: #e5e8dc;
-  --ink-soft: #a9bdb2;
-  --solder: #d6b35c;
+  /* Every colour on the page comes off the console: its navy lettering, its magenta buttons, its four LCD shades. */
+  --navy: #232b5e;
+  --navy-deep: #1a2149;
+  --navy-line: #4a5596;
+  --paper: #eceadf;
+  --paper-soft: #b4b9d6;
+  --magenta: #8c2559;
+  --magenta-hi: #a93a70;
+  --magenta-lo: #51122f;
+  --lcd-0: #c4cfa1;
+  --lcd-1: #8b956d;
+  --lcd-2: #4d533c;
+  --lcd-3: #1f1f1f;
   --plastic: #cdcac1;
   --plastic-hi: #dedbd2;
   --plastic-lo: #a9a69c;
@@ -19,16 +27,13 @@
 }
 
 * { box-sizing: border-box; }
-html, body { margin: 0; min-height: 100%; }
-body {
-  background-color: var(--mat);
-  background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,.035) 1px, transparent 1.4px), radial-gradient(ellipse at 35% 30%, #2f5249, var(--mat-deep) 75%);
-  background-size: 7px 7px, 100% 100%;
-  color: var(--ink);
-  font: 400 18px/1.4 "Barlow Condensed", "Avenir Next Condensed", "Helvetica Neue", sans-serif;
+html, body {
+  background: var(--navy);
+  color: var(--paper);
+  font: 400 16px/1.45 Barlow, "Helvetica Neue", sans-serif;
 }
 
-.bench { display: flex; justify-content: center; align-items: flex-start; gap: 48px; padding: 24px; min-height: 100vh; }
+.bench { display: flex; justify-content: center; align-items: flex-start; gap: 56px; padding: 24px; min-height: 100vh; }
 .stage { display: flex; flex-direction: column; align-items: center; gap: 14px; }
 
 /* ---- The object. All dimensions in --u; the LCD is 160 x 144 at 2u per pixel. ---- */
@@ -115,45 +120,93 @@ button { font: inherit; color: inherit; }
 .grille { position: absolute; right: calc(var(--u) * 22); bottom: calc(var(--u) * 20); display: flex; gap: calc(var(--u) * 8); transform: rotate(-24deg); }
 .grille i { display: block; width: calc(var(--u) * 6); height: calc(var(--u) * 58); border-radius: calc(var(--u) * 3); background: linear-gradient(#77756c, #a09d93); box-shadow: inset 0 calc(var(--u) * 2) calc(var(--u) * 2) rgba(0,0,0,.65), 0 calc(var(--u) * 1) 0 rgba(255,255,255,.5); }
 
-button:focus-visible, input:focus-visible { outline: 2px solid var(--solder); outline-offset: 2px; }
+button:focus-visible, input:focus-visible, summary:focus-visible, a:focus-visible { outline: 2px solid var(--lcd-0); outline-offset: 2px; }
 
-.keys { margin: 0; color: var(--ink-soft); font-size: 16px; text-align: center; max-width: 42ch; }
-kbd { font: inherit; font-weight: 600; color: var(--ink); }
+.keys { margin: 0; color: var(--paper-soft); font-size: 14px; text-align: center; max-width: 52ch; }
+kbd { font: inherit; font-weight: 500; color: var(--paper); }
 
-/* ---- The bench notes beside it ---- */
-.panel { width: 400px; flex: none; }
-.panel h1 { font: 600 italic 44px/1 Jost, sans-serif; margin: 6px 0 8px; color: var(--ink); letter-spacing: -.015em; }
-.lede { margin: 0 0 16px; font-size: 22px; line-height: 1.25; }
-.panel h2 { margin: 24px 0 6px; font-size: 19px; font-weight: 600; color: var(--solder); }
-.note { margin: 8px 0 0; color: var(--ink-soft); font-size: 17px; max-width: 58ch; }
-.note a { color: var(--ink); }
+/* ---- The panel: type to it, read what happened, then the build. ---- */
+.panel { width: 460px; flex: none; display: flex; flex-direction: column; gap: 14px; }
+.panel h1 { font: 600 italic 40px/1 Jost, sans-serif; margin: 0; letter-spacing: -.015em; }
+.lede { margin: -8px 0 0; color: var(--paper-soft); max-width: 58ch; }
+.note { margin: 0; color: var(--paper-soft); font-size: 14px; }
+.note a { color: var(--paper); }
+
+.composer label { display: block; margin-bottom: 6px; font-weight: 500; }
+.say-row { display: flex; gap: 10px; align-items: stretch; }
+#say { flex: 1; min-width: 0; height: 48px; padding: 0 14px; border: 2px solid var(--paper-soft); border-radius: 6px; background: var(--paper); color: var(--lcd-3); font: 500 18px/1 Barlow, sans-serif; text-transform: uppercase; }
+#say::placeholder { color: #6d6f7c; text-transform: none; font-weight: 400; }
+#say:focus { outline: none; border-color: var(--lcd-0); box-shadow: 0 0 0 2px var(--lcd-0); }
+.send { flex: none; width: 84px; height: 46px; border: 0; border-radius: 23px; background: var(--magenta-hi); color: #fff; font: 600 19px/1 "Barlow Condensed", sans-serif; box-shadow: 0 3px 0 var(--magenta-lo); cursor: pointer; transition: transform .05s, box-shadow .05s; }
+.send:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 var(--magenta-lo); }
+.send:disabled { background: var(--navy-line); box-shadow: 0 3px 0 var(--navy-deep); color: var(--paper-soft); cursor: default; }
+.ideas { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.ideas button { padding: 3px 10px; border: 1px solid var(--navy-line); border-radius: 13px; background: none; color: var(--paper-soft); font: 400 14px/1.3 Barlow, sans-serif; cursor: pointer; }
+.ideas button:hover { border-color: var(--paper-soft); color: var(--paper); }
+.coach { margin: -2px 0 0; min-height: 2.9em; color: var(--paper); }
+
+/* The slip borrows the console's screen: the same greens, and the bezel's one large corner. */
+.slip { background: var(--lcd-0); color: var(--lcd-3); padding: 12px 16px 12px; border-radius: 6px 6px 32px 6px; }
+.slip-head, .slip-foot { display: flex; justify-content: space-between; gap: 12px; font: 500 15px/1.2 "Barlow Condensed", sans-serif; color: var(--lcd-2); font-variant-numeric: tabular-nums; }
+.slip-head span:first-child { color: var(--lcd-3); font-weight: 600; }
+.slip-foot { margin: 6px 0 0; padding-right: 14px; }
+.you { display: flex; gap: 8px; align-items: baseline; margin: 8px 0 0; }
+.you span { font: 500 15px/1.2 "Barlow Condensed", sans-serif; color: var(--lcd-2); }
+.you b { font-weight: 500; overflow-wrap: anywhere; }
+.you.menu b { font-weight: 400; color: var(--lcd-2); }
+.heard { display: grid; grid-template-columns: 1.6fr 1fr .8fr .9fr; gap: 8px; margin: 8px 0 0; padding: 7px 0; border-block: 1px solid var(--lcd-1); }
+.heard[hidden], .you[hidden] { display: none; }
+.heard dt { font: 500 13px/1.2 "Barlow Condensed", sans-serif; color: var(--lcd-2); }
+.heard dd { margin: 0; font: 600 16px/1.15 "Barlow Condensed", sans-serif; }
+.tokens { display: flex; flex-wrap: wrap; gap: 6px 7px; min-height: 84px; align-content: flex-start; margin-top: 10px; }
+.tokens .empty { margin: 0; color: var(--lcd-2); }
+.pair { display: inline-flex; }
+.tok { display: inline-flex; flex-direction: column; line-height: 1.1; }
+.tok b { font: 500 21px/1.1 Barlow, sans-serif; }
+.tok i { font: 400 12px/1.1 "Barlow Condensed", sans-serif; color: var(--lcd-2); font-variant-numeric: tabular-nums; }
+.tok.punct { margin-left: 1px; }
+.tok.slot b { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.tok.ctl b { font: 600 15px/1.45 "Barlow Condensed", sans-serif; color: var(--lcd-2); }
+.strip { display: flex; gap: 2px; height: 12px; margin-top: 10px; background: none; }
+.strip:empty { background: rgba(77, 83, 60, .16); }
+.strip i { flex: 1 1 0; min-width: 2px; background: var(--lcd-2); }
+.strip i.first { background: var(--lcd-3); }
+.strip i.live { background: var(--lcd-1); }
+
+.specs { display: flex; flex-direction: column; gap: 8px; }
+.specs h2 { margin: 6px 0 0; font: 600 18px/1.2 "Barlow Condensed", sans-serif; color: var(--paper); }
+.speed { display: flex; flex-direction: column; gap: 8px; }
+.speed-row { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; color: var(--paper-soft); font-size: 14px; font-variant-numeric: tabular-nums; }
+.speed-row span:nth-child(2) { color: var(--paper); font-weight: 500; }
+.bar { grid-column: 1 / -1; display: block; height: 8px; border-radius: 0 4px 4px 0; }
+.bar.base { background: var(--navy-line); }
+.bar.ship { background: var(--lcd-0); }
+.figures { display: grid; grid-template-columns: repeat(4, auto); justify-content: space-between; gap: 12px; margin: 0; }
+.figures > div { display: flex; flex-direction: column; }
+.figures dd { margin: 0; font: 600 25px/1.05 "Barlow Condensed", sans-serif; font-variant-numeric: tabular-nums; }
+.figures dt { color: var(--paper-soft); font-size: 13px; line-height: 1.2; max-width: 11ch; }
+.ram { margin-top: 4px; }
+.ram-cells { display: grid; grid-template-columns: repeat(64, 1fr); gap: 1px; }
+.ram-cells i { display: block; height: 8px; background: var(--navy-deep); }
+.ram-cells i.used { background: var(--lcd-0); }
+.ram p { margin: 5px 0 0; color: var(--paper-soft); font-size: 13px; }
+
+.more { padding-top: 12px; border-top: 1px solid var(--navy-line); }
+.more summary { cursor: pointer; color: var(--paper-soft); }
+.more[open] summary { margin-bottom: 12px; }
+.more > * + * { margin-top: 12px; }
 .row-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
-.row-buttons button { min-height: 40px; padding: 6px 14px; background: var(--mat-deep); border: 1px solid var(--mat-line); border-radius: 3px; cursor: pointer; font-weight: 500; }
-.row-buttons button:hover:not(:disabled) { border-color: var(--ink-soft); }
+.row-buttons button { min-height: 36px; padding: 4px 12px; background: none; border: 1px solid var(--navy-line); border-radius: 4px; color: var(--paper); cursor: pointer; font: 500 15px/1 Barlow, sans-serif; }
+.row-buttons button:hover:not(:disabled) { border-color: var(--paper-soft); }
 .row-buttons button:disabled { opacity: .45; cursor: default; }
-.facts { margin: 0; }
-.facts > div { display: flex; justify-content: space-between; gap: 16px; padding: 3px 0; border-bottom: 1px solid var(--mat-line); }
-.facts dt { color: var(--ink-soft); }
-.facts dd { margin: 0; font-weight: 500; text-align: right; font-variant-numeric: tabular-nums; }
-.tokens { display: flex; flex-wrap: wrap; gap: 4px 5px; min-height: 92px; align-content: flex-start; }
-.tokens .empty { margin: 0; color: var(--ink-soft); font-size: 17px; }
-.tok { display: inline-flex; flex-direction: column; padding: 1px 6px 2px; background: var(--mat-deep); border-radius: 2px; line-height: 1.1; }
-.tok b { font-weight: 500; font-size: 17px; }
-.tok i { font-style: normal; font-size: 13px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
-.tok.ctl { background: transparent; box-shadow: inset 0 0 0 1px var(--mat-line); }
-.tok.ctl b { color: var(--solder); }
-.toggles { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; }
+.toggles { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; font-size: 15px; }
 .toggles label { display: flex; gap: 8px; align-items: center; cursor: pointer; }
-.toggles input { accent-color: var(--solder); width: 16px; height: 16px; }
+.toggles input { accent-color: var(--lcd-1); width: 16px; height: 16px; }
 
 .demo-only { display: none; }
 .demo .demo-only { display: block; }
 .demo .not-demo { display: none; }
 .demo .keys { display: none; }
-.demo .panel h2 { margin-top: 14px; }
-.demo .tokens { min-height: 118px; }
-.demo .lede { margin-bottom: 4px; }
-.demo .demo-only { margin: 0; }
 .fullscreen .panel, .fullscreen .keys { display: none; }
 .fullscreen .bench { align-items: center; padding: 0; }
 
@@ -161,6 +214,7 @@ kbd { font: inherit; font-weight: 600; color: var(--ink); }
   .bench { flex-direction: column; align-items: center; padding: 12px 0 32px; gap: 24px; }
   .panel { width: min(100%, 560px); padding: 0 16px; }
   .keys { display: none; }
+  .heard { grid-template-columns: 1fr 1fr; }
 }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
