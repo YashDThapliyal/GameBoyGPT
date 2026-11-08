@@ -33,7 +33,7 @@ The nibble table lost on both speed and size. It still has to handle signs and s
 
 ## V3: Fused kernels
 
-A per-MAC cost of 464 T-cycles fell to 254 by removing the call, pushes and memory-based loop state. `x` is held biased in HRAM, so each MAC reads it with an immediate address and needs no pointer. Weights are stored biased in ROM. Each element has its own unrolled block, which is why bank 0 usage grows from 9.1 KB in V2 to 15.3 KB in V5Z. Output rows for tokens the mask can never choose are not computed, which saves 27 of 95 rows.
+A per-MAC cost of 464 T-cycles fell to 254 by removing the call, pushes and memory-based loop state. `x` is held biased in HRAM, so each MAC reads it with an immediate address and needs no pointer. Weights are stored biased in ROM. Each element has its own unrolled block, which is why bank 0 usage grows from 9.8 KB in V2 to 15.9 KB in V5Z. Output rows for tokens the mask can never choose are not computed, which saves 27 of 95 rows.
 
 ## V4: Sparse attention
 

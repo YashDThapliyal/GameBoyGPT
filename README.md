@@ -69,7 +69,7 @@ Button press -> deterministic game rules -> outcome
 | Model | 1 layer, d=32, 2 heads, FFN 64, context 16, vocabulary 95, 14,784 parameters |
 | Numbers | int8 weights and activations, 24-bit accumulators, power-of-two scales |
 | Hardware target | DMG, 4.194304 MHz. MBC5 ROM of 64 KiB, no cartridge RAM |
-| RAM | 2,673 of 8,192 bytes of built-in WRAM allocated |
+| RAM | 2,825 of 8,192 bytes of built-in WRAM allocated |
 | Training | PyTorch on one CPU thread, about 3 minutes, byte-reproducible |
 
 The engine decides what happens: rooms, items, damage, winning. The model is told the outcome and narrates it, so it can't break the game. Every story word comes from a model token; the display only adds the final full stop and capitalizes the first letter. Titles, intro lines and menus are fixed text.
