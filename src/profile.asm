@@ -5,7 +5,6 @@ SECTION "profile_vars", WRAM0
 wEventStartFrames: ds 2
 wLastEventFrames:: ds 2
 wLastEventTokens:: ds 1
-wTotalFallbacks::  ds 1
 wEventBankStart:   ds 2
 wLastEventBanks::  ds 2
 

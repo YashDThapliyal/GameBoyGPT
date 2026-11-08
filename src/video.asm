@@ -7,13 +7,16 @@ DEF UPLOAD_ROWS_PER_VBLANK EQU 4 ; ~640 T each; more than 4 can overrun mode 1 (
 SECTION "video_vars", WRAM0
 wBgMap::    ds SCREEN_W * SCREEN_H
 wDirty::    ds SCREEN_H
-wOam::      ds 8             ; two sprites: cursor, spinner
+
+SECTION "oam_shadow", WRAM0, ALIGN[8]
+wOam::      ds 160           ; robot 0-31, cursor 32
 
 SECTION "video_hram", HRAM
 hDirtyAny:: ds 1
 hFrames::   ds 2             ; free-running LCD frame counter
 hVbFlag::   ds 1
-hSpin::     ds 1             ; nonzero animates the spinner sprite
+hOamDirty:: ds 1
+hDmaRoutine:: ds 8           ; OAM DMA must run from HRAM: the CPU cannot read ROM or WRAM during the transfer
 
 SECTION "isr", ROM0
 VBlankIsr::
@@ -27,18 +30,24 @@ VBlankIsr::
     inc hl
     inc [hl]
 .nocarry:
-IF DEF(SP_STREAM)
     ; A row with interrupts held off can delay this ISR past mode 1, so VRAM and OAM are only touched
-    ; while LY says there is room. Dirty rows simply wait for the next frame.
+    ; while LY says there is room. Dirty rows and sprites simply wait for the next frame.
     ldh a, [rLY]
     cp 144
-    jr c, .joy
+    jr c, .anim
     cp 148
-    jr nc, .joy
-ENDC
+    jr nc, .anim
+    ldh a, [hOamDirty]
+    or a
+    jr z, .rows
+    xor a
+    ldh [hOamDirty], a
+    ld a, HIGH(wOam)
+    call hDmaRoutine
+.rows:
     ldh a, [hDirtyAny]
     or a
-    jr z, .oam
+    jr z, .anim
     ld hl, wDirty
     ld c, 0
     ld b, UPLOAD_ROWS_PER_VBLANK
@@ -46,18 +55,16 @@ ENDC
     ld a, [hl]
     or a
     jr z, .next
-IF DEF(SP_STREAM)
     ldh a, [rLY]
     cp 150
-    jr nc, .joy
-ENDC
+    jr nc, .anim
     xor a
     ld [hl], a
     push hl
     call UploadRow
     pop hl
     dec b
-    jr z, .oam           ; budget spent: remaining rows wait for next VBlank
+    jr z, .anim          ; budget spent: remaining rows wait for next VBlank
 .next:
     inc hl
     inc c
@@ -66,25 +73,8 @@ ENDC
     jr nz, .scan
     xor a
     ldh [hDirtyAny], a
-.oam:
-    ld hl, wOam
-    ld de, $FE00
-    REPT 8
-    ld a, [hl+]
-    ld [de], a
-    inc e
-    ENDR
-    ldh a, [hSpin]
-    or a
-    jr z, .joy
-    ldh a, [hFrames]
-    and 8
-    ld a, TILE_SPIN0
-    jr z, .s0
-    inc a
-.s0:
-    ld [wOam + 6], a
-.joy:
+.anim:
+    call AnimTick        ; after the uploads: a rebuild costs more than VBlank has left, and shows next frame
     call ReadJoypad
     ld a, 1
     ldh [hVbFlag], a
@@ -93,6 +83,16 @@ ENDC
     pop bc
     pop af
     reti
+
+; Copied to hDmaRoutine. a = source page.
+DmaTemplate:
+    ldh [rDMA], a
+    ld a, 40
+.w:
+    dec a
+    jr nz, .w
+    ret
+DmaTemplateEnd:
 
 ; UploadRow: c = row. Clobbers a, de, hl. 20 tiles in about 400 T-cycles.
 UploadRow:
@@ -173,13 +173,36 @@ MemCopy::
     jr nz, .loop
     ret
 
-; VideoInit: LCD must be off. Loads font/UI/inverse tiles, clears map, enables VBlank.
+; VideoInit: LCD must be off. Loads font, UI, inverse font and robot tiles, clears map and sprites, enables VBlank.
 VideoInit::
+    ld hl, DmaTemplate
+    ld de, hDmaRoutine
+    ld bc, DmaTemplateEnd - DmaTemplate
+    call MemCopy
     ld a, BANK(FontTiles)
     call BankSwitch
     ld hl, FontTiles
+    ld de, $9000
+    ld bc, TILE_INV * 16
+    call MemCopy
+    ld de, $8800         ; hl continues into the inverse font
+    ld bc, (TILE_LOGO - TILE_INV) * 16
+    call MemCopy
+    ld a, BANK(RobotTiles)
+    call BankSwitch
+    ld hl, RobotTiles
     ld de, $8000
-    ld bc, TILE_ART * 16 ; font + UI + inverse font are contiguous in ROM0
+    ld bc, RobotTilesEnd - RobotTiles
+    call MemCopy
+    ld a, BANK(LogoTiles)
+    call BankSwitch
+    ld hl, LogoTilesLow
+    ld de, $9000 + 64 * 16
+    ld bc, LogoTiles - LogoTilesLow
+    call MemCopy
+    ld hl, LogoTiles
+    ld de, $8800 + (TILE_LOGO - TILE_INV) * 16
+    ld bc, LogoTilesEnd - LogoTiles
     call MemCopy
     ld a, PAL_NORMAL
     ldh [rBGP], a
@@ -189,7 +212,6 @@ VideoInit::
     xor a
     ldh [rSCX], a
     ldh [rSCY], a
-    ; hide all OAM entries
     ld hl, $FE00
     ld b, 160
 .oam:
@@ -219,7 +241,7 @@ ClearShadow::
     or c
     jr nz, .c
     ld hl, wOam
-    ld b, 8
+    ld b, 160
 .o:
     ld [hl+], a
     dec b
@@ -263,15 +285,8 @@ ScreenOff::
 
 ScreenOn::
     call UploadAllNow
-    ld hl, wOam
-    ld de, $FE00
-    ld b, 8
-.o:
-    ld a, [hl+]
-    ld [de], a
-    inc e
-    dec b
-    jr nz, .o
+    ld a, 1
+    ldh [hOamDirty], a
     xor a
     ldh [rIF], a
     ld a, LCDC_ON
@@ -287,50 +302,6 @@ ScreenOn::
     call WaitFrames
     ld a, PAL_NORMAL
     ldh [rBGP], a
-    ret
-
-; LoadArt: LCD off. hl -> {db bank, count; dw tiles, map}; b = map rows to install from row 0.
-; Tiles load at TILE_ART. Clobbers everything.
-LoadArt::
-    ld a, [hl+]
-    push bc
-    call BankSwitch
-    ld a, [hl+]          ; tile count
-    ld c, a
-    ld a, [hl+]
-    ld e, a
-    ld a, [hl+]
-    ld d, a              ; de = tiles
-    ld a, [hl+]
-    ld b, [hl]
-    push af              ; low byte of map
-    push bc              ; b = high byte of map, c = count
-    ; copy count*16 bytes
-    ld h, d
-    ld l, e
-    ld de, $8000 + TILE_ART * 16
-    ld b, 0
-    REPT 4
-    sla c
-    rl b
-    ENDR
-    call MemCopy
-    pop bc
-    pop af
-    ld l, a
-    ld h, b              ; hl = map
-    pop bc               ; b = rows
-    ld de, wBgMap
-.rows:
-    ld c, SCREEN_W
-.cols:
-    ld a, [hl+]
-    ld [de], a
-    inc de
-    dec c
-    jr nz, .cols
-    dec b
-    jr nz, .rows
     ret
 
 ; RowPtr: b=row c=col -> hl = shadow pointer. Clobbers a, de.
@@ -431,6 +402,33 @@ PrintInvAt::
     jr .l
 .e:
     jp MarkRow
+
+; PrintDec16: de = value, hl = shadow ptr. Five digits, advances hl. Clobbers a, bc, de.
+PrintDec16::
+    ld bc, -10000
+    call .digit
+    ld bc, -1000
+    call .digit
+    ld bc, -100
+    call .digit
+    ld bc, -10
+    call .digit
+    ld bc, -1
+.digit:
+    ld a, -1
+    push hl
+    ld h, d
+    ld l, e
+.sub:
+    inc a
+    ld d, h
+    ld e, l
+    add hl, bc
+    jr c, .sub
+    pop hl
+    add '0' - $20
+    ld [hl+], a
+    ret
 
 ; PrintDec2: a=0..99, hl=shadow ptr; advances hl. tile font. Clobbers a, b.
 PrintDec2::

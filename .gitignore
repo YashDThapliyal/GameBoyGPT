@@ -22,3 +22,5 @@ reports/sweep*
 
 # User-supplied third-party style references: guidance only, never redistributed
 docs/references/*.png
+reports/study/*.pt
+reports/study/*.log

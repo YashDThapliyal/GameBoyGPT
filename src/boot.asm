@@ -1,5 +1,6 @@
 ; boot.asm - vectors, cartridge header, hardware init, entry dispatch.
 INCLUDE "constants.inc"
+INCLUDE "model_constants.inc"
 
 SECTION "vec_vblank", ROM0[$40]
     jp VBlankIsr
@@ -22,8 +23,12 @@ Boot::
     di
     ld sp, wStackTop
     call WaitLcdOff
-    xor a
-    ldh [rNR52], a          ; APU off: no audio in this build, saves battery on real units
+    ld a, $80
+    ldh [rNR52], a          ; APU on: one pulse channel blips as words appear
+    ld a, $77
+    ldh [rNR50], a
+    ld a, $22
+    ldh [rNR51], a
     ; Clear WRAM ($C000-$DFFF) and HRAM
     ld hl, $C000
     ld bc, $2000
@@ -51,6 +56,8 @@ ELSE
 IF DEF(SELFTEST)
     jp SelfTestMain
 ELSE
+    ld a, UI_BANK
+    call BankSwitch
     jp GameMain
 ENDC
 ENDC

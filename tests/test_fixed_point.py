@@ -5,8 +5,9 @@ import pytest
 ROOT = Path(__file__).resolve().parent.parent
 sys.path[:0] = [str(ROOT), str(ROOT / "tools")]
 from reference import fixed_point as fp
-from export_weights import quantize, to_blob, from_blob
-from training import dataset as ds
+from export_weights import to_blob, from_blob
+from reference import conversation as cv
+from training import dialogue as dl
 
 
 @pytest.mark.parametrize("v,s,e", [(5, 1, 3), (-5, 1, -2), (3, 1, 2), (-3, 1, -1), (-1, 1, 0), (1, 1, 1), (7, 0, 7), (-128, 3, -16), (-127, 7, -1), (63, 7, 0), (64, 7, 1)])
@@ -44,32 +45,30 @@ def test_attend_single_key_returns_value_scaled():
     assert fp.attend([1, 1], [[1, 1]], [[64, -64]]) == [63, -63]
 
 
-@pytest.fixture(scope="module")
-def model():
-    return quantize(ROOT / "checkpoints" / "release.pt")
+def test_repetition_penalty_lowers_only_words_already_used():
+    m = from_blob((ROOT / "generated" / "model.bin").read_bytes())
+    logits = [0] * m.vocab
+    word = m.first_word + 3
+    out = fp.penalized(m, logits, [m.first_emotion, m.eos + 1, word, word])
+    assert out[word] == -2 * m.rep_penalty and out[m.first_emotion] == 0 and out[m.eos + 1] == 0
 
 
-def test_blob_round_trip_and_checksum(model):
-    blob = to_blob(model)
-    assert from_blob(blob) == model
-    bad = bytearray(blob)
-    bad[100] ^= 1
-    with pytest.raises(ValueError):
-        from_blob(bytes(bad))
+def test_first_token_is_always_an_emotion_and_generation_is_deterministic():
+    m = from_blob((ROOT / "generated" / "model.bin").read_bytes())
+    p = dl.prompt_ids(cv.Situation("SMUG", "PEST", "NEW", "ONCE", "NONE", "GREET", "NONE"))
+    a, b = fp.generate(m, p, greedy=False, rng=77), fp.generate(m, p, greedy=False, rng=77)
+    assert a == b and m.first_emotion <= a["generated"][0] < m.eos
+    assert all(t >= m.eos for t in a["generated"][1:])
 
 
-def test_generation_deterministic_and_causal(model):
-    p = ds.prompt_ids(*ds.situations()[0])
-    a = fp.generate(model, p)
-    assert a == fp.generate(model, p)
-    assert len(a["tokens"]) <= model.ctx
-    # Causality: logits at position t depend only on tokens up to t.
-    assert fp.step(model, a["tokens"][:5])[0] == fp.step(model, a["tokens"][:5])[0]
-    assert fp.step(model, a["tokens"][:6])[0] != fp.step(model, a["tokens"][:5])[0]
+def test_cached_step_equals_full_recompute():
+    m = from_blob((ROOT / "generated" / "model.bin").read_bytes())
+    p = dl.prompt_ids(cv.Situation("ANGRY", "ENEMY", "RUDE", "AGAIN", "BOTH", "INSULT", "NONE")) + [m.first_emotion, m.first_word, m.first_word + 5]
+    cache = fp.Cache()
+    for n in range(1, len(p) + 1):
+        assert fp.step(m, p[:n], cache)[0] == fp.step(m, p[:n])[0]
 
 
-def test_event_token_changes_logits(model):
-    sits = ds.situations()
-    a = fp.step(model, ds.prompt_ids(*sits[0]))[0]
-    b = fp.step(model, ds.prompt_ids(*sits[-1]))[0]
-    assert a != b
+def test_blob_round_trip():
+    m = from_blob((ROOT / "generated" / "model.bin").read_bytes())
+    assert from_blob(to_blob(m)) == m

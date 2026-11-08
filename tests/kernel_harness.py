@@ -6,11 +6,23 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path[:0] = [str(ROOT), str(ROOT / "tools")]
 from run_emulator import GB
 
-CMD_MUL, CMD_DOT, CMD_REQUANT, CMD_NORM, CMD_ATTEND, CMD_MATVEC, CMD_STEP, CMD_GENERATE, CMD_SATADD, CMD_RELU, CMD_WEIGHTS, CMD_SAMPLE = range(1, 13)
+CMD_MUL, CMD_DOT, CMD_REQUANT, CMD_NORM, CMD_ATTEND, CMD_MATVEC, CMD_STEP, CMD_GENERATE, CMD_SATADD, CMD_RELU, CMD_WEIGHTS, CMD_SAMPLE, CMD_PARSE, CMD_TURN, CMD_RESET = range(1, 16)
 
 
 def s8(b: int) -> int:
     return b - 256 if b > 127 else b
+
+
+def ids16(tokens) -> list[int]:
+    out = []
+    for t in tokens:
+        out += [t & 255, t >> 8]
+    return out
+
+
+def read_ids(gb, n: int) -> list[int]:
+    raw = gb.read("wSeq", n * 2)
+    return [raw[i] | raw[i + 1] << 8 for i in range(0, n * 2, 2)]
 
 
 class KernelRig:

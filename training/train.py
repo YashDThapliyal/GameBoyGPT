@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Deterministic training: float warmup then quantization-aware fine-tuning. Bounded and CPU-only."""
+"""Deterministic training of the shipping dialogue model: float warmup then quantization-aware fine-tuning."""
 from __future__ import annotations
 import argparse, csv, json, math, time
 from pathlib import Path
@@ -9,13 +9,13 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 import yaml
-from training import dataset as ds
+from training import dialogue as dl
 from training.model import Config, TinyTransformer
 
 ROOT = Path(__file__).resolve().parent.parent
 
 
-def nll(model, x, y, quant, bs=1024):
+def nll(model, x, y, quant, bs=1024) -> float:
     total, count = 0.0, 0
     with torch.no_grad():
         for i in range(0, len(x), bs):
@@ -28,14 +28,14 @@ def nll(model, x, y, quant, bs=1024):
 
 def run(cfg: dict) -> dict:
     torch.manual_seed(cfg["seed"])
-    torch.set_num_threads(cfg.get("threads", 4))
+    torch.set_num_threads(cfg.get("threads", 1))  # multithreaded runs were not byte-reproducible
     rng = np.random.default_rng(cfg["seed"])
-    split = ds.make_split(cfg["n_train"], cfg["n_eval"], cfg["seed"], cfg.get("train_on_all", False))
-    arrays = {k: tuple(map(torch.from_numpy, ds.to_arrays(v))) for k, v in split.items()}
+    split = dl.make_split(cfg["n_train"], cfg["n_eval"], cfg["seed"])
+    arrays = {k: tuple(map(torch.from_numpy, dl.to_arrays(v))) for k, v in split.items()}
     (xtr, ytr), (xva, yva), (xte, yte) = arrays["train"], arrays["val"], arrays["test"]
-    c = Config(vocab=len(ds.VOCAB), **cfg["model"])  # ctx comes from the config
+    c = Config(vocab=len(dl.VOCAB), ctx=dl.CTX, **cfg["model"])
     model = TinyTransformer(c)
-    untrained = {"val_nll": nll(model, xva, yva, False), "uniform_nll": math.log(len(ds.VOCAB))}
+    untrained = {"val_nll": nll(model, xva, yva, False), "uniform_nll": math.log(len(dl.VOCAB))}
     float_steps, qat_steps, bs = cfg["float_steps"], cfg["qat_steps"], cfg["batch"]
     total = float_steps + qat_steps
     opt = torch.optim.AdamW(model.parameters(), lr=cfg["lr"], weight_decay=cfg["weight_decay"])
@@ -59,12 +59,11 @@ def run(cfg: dict) -> dict:
             if quant and v < best:
                 best, best_state = v, {k: p.clone() for k, p in model.state_dict().items()}
     model.load_state_dict(best_state)
-    report = {"config": cfg, "model": c.as_dict(), "params": model.num_params(), "untrained": untrained,
-              "best_val_nll_quant": best, "test_nll_quant": nll(model, xte, yte, True),
-              "test_nll_float": nll(model, xte, yte, False), "train_seconds": time.time() - t0}
+    report = {"config": cfg, "model": c.as_dict(), "params": model.num_params(), "untrained": untrained, "best_val_nll_quant": best,
+              "test_nll_quant": nll(model, xte, yte, True), "test_nll_float": nll(model, xte, yte, False), "train_seconds": time.time() - t0}
     out = ROOT / cfg["out"]
     out.parent.mkdir(parents=True, exist_ok=True)
-    torch.save({"state": model.state_dict(), "model": c.as_dict(), "report": report, "vocab": ds.VOCAB}, out)
+    torch.save({"state": model.state_dict(), "model": c.as_dict(), "report": report, "vocab": dl.VOCAB}, out)
     with open(out.with_suffix(".curve.csv"), "w", newline="") as f:
         w = csv.DictWriter(f, curve[0].keys())
         w.writeheader()

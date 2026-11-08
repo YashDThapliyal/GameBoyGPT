@@ -418,7 +418,19 @@ DotW32::
     ENDR
 ENDC
 DotW16::
-    FOR I, 48, 64, 2
+    FOR I, 48, 52, 2
+    pop bc
+    QMACS I, c
+    QMACS I + 1, b
+    ENDR
+DotW12::
+    FOR I, 52, 56, 2
+    pop bc
+    QMACS I, c
+    QMACS I + 1, b
+    ENDR
+DotW8::
+    FOR I, 56, 64, 2
     pop bc
     QMACS I, c
     QMACS I + 1, b
@@ -453,7 +465,15 @@ DotW32::
     QMAC I, 0
     ENDR
 DotW16::
-    FOR I, 48, 64
+    FOR I, 48, 52
+    QMAC I, 0
+    ENDR
+DotW12::
+    FOR I, 52, 56
+    QMAC I, 0
+    ENDR
+DotW8::
+    FOR I, 56, 64
     QMAC I, 0
     ENDR
     ld a, e

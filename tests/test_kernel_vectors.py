@@ -94,15 +94,15 @@ def test_norm(rig):
 
 def test_attention_weights(rig):
     rnd = random.Random(13)
-    cases = [[0], [127], [-127], [127, -127], [5] * 16, [5] * 24, [127] + [-127] * 23, list(range(-12, 12))]
-    cases += [rand_vec(rnd, rnd.randint(1, 24), -m, m) for m in (2, 10, 40, 127) for _ in range(20)]
+    cases = [[0], [127], [-127], [127, -127], [5] * 16, [5] * 32, [127] + [-127] * 31, list(range(-16, 16))]
+    cases += [rand_vec(rnd, rnd.randint(1, 32), -m, m) for m in (2, 10, 40, 127) for _ in range(20)]
     for sc in cases:
         rig.gb.write("wScore", sc)
         rig.run(CMD_WEIGHTS, [len(sc)])
         assert rig.gb.read("wWeight", len(sc)) == fp.attention_weights(sc)
 
 
-@pytest.mark.parametrize("L", [1, 2, 5, 16, 24])
+@pytest.mark.parametrize("L", [1, 2, 5, 16, 32])
 def test_attend_head(rig, model, L):
     rnd = random.Random(L)
     hd = 16
@@ -121,7 +121,7 @@ def test_attend_head(rig, model, L):
             assert [s8(x) for x in rig.gb.read("wTestOut", hd)] == want
 
 
-@pytest.mark.parametrize("idx,name,shift,n_in", [(2, "w_q", "s_q", 32), (3, "w_k", "s_k", 32), (4, "w_v", "s_v", 32), (5, "w_o", "s_o", 32), (6, "w_f1", "s_f1", 32), (7, "w_f2", "s_f2", 64)])
+@pytest.mark.parametrize("idx,name,shift,n_in", [(2, "w_q", "s_q", 32), (3, "w_k", "s_k", 32), (4, "w_v", "s_v", 32), (5, "w_o", "s_o", 32), (6, "w_f1", "s_f1", 32), (7, "w_f2", "s_f2", 64), (8, "w_b", "s_b", 32)])
 def test_matvec_real_weights_from_rom(rig, model, idx, name, shift, n_in):
     rnd = random.Random(idx)
     W, s = getattr(model, name), getattr(model, shift)
@@ -131,22 +131,28 @@ def test_matvec_real_weights_from_rom(rig, model, idx, name, shift, n_in):
         assert [s8(v) for v in rig.gb.read("wTestOut", len(W))] == fp.matvec(W, x, s)
 
 
-def test_argmax_and_sampling(rig, model):
-    rnd = random.Random(17)
+@pytest.mark.parametrize("mode", [0, 1])
+def test_argmax_and_sampling(rig, model, mode):
+    """Both decoding ranges, at random logits including ties and near ties at the top."""
+    rnd = random.Random(17 + mode)
     rng = 0xACE1
-    for trial in range(60):
-        hi = 30000 if trial % 2 else 200
-        logits = [rnd.randint(-hi, hi) for _ in range(len(model.w_out))]
-        if trial % 5 == 0:  # create ties and near-ties around the top
-            top = max(logits[model.first_gen:])
-            for i in rnd.sample(range(model.first_gen, len(model.w_out)), 6):
+    rows = fp.allowed_rows(model, mode)
+    rig.gb.write("wRowMode", [mode])
+    for trial in range(40):
+        hi = 12000 if trial % 2 else 200
+        logits = [rnd.randint(-hi, hi) for _ in range(model.vocab)]
+        if trial % 3 == 0:
+            top = max(logits[i] for i in rows)
+            for i in rnd.sample(list(rows), min(len(rows), 16)):
                 logits[i] = top - rnd.randint(0, model.sample_margin)
         rig.gb.write("wLogits", [b for v in logits for b in ((v & 255), (v >> 8) & 255)])
         rig.run(CMD_SAMPLE, [0])
-        assert rig.gb.read("wMB_Args", 1, 1)[0] == fp.argmax_masked(model, logits)
+        lo, h = rig.gb.read("wMB_Args", 2, 1)
+        assert lo | h << 8 == fp.argmax_range(logits, rows)
         rig.gb.write("wNarrRng", [rng & 255, rng >> 8])
         rig.run(CMD_SAMPLE, [1])
-        want, rng2 = fp.sample_masked(model, logits, rng)
-        assert rig.gb.read("wMB_Args", 1, 1)[0] == want
+        want, rng2 = fp.sample_range(model, logits, rows, rng)
+        lo, h = rig.gb.read("wMB_Args", 2, 1)
+        assert lo | h << 8 == want
         assert rig.gb.read("wNarrRng", 2) == [rng2 & 255, rng2 >> 8]
         rng = rng2

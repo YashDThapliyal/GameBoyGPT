@@ -102,19 +102,21 @@ def _build_vocab() -> tuple[str, ...]:
     head = ["<BOS>", "<SAY>"]
     head += [f"<M_{x}>" for x in cv.MOODS] + [f"<R_{x}>" for x in cv.RELATIONS] + [f"<H_{x}>" for x in cv.HISTORIES]
     head += [f"<P_{x}>" for x in cv.REPEATS] + [f"<F_{x}>" for x in cv.FACTS] + [f"<I_{x}>" for x in cv.INTENTS] + [f"<T_{x}>" for x in cv.TOPICS]
-    gen = ["<EOS>"] + [f"<E_{x}>" for x in EMOTIONS] + list(RUNTIME_SLOTS)
-    words = sorted({w for e in EXPANDED for w in tokenize(e) if w not in RUNTIME_SLOTS})
-    return tuple(head + gen + words)
+    # The ROM relies on this order: emotions are scored alone for the first token, punctuation is exempt from the repetition penalty.
+    gen = [f"<E_{x}>" for x in EMOTIONS] + ["<EOS>"] + list(RUNTIME_SLOTS)
+    words = {w for e in EXPANDED for w in tokenize(e) if w not in RUNTIME_SLOTS}
+    punct = sorted(words & set(PUNCT))
+    return tuple(head + gen + punct + sorted(words - set(PUNCT)))
 
 
 VOCAB = _build_vocab()
 STOI = {w: i for i, w in enumerate(VOCAB)}
 BOS, SAY, EOS = STOI["<BOS>"], STOI["<SAY>"], STOI["<EOS>"]
-FIRST_GEN = EOS
 FIRST_EMOTION = STOI[f"<E_{EMOTIONS[0]}>"]
+FIRST_GEN = FIRST_EMOTION
 FIRST_SLOT = STOI["<NAME>"]
-FIRST_WORD = FIRST_SLOT + len(RUNTIME_SLOTS)
 PUNCT_IDS = frozenset(STOI[p] for p in PUNCT if p in STOI)
+FIRST_WORD = FIRST_SLOT + len(RUNTIME_SLOTS) + len(PUNCT_IDS)
 
 
 def prompt_ids(s: cv.Situation) -> list[int]:

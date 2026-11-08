@@ -18,37 +18,44 @@ wF::   ds MODEL_FFN
 wO2::  ds MODEL_D
 wX2::  ds MODEL_D
 wN3::  ds MODEL_D
+wZ::   ds MODEL_K             ; output bottleneck
 
 SECTION "seq_vars", WRAM0
-wSeq::    ds MODEL_CTX
+wSeq::    ds MODEL_CTX * 2    ; 16-bit token ids, little-endian
 wSeqLen:: ds 1
 wStepJ:   ds 1
+wRowMode:: ds 1               ; 0: score the emotion rows, 1: score EOS, slots and words
+wRowsLeft: ds 2
 wLogits:: ds MODEL_VOCAB * 2  ; int16 little-endian
 wCacheLen:: ds 1              ; positions already holding valid K,V (V5 only)
 
 SECTION "model_code", ROM0
 ; EmbedPos: a = position. wE = sat8(tok[wSeq[a]] + pos[a]). Clobbers everything.
+; The token table starts each bank on a row boundary: 512 rows of 32 bytes fill a bank exactly, so id >> 9 picks the bank.
 EmbedPos::
     ld c, a
     push bc
-    ld hl, wSeq
-    add l
-    ld l, a
-    jr nc, .nc
-    inc h
-.nc:
-    ld a, [hl]
-    ; row pointer into tok
     ld l, a
     ld h, 0
+    add hl, hl
+    ld de, wSeq
+    add hl, de
+    ld a, [hl+]
+    ld e, a
+    ld d, [hl]           ; de = id
+    ld a, d
+    srl a
+    add BANK(DataTok)
+    call BankSwitch
+    ld a, d
+    and 1
+    ld h, a
+    ld l, e
     REPT 5
     add hl, hl
     ENDR
     ld de, DataTok
     add hl, de
-    ; tok row is copied to wE first so the bank can change for pos
-    ld a, BANK(DataTok)
-    call BankSwitch
     ld de, wE
     ld b, MODEL_D
 .c1:
@@ -180,29 +187,43 @@ PhFfn::
 PhOut::
     jp OutputLogits
 
-IF DEF(FAST_DOT)
-; OutputLogits: wN3 -> wLogits for generatable tokens only: the mask is fixed, so masked rows are never computed.
+; OutputLogits: wN3 -> wZ -> wLogits. The factored head costs k x (d + rows) MACs rather than d x rows.
 OutputLogits::
-    ld hl, TOut
-    call LoadTensor
+    ld hl, TB
     ld de, wN3
-    ld a, MODEL_D
+    ld bc, wZ
+    call MatVec
+IF DEF(FAST_DOT)
+    ; Only rows the decoder can choose at this position are computed.
+    ld de, wZ
+    ld a, MODEL_K
     call LoadXBiased
-    ld a, [wMvBank]
+    ld a, BANK(DataOut)
     call BankSwitch
-    ld hl, DataOut + TOK_FIRST_GEN * MODEL_D
-    ld b, h
-    ld c, l
-    ld hl, wLogits + TOK_FIRST_GEN * 2
-    ld a, MODEL_VOCAB - TOK_FIRST_GEN
-    ld [wMvRows], a
+    ld a, [wRowMode]
+    or a
+    jr nz, .later
+    ld bc, DataOut + TOK_FIRST_EMOTION * MODEL_K
+    ld hl, wRowsLeft
+    ld a, LOW(TOK_EOS - TOK_FIRST_EMOTION)
+    ld [hl+], a
+    ld [hl], HIGH(TOK_EOS - TOK_FIRST_EMOTION)
+    ld hl, wLogits + TOK_FIRST_EMOTION * 2
+    jr .row
+.later:
+    ld bc, DataOut + TOK_EOS * MODEL_K
+    ld hl, wRowsLeft
+    ld a, LOW(MODEL_VOCAB - TOK_EOS)
+    ld [hl+], a
+    ld [hl], HIGH(MODEL_VOCAB - TOK_EOS)
+    ld hl, wLogits + TOK_EOS * 2
 .row:
     push hl
     xor a
     ldh [hAcc + 2], a
     ld d, a
     ld e, a
-    ld hl, DotW32
+    ld hl, DotW{d:MODEL_K}
     call DotEnter
     push bc
     ld c, LOGIT_SHIFT
@@ -213,22 +234,32 @@ OutputLogits::
     ld [hl+], a
     ld a, d
     ld [hl+], a
-    ld a, [wMvRows]
-    dec a
-    ld [wMvRows], a
+    push hl
+    ld hl, wRowsLeft
+    ld a, [hl]
+    sub 1
+    ld [hl+], a
+    ld a, [hl]
+    sbc 0
+    ld [hl-], a
+    or [hl]
+    pop hl
     jr nz, .row
     ret
 ELSE
-; OutputLogits: wN3 -> wLogits. Vanilla computes every row, then the sampler applies the mask.
-OutputLogits::
+    ; Vanilla computes every row, then the sampler applies the mask.
     ld hl, TOut
     call LoadTensor
-    ld a, LOW(wN3)
+    ld a, LOW(wZ)
     ld [wMvX], a
-    ld a, HIGH(wN3)
+    ld a, HIGH(wZ)
     ld [wMvX + 1], a
     ld a, [wMvBank]
     call BankSwitch
+    ld hl, wRowsLeft
+    ld a, LOW(MODEL_VOCAB)
+    ld [hl+], a
+    ld [hl], HIGH(MODEL_VOCAB)
     ld hl, wLogits
 .row:
     push hl
@@ -240,12 +271,18 @@ OutputLogits::
     ld [hl+], a
     ld a, d
     ld [hl+], a
-    ld a, [wMvRows]
-    dec a
-    ld [wMvRows], a
+    push hl
+    ld hl, wRowsLeft
+    ld a, [hl]
+    sub 1
+    ld [hl+], a
+    ld a, [hl]
+    sbc 0
+    ld [hl-], a
+    or [hl]
+    pop hl
     jr nz, .row
     ret
-
 ENDC
 
 ; ModelReset: invalidates per-event state before a new prompt.

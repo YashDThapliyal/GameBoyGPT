@@ -43,7 +43,7 @@ Dispatch:
     ld l, a
     jp hl
 .table:
-    dw CmdNop, CmdMul, CmdDot, CmdRequant, CmdNorm, CmdAttend, CmdMatVec, CmdStep, CmdGenerate, CmdSatAdd, CmdRelu, CmdWeights, CmdSample
+    dw CmdNop, CmdMul, CmdDot, CmdRequant, CmdNorm, CmdAttend, CmdMatVec, CmdStep, CmdGenerate, CmdSatAdd, CmdRelu, CmdWeights, CmdSample, CmdParse, CmdTurn, CmdReset
 CmdNop:
     ret
 ; 1: args[0]*args[1] -> args[2..3]
@@ -115,7 +115,7 @@ CmdMatVec:
     ld de, wTestA
     ld bc, wTestOut
     jp MatVec
-; 7: wSeq/wSeqLen preset -> wLogits
+; 7: wSeq/wSeqLen/wRowMode preset -> wLogits
 CmdStep:
     call ModelReset
     jp ForwardStep
@@ -144,18 +144,37 @@ CmdWeights:
     ld a, [wMB_Args]
     ld [wAttnL], a
     jp ScoresToWeights
-; 12: wLogits preset; args[0] nonzero = sample -> args[1]
+; 12: wLogits and wRowMode preset; args[0] nonzero = sample -> args[1..2]
 CmdSample:
     ld a, [wMB_Args]
     or a
     jr nz, .s
-    call ArgmaxMasked
-    ld [wMB_Args + 1], a
-    ret
+    call ArgmaxRange
+    jr .out
 .s:
-    call SampleMasked
+    call SampleRange
+.out:
+    ld a, [wPickId]
     ld [wMB_Args + 1], a
+    ld a, [wPickId + 1]
+    ld [wMB_Args + 2], a
     ret
+; 13: wInput/wInputLen preset -> wParsed*
+CmdParse:
+    ld a, UI_BANK
+    call BankSwitch
+    jp Parse
+; 14: wParsed* preset -> memory, mood, relation, prompt in wSeq
+CmdTurn:
+    ld a, UI_BANK
+    call BankSwitch
+    call ApplyTurn
+    jp BuildPrompt
+; 15: a new relationship
+CmdReset:
+    ld a, UI_BANK
+    call BankSwitch
+    jp StateReset
 
 TokenHook::
     ret

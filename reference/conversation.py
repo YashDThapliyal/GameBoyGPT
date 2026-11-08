@@ -218,6 +218,11 @@ def apply_turn(s: State, p: Parsed) -> State:
     )
 
 
+def after_power_down(s: State) -> State:
+    """The third shutdown in a row plays the power-down sequence. Memory survives it, as it survives a real power cycle."""
+    return replace(s, shutdowns=0, anger=5, bored=0)
+
+
 def mood_of(s: State) -> str:
     i = INTENTS[s.last_intent] if s.last_intent < len(INTENTS) else "TALK"
     if s.shutdowns >= SHUTDOWN_LIMIT:

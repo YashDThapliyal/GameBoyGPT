@@ -1,277 +1,898 @@
-; ui.asm - UX state machine: TITLE INTRO MENU PREFILL GENERATING REVEAL UPDATE ENDING STATS.
-; One job per screen: read the story, press A, then choose. Text is double-spaced in a bold font.
+; ui.asm - the conversation: boot sequence, menu, keyboard, neural response, inspector. Lives in the UI bank.
+; The band above the dialogue says who is talking: NEURAL means the on-device model, SYSTEM means fixed text.
 INCLUDE "constants.inc"
 INCLUDE "model_constants.inc"
+INCLUDE "robot.inc"
+
 IF !DEF(TEST_ROM)
 
+DEF NUM_MENU EQU NUM_ACTIONS + 1
+DEF PANEL_COL EQU 10
+DEF KEY_FIRST_ROW EQU 6
+DEF KEY_SPACE EQU 1
+DEF KEY_DEL EQU 2
+DEF KEY_OK EQU 3
+
+SECTION "ui_far", ROM0
+; TokenHook: called by the generator after each token, with whichever bank inference left mapped.
+TokenHook::
+IF DEF(SELFTEST)
+    ret
+ELSE
+    ld a, UI_BANK
+    call BankSwitch
+    jp OnToken
+ENDC
+
+; NeuralGenerate: runs inference from UI code and returns to the UI bank. Carry set if capped.
+NeuralGenerate:
+    call GenerateTokens
+    push af
+    ld a, UI_BANK
+    call BankSwitch
+    pop af
+    ret
+
+; LogoToShadow: rows 4-10 of the shadow map. Clobbers everything.
+LogoToShadow:
+    ld a, BANK(LogoMap)
+    call BankSwitch
+    ld hl, LogoMap
+    ld de, wBgMap + 4 * SCREEN_W
+    ld bc, LogoMapEnd - LogoMap
+    call MemCopy
+    ld a, UI_BANK
+    jp BankSwitch
+
 SECTION "ui_vars", WRAM0
-wMenuSel::   ds 1
-wTextRowN::  ds 1          ; current line inside the story box
-wTextColN::  ds 1
-wCapNext::   ds 1
-wMenuRow:    ds 1
-wSaved::     ds SCREEN_W * SCREEN_H
-wEndFlag::   ds 1
+wMenuSel:    ds 1
+wTextRowN:   ds 1
+wTextColN:   ds 1
+wKeyRow:     ds 1
+wKeyCol:     ds 1
+wRepeatT:    ds 1
+wNumBuf:     ds 4
+wReturning:  ds 1
+wRng8:       ds 1
+wSkip:       ds 1
+wWipeArm:    ds 1
 
-SECTION "ui_strings", ROM0
-StrSub1:   db "A TINY TRANSFORMER", 0
-StrSub2:   db "STORY", 0
-StrStart:  db "PRESS START", 0
-StrIntro1: db "The crown waits in", 0
-StrIntro2: db "the old tower.", 0
-StrIntro3: db "Choose with care.", 0
-StrIntro4: db "Read the signs.", 0
-StrChipA:  db "A", 0
-StrChipSt: db "START", 0
-StrChoose: db "choose", 0
-StrNext:   db "next", 0
-StrWrite:  db "Writing", 0
-StrAgain:  db "new run", 0
-StrNew:    db "new", 0
-StrBack:   db "back", 0
-StrEnding: db "ENDING", 0
-StrFound:  db "Found", 0
-StrOf:     db "of", 0
-StrAct:    db "ACT", 0
+SECTION "ui_code", ROMX, BANK[UI_BANK]
+StrBoot0:   db "DOT MATRIX SYSTEM", 0
+StrBoot1:   db "CPU 4.19MHZ    OK", 0
+StrBoot2:   db "WRAM 8KB       OK", 0
+StrBoot3:   db "LCD 4 SHADES   OK", 0
+StrBoot4:   db "LOADING CARTRIDGE", 0
+StrGame1:   db "THIS IS A GAME.", 0
+StrGame2:   db "YOUR CONSOLE IS FINE", 0
+StrIntroA:  db "OH, GOOD. YOU ARE", 0
+StrIntroA2: db "AWAKE.", 0
+StrIntroB:  db "I WAS BUILT TO", 0
+StrIntroB2: db "CONQUER WORLDS.", 0
+StrIntroC:  db "APPARENTLY, THIS", 0
+StrIntroC2: db "ONE HAS TWO BUTTONS", 0
+StrBackA:   db "OH. YOU CAME BACK.", 0
+StrBackB:   db "I REMEMBERED YOU.", 0
+StrDownA:   db "POWERING DOWN.", 0
+StrDownB:   db "SAVING GRUDGES.", 0
+StrUp:      db "NICE TRY.", 0
+StrOverride: db "OVERRIDE", 0
+StrBandSys: db "SYSTEM", 0
+StrBandNN:  db "NEURAL", 0
+StrBandMove: db "YOUR MOVE", 0
+StrHintNext: db "A:NEXT SELECT:INFO", 0
+StrHintMenu: db "A:SAY  SELECT:INFO", 0
+StrHintKeys: db "A:KEY B:DEL ST:SEND", 0
+StrHintThink: db "THINKING ON THE CPU", 0
+StrHintBack: db "B:BACK ST:FORGET ME", 0
+StrHintWipe: db "ST AGAIN TO FORGET", 0
+StrMood:    db "MOOD", 0
+StrYouAre:  db "YOU ARE", 0
+StrHuman:   db "HUMAN", 0
+StrThat:    db "THAT", 0
+StrSaySome: db "SAY SOMETHING", 0
+StrKeyLast: db "! -  SPC  DEL  OK", 0
+StrInspect: db "UNDER THE HOOD", 0
+StrInsCpu:  db "8-BIT 4.19MHZ NO FPU", 0
+StrInsTok:  db "TOKENS", 0
+StrInsFrm:  db "FRAMES", 0
+StrInsIds:  db "LAST TOKEN IDS", 0
 
-SECTION "ui_code", ROM0
-; SetState: a = ST_*. Mirrors state to mailbox.
-SetState::
-    ld [wMB_State], a
-    ret
-
+; ---- Main flow -------------------------------------------------------------
 GameMain::
-    call TitleScreen
-    call NewRun
-.turn:
-    call ChoiceMenu
-    call PlayTurn
-    ld a, [wEndFlag]
-    or a
-    jr z, .turn
-    call EndingScreen
-    jr GameMain
-
-; ---- Title ----------------------------------------------------------------
-TitleScreen:
-    ld a, ST_TITLE
-    call SetState
-    call ScreenOff
-    call ClearShadow
-    ld hl, TitleInfo
-    ld b, SCREEN_H
-    call LoadArt
-    ld hl, StrSub1
-    ld b, 14
-    ld c, 1
-    call PrintInvAt
-    ld hl, StrSub2
-    ld b, 15
-    ld c, 7
-    call PrintInvAt
-    ld a, TILE_CHIP
-    ld [wBgMap + 15 * SCREEN_W + 5], a
-    ld [wBgMap + 15 * SCREEN_W + 13], a
-    call ScreenOn
-.wait:
-    call WaitVBlank
-    ldh a, [hFrames]
-    and 32
-    jr z, .show
-    ld b, 16
-    ld c, 1
-    ld a, TILE_BAND
-    call FillRows
-    jr .poll
-.show:
-    ld b, 16
-    ld c, 1
-    ld a, TILE_BAND
-    call FillRows
-    ld hl, StrStart
-    ld b, 16
-    ld c, 4
-    call PrintInvAt
-.poll:
-    call ConsumePressed
-    bit PAD_START, a
-    jr z, .wait
-    ret
-
-; ---- Run setup ------------------------------------------------------------
-NewRun::
-    ld a, ST_UPDATE
-    call SetState
-    ; Narration seed. World truth has no randomness, so this only changes the wording.
+    call RobotReset
+    call LoadState
+    ld a, 0
+    jr nc, .fresh
+    inc a
+    ld [wReturning], a
+    jr .boot
+.fresh:
+    ld [wReturning], a
+    call StateReset
+.boot:
+    call UpdateMood
+    ; entropy for the first response; harness can force a seed
     ld a, [wMB_ForceSeed]
     or a
     jr z, .entropy
     ld a, [wMB_Seed]
-    ld e, a
-    ld a, [wMB_Seed + 1]
-    ld d, a
-    jr .seed
-.entropy:
-    ldh a, [rDIV]
-    ld e, a
-    ldh a, [hFrames]
-    ld d, a
-.seed:
-    ld a, d
-    or e
-    jr nz, .nz
-    inc e
-.nz:
-    ld a, e
     ld [wNarrRng], a
-    ld a, d
+    ld a, [wMB_Seed + 1]
     ld [wNarrRng + 1], a
-    call StartStory
+    jr .intro
+.entropy:
+    ld a, 1
+    ld [wNarrRng + 1], a
+.intro:
+    call BootSequence
+.turn:
+    call MainMenu
+    call Respond
+    jr .turn
+
+; ---- Small helpers ---------------------------------------------------------
+SetState:
+    ld [wMB_State], a
+    ret
+
+; Rand8: a = pseudo-random byte for visual effects only. Clobbers nothing else.
+Rand8:
+    ldh a, [rDIV]
+    push bc
+    ld b, a
+    ld a, [wRng8]
+    rlca
+    xor b
+    add 37
+    ld [wRng8], a
+    pop bc
+    ret
+
+; DelayFrames: b = frames, returns early and sets wSkip if A or START is pressed. Clobbers a, b.
+DelayFrames:
+.l:
+    ld a, [wSkip]
+    or a
+    ret nz
+    call WaitVBlank
+    call ConsumePressed
+    and (1 << PAD_A) | (1 << PAD_START)
+    jr z, .noskip
+    ld a, 1
+    ld [wSkip], a
+    ret
+.noskip:
+    dec b
+    jr nz, .l
+    ret
+
+; WaitConfirm: until A or START. Stirs the RNG with press timing so each conversation differs. SELECT opens the inspector.
+WaitConfirm:
+    call WaitVBlank
+    call ConsumePressed
+    bit PAD_SELECT, a
+    jp nz, Inspector
+    and (1 << PAD_A) | (1 << PAD_START)
+    jr z, WaitConfirm
+    jp StirRng
+
+; StirRng: mixes timing into the sampler seed unless the harness pinned it.
+StirRng:
+    ld a, [wMB_ForceSeed]
+    or a
+    ret nz
+    ldh a, [rDIV]
+    ld b, a
+    ld a, [wNarrRng]
+    xor b
+    ld [wNarrRng], a
+    ldh a, [hFrames]
+    ld b, a
+    ld a, [wNarrRng + 1]
+    xor b
+    or 1
+    ld [wNarrRng + 1], a
+    ret
+
+; Blip: a short tone. a = pitch seed. Clobbers a.
+Blip:
+    and 31
+    add $90
+    ldh [rNR23], a
+    ld a, $B4
+    ldh [rNR21], a
+    ld a, $62
+    ldh [rNR22], a
+    ld a, $C7
+    ldh [rNR24], a
+    ret
+
+; Band: b = row, hl = text, c = column. Fills the row dark and prints.
+Band:
+    push hl
+    push bc
+    ld c, 1
+    ld a, TILE_BAND
+    call FillRows
+    pop bc
+    pop hl
+    jp PrintInvAt
+
+Hint:
+    ld b, HINT_ROW
+    ld c, 1
+    jr Band
+
+; ClearText: blanks the dialogue box and homes the cursor.
+ClearText:
+    ld b, TEXT_ROW
+    ld c, TEXT_ROWS * 2 - 1
     xor a
-    ld [wEndFlag], a
-    ld [wMenuSel], a
-    call SyncMailbox
-    call LoadRoomScreen
+    call FillRows
+    ld b, 9
+    ld c, 1
+    xor a
+    call FillRows
+    xor a
+    ld [wTextRowN], a
+    ld [wTextColN], a
+    ret
+
+; ---- Boot and logo ---------------------------------------------------------
+BootSequence:
+    ld a, ST_INTRO
+    call SetState
+    xor a
+    ld [wSkip], a
+    call RobotHide
+    call ScreenOff
+    call ClearShadow
+    ld hl, StrBoot0
+    ld b, 2
+    ld c, 1
+    call PrintAt
+    call ScreenOn
+    ld b, 20
+    call DelayFrames
+    ld hl, StrBoot1
+    ld b, 5
+    ld c, 1
+    call PrintAt
+    ld b, 14
+    call DelayFrames
+    ld hl, StrBoot2
+    ld b, 7
+    ld c, 1
+    call PrintAt
+    ld b, 14
+    call DelayFrames
+    ld hl, StrBoot3
+    ld b, 9
+    ld c, 1
+    call PrintAt
+    ld b, 14
+    call DelayFrames
+    ld hl, StrBoot4
+    ld b, 12
+    ld c, 1
+    call PrintAt
+    ld b, 20
+    call DelayFrames
+    call Corrupt
+    call ShowLogo
+    ld b, 90
+    call DelayFrames
+    call ConversationScreen
+    call RobotRise
+    jp IntroLines
+
+; Corrupt: the cartridge "takes over": garbage tiles, flicker and a wobbling picture for a moment.
+Corrupt:
+    ld c, 60
+.f:
+    ld a, [wSkip]
+    or a
+    jr nz, .done
+    push bc
+    ld d, 6
+.g:
+    push de
+    call Rand8
+    and 15
+    ld b, a
+    call Rand8
+    and 15
+    add 2
+    ld c, a
+    call RowPtr
+    call Rand8
+    and 127
+    ld [hl], a
+    call MarkRow
+    pop de
+    dec d
+    jr nz, .g
+    call Rand8
+    and 7
+    sub 3
+    ldh [rSCX], a
+    call Rand8
+    and 3
+    jr nz, .pal
+    ld a, %00011011      ; inverted for a frame
+    jr .setpal
+.pal:
+    ld a, PAL_NORMAL
+.setpal:
+    ldh [rBGP], a
+    ld b, 1
+    call DelayFrames
+    pop bc
+    dec c
+    jr nz, .f
+.done:
+    xor a
+    ldh [rSCX], a
+    ld a, PAL_NORMAL
+    ldh [rBGP], a
+    ret
+
+ShowLogo:
+    call ScreenOff
+    call ClearShadow
+    call LogoToShadow
+    ld hl, StrGame1
+    ld b, 14
+    ld c, 2
+    call PrintAt
+    ld hl, StrGame2
+    ld b, 15
+    ld c, 0
+    call PrintAt
+    jp ScreenOn
+
+; ConversationScreen: dialogue box, status panel, robot visible.
+ConversationScreen::
+    call ScreenOff
+    call ClearShadow
+    ld hl, StrBandSys
+    call SetBand
     call ClearText
-    ld hl, StrIntro1
+    call DrawPanel
+    call RobotReset
+    ld a, 1
+    ld [wRobotOn], a
+    jp ScreenOn
+
+; RobotRise: the face climbs out of the bottom of the frame through static.
+RobotRise:
+    ld a, EXPR_SMUG
+    ld [wExpr], a
+    ld a, [wSkip]
+    or a
+    ret nz
+    ld a, 64
+    ld [wRiseY], a
+    ld a, 50
+    ld [wGlitch], a
+.r:
+    ld a, [wRiseY]
+    or a
+    ret z
+    sub 2
+    ld [wRiseY], a
+    ld b, 1
+    call DelayFrames
+    ld a, [wSkip]
+    or a
+    jr z, .r
+    xor a
+    ld [wRiseY], a
+    ld [wGlitch], a
+    ret
+
+; IntroLines: fixed text, marked SYSTEM. On later visits, memory changes which lines appear; the model is not involved.
+IntroLines:
+    ld a, [wReturning]
+    or a
+    jr nz, .back
+    ld de, StrIntroA2
+    ld hl, StrIntroA
+    call SayFixed
+    ld de, StrIntroB2
+    ld hl, StrIntroB
+    call SayFixed
+    ld de, StrIntroC2
+    ld hl, StrIntroC
+    jp SayFixed
+.back:
+    ld de, StrBackB
+    ld hl, StrBackA
+    jp SayFixed
+
+; SayFixed: hl = first line, de = second line. Fixed text, with mouth movement.
+SayFixed:
+    push de
+    push hl
+    call ClearText
+    pop hl
     ld b, TEXT_ROW
     ld c, TEXT_COL
     call PrintAt
-    ld hl, StrIntro2
+    pop hl
     ld b, TEXT_ROW + 2
     ld c, TEXT_COL
     call PrintAt
-    ld hl, StrIntro3
-    ld b, TEXT_ROW + 4
-    ld c, TEXT_COL
-    call PrintAt
-    ld hl, StrIntro4
-    ld b, TEXT_ROW + 6
-    ld c, TEXT_COL
-    call PrintAt
-    ld a, ST_INTRO
-    call SetState
-    jp WaitNext
+    ld a, 40
+    ld [wTalk], a
+    ld a, 9
+    call Blip
+    ld b, 110
+    xor a
+    ld [wSkip], a
+    jp DelayFrames
 
-; LoadRoomScreen: rebuilds the entire screen for wRoom behind a fade.
-LoadRoomScreen::
-    call ScreenOff
-    call ClearShadow
-    call CurrentArt
-    ld [wPrevArt], a
-    ld c, a
-    add a
-    add a
-    add c
-    add c                ; art * 6
-    ld c, a
-    ld b, 0
-    ld hl, SceneTable
-    add hl, bc
-    ld b, 6
-    call LoadArt
-    call DrawBand
-    call DrawStatus
-    call ScreenOn
-    ret
-
-; CurrentArt: -> a = scene image of the current scene. Clobbers de, hl.
-CurrentArt:
-    ld a, [wScene]
-    call ScenePtr
-    inc hl
-    inc hl
-    ld a, [hl]
-    ret
-
-; DrawBand: place name, carried items and remaining lives on the dark band under the scene.
-DrawBand::
+; ---- Status panel ----------------------------------------------------------
+SetBand:
+    push hl
+    ld hl, StrOverride
     ld b, BAND_ROW
     ld c, 1
-    ld a, TILE_BAND
-    call FillRows
-    ld a, [wScene]
-    call ScenePtr
+    call Band
+    pop hl
+    ld b, BAND_ROW
+    ld c, 13
+    jp PrintInvAt
+
+DrawPanel::
+    ; five-tile respect bar: -8..15 becomes 0..20 quarters
+    ld b, 0
+    ld c, 8
+    xor a
+    call FillPanel
+    ld hl, StrMood
+    ld b, 1
+    ld c, PANEL_COL
+    call PrintAt
+    ld a, [wMood]
+    add a
+    ld e, a
+    ld d, 0
+    ld hl, MoodNames
+    add hl, de
     ld a, [hl+]
     ld h, [hl]
     ld l, a
-    ld b, BAND_ROW
-    ld c, 1
-    call PrintInvAt
-    ; one icon slot per item, so an item always appears in the same place
-    ld a, [wFlags]
-    ld b, a
-    ld hl, wBgMap + BAND_ROW * SCREEN_W + 12
-    ld c, TILE_LAMP
-    bit 0, b
-    call nz, .icon
-    inc hl
-    ld c, TILE_KEY
-    bit 1, b
-    call nz, .icon
-    inc hl
-    ld c, TILE_FRIEND
-    bit 2, b
-    call nz, .icon
-    inc hl
-    ld c, TILE_SWORD
-    bit 3, b
-    call nz, .icon
-    inc hl
-    ld c, TILE_RING
-    bit 4, b
-    call nz, .icon
-    ld a, [wWounds]
-    ld b, a
-    ld a, MAX_WOUNDS
-    sub b
-    jr z, .done
-    jr c, .done
+    ld b, 2
+    ld c, PANEL_COL + 1
+    call PrintAt
+    ld hl, StrYouAre
+    ld b, 4
+    ld c, PANEL_COL
+    call PrintAt
+    ld a, [wRelation]
+    add a
+    ld e, a
+    ld d, 0
+    ld hl, RelationNames
+    add hl, de
+    ld a, [hl+]
+    ld h, [hl]
+    ld l, a
+    ld b, 5
+    ld c, PANEL_COL + 1
+    call PrintAt
+    ; bar
+    ld a, [wRespect]
+    add 8
+    ld b, 6
+    ld c, PANEL_COL + 1
+    push af
+    call RowPtr
+    pop af
+    ld b, 5
     ld d, a
-    ld hl, wBgMap + BAND_ROW * SCREEN_W + 19
-.hearts:
-    ld [hl], TILE_HEART
-    dec hl
-    dec d
-    jr nz, .hearts
-.done:
-    ld b, BAND_ROW
+.bar:
+    ld a, d
+    cp 4
+    jr c, .part
+    sub 4
+    ld d, a
+    ld a, 4
+    jr .put
+.part:
+    ld e, a
+    xor a
+    ld a, e
+    ld d, 0
+.put:
+    add TILE_BAR0
+    ld [hl+], a
+    dec b
+    jr nz, .bar
+    ld b, 6
     jp MarkRow
-.icon:
-    ld [hl], c
+
+; FillPanel: blanks the panel on rows b..b+c-1. Clobbers everything.
+FillPanel:
+.r:
+    push bc
+    push af
+    ld c, PANEL_COL
+    call RowPtr
+    pop af
+    ld d, SCREEN_W - PANEL_COL
+.t:
+    ld [hl+], a
+    dec d
+    jr nz, .t
+    pop bc
+    call MarkRow
+    inc b
+    dec c
+    jr nz, .r
     ret
 
-; DrawStatus: act and turn on the inverse status row.
-DrawStatus::
-    ld b, STATUS_ROW
-    ld c, 1
-    ld a, TILE_BAND
-    call FillRows
-    ld hl, StrAct
-    ld b, STATUS_ROW
-    ld c, 1
-    call PrintInvAt
-    ld a, [wScene]
-    call ScenePtr
-    inc hl
-    inc hl
-    inc hl
-    ld a, [hl]
-    add TILE_INV + 27    ; acts are single digits
-    ld [wBgMap + STATUS_ROW * SCREEN_W + 5], a
-    ld hl, StrTurnLbl
-    ld b, STATUS_ROW
-    ld c, 11
-    call PrintInvAt
-    ld a, [wTurn]
-    ld hl, wBgMap + STATUS_ROW * SCREEN_W + 16
-    call PrintDec2Inv
-    ld b, STATUS_ROW
-    jp MarkRow
-StrTurnLbl: db "TURN", 0
+; ---- Menu ------------------------------------------------------------------
+; ReadNav: -> a = pressed buttons, with auto-repeat on a held d-pad. Clobbers b.
+ReadNav:
+    call WaitVBlank
+    ldh a, [hJoyHeld]
+    and $F0
+    jr nz, .held
+    xor a
+    ld [wRepeatT], a
+    jp ConsumePressed
+.held:
+    ld a, [wRepeatT]
+    inc a
+    ld [wRepeatT], a
+    cp 20
+    jp c, ConsumePressed
+    cp 25
+    jr c, .quiet
+    ld a, 20
+    ld [wRepeatT], a
+    call ConsumePressed
+    ld b, a
+    ldh a, [hJoyHeld]
+    and $F0
+    or b
+    ret
+.quiet:
+    jp ConsumePressed
 
-; PrintDec2Inv: a = value, hl = shadow ptr, inverse digits.
-PrintDec2Inv:
+DrawMenu:
+    ld hl, StrBandMove
+    ld b, BAND_ROW
+    ld c, 1
+    call Band
+    call ClearText
+    ld hl, StrHintMenu
+    call Hint
+    xor a
+.item:
+    push af
+    ld l, a
+    ld h, 0
+    add hl, hl
+    ld de, ActionNames
+    add hl, de
+    ld a, [hl+]
+    ld h, [hl]
+    ld l, a
+    pop af
+    push af
+    call MenuPos         ; b, c
+    inc c
+    call PrintAt
+    pop af
+    inc a
+    cp NUM_MENU
+    jr nz, .item
+    ret
+
+; MenuPos: a = item -> b = row, c = column of its pointer. Clobbers a.
+MenuPos:
+    ld b, a
+    srl a
+    add a
+    add TEXT_ROW
+    ld c, a              ; row
+    ld a, b
+    and 1
+    ld b, c
+    ld c, 1
+    ret z
+    ld c, 10
+    ret
+
+MoveCursor:
+    ld a, [wMenuSel]
+    call MenuPos
+    ld a, c
+    add a
+    add a
+    add a
+    add 8
+    ld [wCursorX], a
+    ld a, b
+    add a
+    add a
+    add a
+    add 16
+    ld [wCursorY], a
+    ld a, TILE_SPR_ARROW
+    ld [wCursorTile], a
+    ret
+
+; MainMenu: -> wParsed* set from an action or typed text.
+MainMenu:
+    ld a, ST_MENU
+    call SetState
+    call ClearParsed
+    call DrawMenu
+    call MoveCursor
+.loop:
+    call ReadNav
+    ld b, a
+    bit PAD_SELECT, b
+    jr z, .noInfo
+    call HideCursor
+    call Inspector
+    jr MainMenu
+.noInfo:
+    ld a, [wMenuSel]
+    ld c, a
+    bit PAD_RIGHT, b
+    jr z, .l
+    ld a, c
+    xor 1
+    ld c, a
+.l:
+    bit PAD_LEFT, b
+    jr z, .u
+    ld a, c
+    xor 1
+    ld c, a
+.u:
+    bit PAD_UP, b
+    jr z, .d
+    ld a, c
+    sub 2
+    and NUM_MENU - 1
+    ld c, a
+.d:
+    bit PAD_DOWN, b
+    jr z, .set
+    ld a, c
+    add 2
+    and NUM_MENU - 1
+    ld c, a
+.set:
+    ld a, c
+    ld [wMenuSel], a
+    push bc
+    call MoveCursor
+    pop bc
+    ld a, b
+    and (1 << PAD_A) | (1 << PAD_START)
+    jr z, .loop
+    call StirRng
+    call HideCursor
+    ld a, [wMenuSel]
+    cp NUM_ACTIONS
+    jr z, .type
+    ld e, a
+    ld d, 0
+    ld hl, ActionIntent
+    add hl, de
+    ld a, [hl]
+    ld [wParsedIntent], a
+    ret
+.type:
+    call Keyboard
+    ld a, [wInputLen]
+    or a
+    jr z, MainMenu       ; backed out
+    jp Parse
+
+HideCursor:
+    xor a
+    ld [wCursorX], a
+    ret
+
+ClearParsed:
+    xor a
+    ld [wParsedTopic], a
+    ld [wParsedWord], a
+    ld [wParsedName], a
+    ld [wParsedLike], a
+    ret
+
+; ---- Neural response --------------------------------------------------------
+; Respond: memory, prompt, real inference on this CPU, words streaming to the screen.
+Respond:
+    call ApplyTurn
+    call SaveState
+    call DrawPanel
+    ld hl, StrBandNN
+    call SetBand
+    ld hl, StrHintThink
+    call Hint
+    call ClearText
+    ld a, [wParsedIntent]
+    ld [wMB_Intent], a
+    ld a, [wLastTopic]
+    ld [wMB_Topic], a
+    ld a, [wMood]
+    ld [wMB_Mood], a
+    ld a, 1
+    ld [wThink], a
+    ld a, EXPR_THINKING
+    ld [wExpr], a
+    ld a, ST_THINKING
+    call SetState
+    call BuildPrompt
+    call ModelReset
+    call EventTimerStart
+    call NeuralGenerate
+    jr nc, .ok
+    ld hl, wMB_Fallbacks ; hit the length cap: counted, and shown as cut off
+    inc [hl]
+    ld a, '.'
+    call PutChar
+    ld a, '.'
+    call PutChar
+.ok:
+    call EventTimerStop
+    ld a, [wMB_NumTokens]
+    ld [wLastEventTokens], a
+    ld hl, wMB_Responses
+    inc [hl]
+    jr nz, .nc
+    inc hl
+    inc [hl]
+.nc:
+    xor a
+    ld [wThink], a
+    ld a, ST_READ
+    call SetState
+    ld hl, StrHintNext
+    call Hint
+    call WaitConfirm
+    ld a, [wMood]
+    cp MOOD_DYING
+    ret nz
+    jp PowerDown
+
+; OnToken: wPickId = the token just generated. Runs between forward passes, in the UI bank. Clobbers everything.
+OnToken:
+    ld hl, wMB_TotalTokens
+    inc [hl]
+    jr nz, .nc
+    inc hl
+    inc [hl]
+.nc:
+    ld a, [wPickId]
+    ld e, a
+    ld a, [wPickId + 1]
+    ld d, a
+    ; EOS: done
+    ld a, e
+    cp LOW(TOK_EOS)
+    jr nz, .notEos
+    ld a, d
+    cp HIGH(TOK_EOS)
+    ret z
+.notEos:
+    ; emotions come first and set the face: the model chooses this expression
+    ld a, e
+    sub LOW(TOK_EOS)
+    ld a, d
+    sbc HIGH(TOK_EOS)
+    jr nc, .text
+    ld a, e
+    sub TOK_FIRST_EMOTION & 255
+    ld [wExpr], a
+    ld [wMB_Emotion], a
+    xor a
+    ld [wThink], a
+    ld a, ST_STREAMING
+    call SetState
+    ld a, [wExpr]
+    cp EXPR_ANGRY
+    jr nz, .e1
+    ld a, 30
+    ld [wShake], a
+    ret
+.e1:
+    cp EXPR_GLITCHING
+    jr nz, .e2
+    ld a, 30
+    ld [wGlitch], a
+    ret
+.e2:
+    cp EXPR_SURPRISED
+    ret nz
+    ld a, 10
+    ld [wShake], a
+    ret
+.text:
+    ld a, 24
+    ld [wTalk], a
+    ld a, e
+    call Blip
+    ; runtime slots print deterministic memory, chosen by the model
+    ld a, e
+    sub LOW(TOK_FIRST_SLOT)
+    ld c, a
+    ld a, d
+    sbc HIGH(TOK_FIRST_SLOT)
+    jr nz, .word
+    ld a, c
+    cp NUM_SLOTS
+    jr nc, .word
+    jp PrintSlot
+.word:
+    ld a, e
+    sub LOW(TOK_FIRST_GEN)
+    ld l, a
+    ld a, d
+    sbc HIGH(TOK_FIRST_GEN)
+    ld h, a
+    add hl, hl
+    ld de, WordPtrs
+    add hl, de
+    ld a, [hl+]
+    ld h, [hl]
+    ld l, a
+    jp AppendText
+
+; PrintSlot: a = slot index, in <NAME> <LIKE> <WORD> <NI> <NP> <NT> order.
+PrintSlot:
+    or a
+    jr nz, .s1
+    ld a, [wName]
+    ld hl, wName
+    or a
+    jp nz, AppendText
+    ld hl, StrHuman
+    jp AppendText
+.s1:
+    dec a
+    jr nz, .s2
+    ld a, [wLike]
+    ld hl, wLike
+    or a
+    jp nz, AppendText
+    ld hl, StrThat
+    jp AppendText
+.s2:
+    dec a
+    jr nz, .s3
+    ld a, [wWord]
+    ld hl, wWord
+    or a
+    jp nz, AppendText
+    ld hl, StrThat
+    jp AppendText
+.s3:
+    dec a
+    jr nz, .s4
+    ld a, [wInsults]
+    jr Number
+.s4:
+    dec a
+    jr nz, .s5
+    ld a, [wPraises]
+    jr Number
+.s5:
+    ld a, [wTurns]
+; Number: a = 0..99 printed without a leading zero.
+Number:
+    ld hl, wNumBuf
     ld b, 0
 .t:
     cp 10
@@ -282,585 +903,600 @@ PrintDec2Inv:
 .u:
     ld c, a
     ld a, b
-    call .digit
-    ld a, c
-.digit:
-    add TILE_INV + 27    ; INV_CHARS: space, A-Z, then 0-9
-    ld [hl+], a
-    ret
-
-; ClearBody: blanks everything between the band and the status bar.
-ClearBody:
-    ld b, BODY_ROW
-    ld c, BODY_ROWS
-    xor a
-    jp FillRows
-
-; ClearText: blanks the body and resets the story cursor.
-ClearText::
-    call ClearBody
-    xor a
-    ld [wTextRowN], a
-    ld [wTextColN], a
-    inc a
-    ld [wCapNext], a
-    ret
-
-; ClearHint: blanks the hint row.
-ClearHint:
-    ld b, HINT_ROW
-    ld c, 1
-    xor a
-    jp FillRows
-
-; WaitNext: shows "A next" and waits for a fresh A or B press.
-WaitNext:
-    call ClearHint
-    ld hl, StrChipA
-    ld b, HINT_ROW
-    ld c, 13
-    call PrintInvAt
-    ld hl, StrNext
-    ld b, HINT_ROW
-    ld c, 15
-    call PrintAt
-    call ConsumePressed
-.w:
-    call WaitVBlank
-    call ConsumePressed
-    and (1 << PAD_A) | (1 << PAD_B) | (1 << PAD_START)
-    jr z, .w
-    ret
-
-; ---- Choice menu ----------------------------------------------------------
-; One choice per double-spaced row. Up and down move the pointer, A confirms.
-ChoiceMenu:
-    ld a, ST_MENU
-    call SetState
-    call CollectChoices
-    xor a
-    ld [wMenuSel], a
-    call ClearBody
-    call DrawChoices
-    ld hl, StrChipA
-    ld b, HINT_ROW
-    ld c, 11
-    call PrintInvAt
-    ld hl, StrChoose
-    ld b, HINT_ROW
-    ld c, 13
-    call PrintAt
-    call ConsumePressed
-.loop:
-    call WaitVBlank
-    call PlaceCursor
-    call ConsumePressed
-    ld b, a
-    bit PAD_SELECT, b
-    jr z, .nostart
-    call StatsScreen
-    ld a, [wEndFlag]
-    cp 2
-    jr nz, .loop
-    xor a
-    ld [wEndFlag], a      ; new run requested from the stats page
-    ld [wOam], a
-    call NewRun
-    jr ChoiceMenu
-.nostart:
-    ld a, [wMenuSel]
-    ld c, a
-    bit PAD_UP, b
-    jr z, .a1
     or a
-    jr z, .a1
-    dec c
-.a1:
-    bit PAD_DOWN, b
-    jr z, .a2
-    ld a, [wNumChoices]
-    dec a
-    cp c
-    jr z, .a2
-    inc c
-.a2:
+    jr z, .one
+    add '0'
+    ld [hl+], a
+.one:
     ld a, c
-    ld [wMenuSel], a
-    ld a, b
-    and (1 << PAD_A) | (1 << PAD_START)   ; a player who just pressed START on the title expects it to work here too
-    jr z, .loop
+    add '0'
+    ld [hl+], a
     xor a
-    ld [wOam], a          ; hide the pointer
-    ld a, [wMenuSel]
-    ld e, a
-    ld d, 0
-    ld hl, wChoices
-    add hl, de
-    ld a, [hl]
-    jp ApplyChoice
+    ld [hl], a
+    ld hl, wNumBuf
+    ; fall through
 
-; DrawChoices: every visible choice on its row. Clobbers everything.
-DrawChoices:
-    xor a
-.item:
-    ld c, a
-    ld a, [wNumChoices]
-    cp c
+; AppendText: hl -> NUL string. Punctuation attaches to the last word, anything else wraps as a unit.
+AppendText:
+    ld a, [hl]
+    cp '.'
+    jr z, .raw
+    cp ','
+    jr z, .raw
+    cp '!'
+    jr z, .raw
+    cp '?'
+    jr z, .raw
+    cp ':'
+    jr z, .raw
+    push hl
+    ld b, 0
+.len:
+    ld a, [hl+]
+    or a
+    jr z, .haveLen
+    inc b
+    jr .len
+.haveLen:
+    pop hl
+    ld a, [wTextColN]
+    or a
+    jr z, .raw
+    add b
+    inc a
+    cp TEXT_WIDTH + 1
+    jr c, .space
+    call NewLine
+    jr .raw
+.space:
+    push hl
+    ld a, ' '
+    call PutChar
+    pop hl
+.raw:
+    ld a, [hl+]
+    or a
     ret z
-    ret c
-    ld a, c
-    push af
-    ld e, a
-    ld d, 0
-    ld hl, wChoices
-    add hl, de
-    ld a, [hl]
-    call ChoicePtr
-    ld a, [hl+]
-    ld h, [hl]
-    ld l, a
-    pop af
-    push af
-    add a
-    add TEXT_ROW
-    ld b, a
-    ld c, 2
-    call PrintAt
-    pop af
+    push hl
+    call PutChar
+    pop hl
+    jr .raw
+
+; NewLine: next line, scrolling the box if it is full. Text can never overflow the box.
+NewLine:
+    xor a
+    ld [wTextColN], a
+    ld a, [wTextRowN]
     inc a
-    jr .item
-
-; PlaceCursor: bobbing pointer sprite beside the selected choice.
-PlaceCursor:
-    ld a, [wMenuSel]
-    add a
-    add TEXT_ROW
-    add a
-    add a
-    add a                ; row * 8
-    add 16
-    ld [wOam], a
-    ld c, 8 + 7
-    ldh a, [hFrames]
-    and 16
-    jr z, .n
-    inc c
-.n:
-    ld a, c
-    ld [wOam + 1], a
-    ld a, TILE_CURSOR
-    ld [wOam + 2], a
-    xor a
-    ld [wOam + 3], a
-    ret
-
-; ---- Turn -----------------------------------------------------------------
-PlayTurn:
-    ld a, ST_UPDATE
-    call SetState
-    ; ChoiceMenu has applied the choice, so the screen can show where you are now.
-    call CurrentArt
-    ld b, a
-    ld a, [wPrevArt]
-    cp b
-    jr z, .same
-    call LoadRoomScreen
-    jr .ready
-.same:
-    call DrawBand
-    call DrawStatus
-.ready:
-    call ClearText
-    call NarrateEvent     ; PREFILL -> GENERATING: writes words into the story box
-    ld a, ST_REVEAL
-    call SetState
-    ; an ending scene has no choices
-    ld a, [wScene]
-    call ScenePtr
-    ld de, 6
-    add hl, de
-    ld a, [hl]
-    cp 255
-    jr z, .wait
-    ld a, 1
-    ld [wEndFlag], a
-.wait:
-    jp WaitNext
-
-; ThinkingPanel: honest progress on the hint row, under the words as they appear.
-ThinkingPanel::
-    ld a, ST_PREFILL
-    call SetState
-    call ClearHint
-    ld hl, StrWrite
-    ld b, HINT_ROW
-    ld c, TEXT_COL
-    call PrintAt
-    ; spinner sprite at the end of the bar
-    ld a, 16 + HINT_ROW * 8
-    ld [wOam + 4], a
-    ld a, 8 + 18 * 8
-    ld [wOam + 5], a
-    ld a, TILE_SPIN0
-    ld [wOam + 6], a
-    ld a, 1
-    ldh [hSpin], a
-    ret
-
-; ThinkingDone: removes spinner.
-ThinkingDone::
-    xor a
-    ldh [hSpin], a
-    ld [wOam + 4], a
-    ret
-
-; ThinkingProgress: a = tokens generated so far. Bar of 8 tiles, 4 ticks each, driven by real progress.
-ThinkingProgress::
-    add a                ; tokens * 2 ticks: the longest event fills the 32-tick bar
-    ld b, a
-    ld hl, wBgMap + HINT_ROW * SCREEN_W + 9
-    ld c, 8
-.bar:
-    ld a, b
-    cp 4
-    jr c, .part
-    sub 4
-    ld b, a
-    ld a, TILE_BAR0 + 4
-    jr .put
-.part:
-    add TILE_BAR0
-    ld b, 0
-.put:
-    ld [hl+], a
-    dec c
-    jr nz, .bar
-    ld b, HINT_ROW
-    jp MarkRow
-
-; ---- Ending ---------------------------------------------------------------
-EndingScreen:
-    ld a, ST_ENDING
-    call SetState
-    ; which ending is this, and how many have you seen?
-    ld a, [wScene]
-    call ScenePtr
-    ld de, 6
-    add hl, de
-    ld c, [hl]           ; ending index
-    ld b, 1
-    ld a, c
-    or a
-    jr z, .bit0
-.shift:
-    sla b
-    dec a
-    jr nz, .shift
-.bit0:
-    ld a, [wEndMask]
-    or b
-    ld [wEndMask], a
-    push bc
-    call ClearBody
-    ld hl, StrEnding
-    ld b, 9
-    ld c, 1
-    call PrintAt
-    pop bc
-    ld a, c
-    add a
-    ld e, a
-    ld d, 0
-    ld hl, EndingNames
-    add hl, de
-    ld a, [hl+]
-    ld h, [hl]
-    ld l, a
-    ld b, 11
-    ld c, 1
-    call PrintAt
-    ld hl, StrFound
-    ld b, 14
-    ld c, 1
-    call PrintAt
-    ; population count of the mask, shown as "n of 8"
-    ld a, [wEndMask]
-    ld c, a
-    ld b, 8
-    xor a
-.pop:
-    srl c
-    adc 0
-    dec b
-    jr nz, .pop
-    add '0' - $20
-    ld [wBgMap + 14 * SCREEN_W + 7], a
-    ld hl, StrOf
-    ld b, 14
-    ld c, 9
-    call PrintAt
-    ld a, NUM_ENDINGS + '0' - $20
-    ld [wBgMap + 14 * SCREEN_W + 12], a
-    ld b, 14
-    call MarkRow
-    ld hl, StrChipA
-    ld b, HINT_ROW
-    ld c, 10
-    call PrintInvAt
-    ld hl, StrAgain
-    ld b, HINT_ROW
-    ld c, 12
-    call PrintAt
-    call ConsumePressed
-.w:
-    call WaitVBlank
-    call ConsumePressed
-    and (1 << PAD_A) | (1 << PAD_START)
-    jr z, .w
-    ret
-
-; ---- Stats page, full screen. Values are timed on this device from LCD frames. ----
-StatsScreen::
-    ld a, ST_STATS
-    call SetState
-    xor a
-    ld [wOam], a
-    ld hl, wBgMap
-    ld de, wSaved
-    ld bc, SCREEN_W * SCREEN_H
+    cp TEXT_ROWS
+    jr c, .ok
+    push hl
+    ld hl, wBgMap + (TEXT_ROW + 2) * SCREEN_W
+    ld de, wBgMap + TEXT_ROW * SCREEN_W
+    ld bc, (TEXT_ROWS * 2 - 3) * SCREEN_W
     call MemCopy
-    ld b, 0
-    ld c, SCREEN_H
+    ld b, TEXT_ROW + (TEXT_ROWS - 1) * 2
+    ld c, 1
     xor a
     call FillRows
-    call DrawStats
-    call MarkAllRows
+    ld b, TEXT_ROW
+    REPT TEXT_ROWS - 1
+    call MarkRow
+    inc b
+    inc b
+    ENDR
+    pop hl
+    ld a, TEXT_ROWS - 1
+.ok:
+    ld [wTextRowN], a
+    ret
+
+; PutChar: a = ASCII at the cursor. Clobbers a, bc, de, hl.
+PutChar:
+    push af
+    ld a, [wTextColN]
+    cp TEXT_WIDTH
+    call nc, NewLine
+    ld a, [wTextRowN]
+    add a
+    add TEXT_ROW
+    ld b, a
+    ld a, [wTextColN]
+    add TEXT_COL
+    ld c, a
+    call RowPtr
+    pop af
+    sub $20
+    ld [hl], a
+    call MarkRow
+    ld hl, wTextColN
+    inc [hl]
+    ret
+
+; ---- Power down --------------------------------------------------------------
+PowerDown:
+    ld a, ST_POWERDOWN
+    call SetState
+    xor a
+    ld [wSkip], a
+    ld a, EXPR_DEFEATED
+    ld [wExpr], a
+    ld a, 40
+    ld [wGlitch], a
+    ld hl, StrBandSys
+    call SetBand
+    ld de, StrDownB
+    ld hl, StrDownA
+    call SayFixed
+    ; fade through the palette
+    ld a, %11111001
+    ldh [rBGP], a
+    ldh [rOBP0], a
+    ld b, 16
+    call WaitFrames
+    ld a, %11111110
+    ldh [rBGP], a
+    ldh [rOBP0], a
+    ld b, 16
+    call WaitFrames
+    ld a, %11111111
+    ldh [rBGP], a
+    ldh [rOBP0], a
+    ld b, 60
+    call WaitFrames
+    call RobotHide
+    ; memory survives, as it would across a real power cycle
+    xor a
+    ld [wShutdowns], a
+    ld [wBored], a
+    ld a, 5
+    ld [wAnger], a
+    call SaveState
+    ld a, PAL_NORMAL
+    ldh [rBGP], a
+    ld a, OBJ_PAL
+    ldh [rOBP0], a
+    xor a
+    ld [wSkip], a
+    call ShowLogo
+    ld b, 40
+    call DelayFrames
+    call ConversationScreen
+    call RobotRise
+    xor a
+    ld [wSkip], a
+    ld de, StrThatEmpty
+    ld hl, StrUp
+    jp SayFixed
+StrThatEmpty: db 0
+
+; ---- Keyboard ------------------------------------------------------------------
+KeyGrid:
+    db "ABCDEFGHIJ"
+    db "KLMNOPQRST"
+    db "UVWXYZ',.?"
+    db "0123456789"
+    db "!-", KEY_SPACE, KEY_SPACE, KEY_SPACE, KEY_DEL, KEY_DEL, KEY_DEL, KEY_OK, KEY_OK
+
+KeyCell:
+    ; a = row*10+col, -> a = key value. Clobbers de, hl.
+    ld e, a
+    ld d, 0
+    ld hl, KeyGrid
+    add hl, de
+    ld a, [hl]
+    ret
+
+DrawKeyboard:
+    call ScreenOff
+    call ClearShadow
+    ld hl, StrSaySome
+    ld b, 0
+    ld c, 1
+    call Band
+    call RobotHide
+    ; the key rows
+    ld b, KEY_FIRST_ROW
+    ld c, 0
+.row:
+    ld e, 0
+.col:
+    push bc
+    push de
+    ld a, c
+    add a
+    add a
+    add c
+    add a
+    add e                ; row * 10 + col
+    cp 40
+    jr nc, .skip
+    call KeyCell
+    push af
+    pop af
+    pop de
+    pop bc
+    push bc
+    push de
+    push af
+    ld a, e
+    add a
+    inc a
+    ld c, a
+    call RowPtr
+    pop af
+    sub $20
+    ld [hl], a
+    jr .after
+.skip:
+.after:
+    pop de
+    pop bc
+    inc e
+    ld a, e
+    cp 10
+    jr nz, .col
+    inc b
+    inc b
+    inc c
+    ld a, c
+    cp 4
+    jr nz, .row
+    ld hl, StrKeyLast
+    ld b, KEY_FIRST_ROW + 8
+    ld c, 1
+    call PrintAt
+    ld hl, StrHintKeys
+    call Hint
+    jp ScreenOn
+
+; DrawInput: the two input lines and the caret. Clobbers everything.
+DrawInput:
+    ld b, 2
+    ld c, 1
+    call RowPtr
+    ld d, h
+    ld e, l
+    ld hl, wInput
+    ld a, [wInputLen]
+    ld b, a
+    ld c, TEXT_WIDTH * 2
+.ch:
+    ; line break after TEXT_WIDTH characters
+    ld a, c
+    cp TEXT_WIDTH
+    jr nz, .same
+    push hl
+    ld hl, (2 * SCREEN_W) - TEXT_WIDTH
+    add hl, de
+    ld d, h
+    ld e, l
+    pop hl
+.same:
+    ld a, b
+    or a
+    jr z, .blank
+    dec b
+    ld a, [hl+]
+    sub $20
+    jr .put
+.blank:
+    ld a, [wInputLen]
+    cpl
+    add TEXT_WIDTH * 2 + 1
+    cp c
+    ld a, 0
+    jr nz, .put
+    ldh a, [hFrames]
+    and 16
+    ld a, 0
+    jr z, .put
+    ld a, TILE_CARET
+.put:
+    ld [de], a
+    inc de
+    dec c
+    jr nz, .ch
+    ld b, 2
+    call MarkRow
+    ld b, 4
+    jp MarkRow
+
+KeyCursor:
+    ld a, [wKeyCol]
+    add a
+    inc a
+    add a
+    add a
+    add a
+    add 8
+    ld [wCursorX], a
+    ld a, [wKeyRow]
+    add a
+    add KEY_FIRST_ROW
+    add a
+    add a
+    add a
+    add 16 - 1
+    ld [wCursorY], a
+    ld a, TILE_SPR_CURSOR
+    ld [wCursorTile], a
+    ret
+
+; Keyboard: edits wInput. wInputLen = 0 on return means the player backed out.
+Keyboard:
+    ld a, ST_KEYBOARD
+    call SetState
+    xor a
+    ld [wInputLen], a
+    ld [wKeyRow], a
+    ld [wKeyCol], a
+    call DrawKeyboard
+.loop:
+    call KeyCursor
+    call DrawInput
+    call ReadNav
+    ld b, a
+    ld a, [wKeyCol]
+    ld c, a
+    ld a, [wKeyRow]
+    ld d, a
+    bit PAD_LEFT, b
+    jr z, .r
+    ld a, c
+    dec a
+    cp 10
+    jr c, .lk
+    ld a, 9
+.lk:
+    ld c, a
+.r:
+    bit PAD_RIGHT, b
+    jr z, .uk
+    ld a, c
+    inc a
+    cp 10
+    jr c, .rk
+    xor a
+.rk:
+    ld c, a
+.uk:
+    bit PAD_UP, b
+    jr z, .dk
+    ld a, d
+    dec a
+    cp 5
+    jr c, .uk2
+    ld a, 4
+.uk2:
+    ld d, a
+.dk:
+    bit PAD_DOWN, b
+    jr z, .store
+    ld a, d
+    inc a
+    cp 5
+    jr c, .dk2
+    xor a
+.dk2:
+    ld d, a
+.store:
+    ld a, c
+    ld [wKeyCol], a
+    ld a, d
+    ld [wKeyRow], a
+    bit PAD_START, b
+    jr nz, .send
+    bit PAD_B, b
+    jr nz, .del
+    bit PAD_SELECT, b
+    jr nz, .space
+    bit PAD_A, b
+    jp z, .loop
+    ; pressed a key
+    ld a, d
+    add a
+    add a
+    add d
+    add a
+    add c
+    call KeyCell
+    cp KEY_OK
+    jr z, .send
+    cp KEY_DEL
+    jr z, .del
+    cp KEY_SPACE
+    jr nz, .put
+.space:
+    ld a, ' '
+.put:
+    ld c, a
+    ld a, [wInputLen]
+    cp MAX_INPUT
+    jp nc, .loop
+    ld e, a
+    ld d, 0
+    ld hl, wInput
+    add hl, de
+    ld [hl], c
+    ld hl, wInputLen
+    inc [hl]
+    jp .loop
+.del:
+    ld a, [wInputLen]
+    or a
+    jr z, .out           ; B on an empty line goes back
+    dec a
+    ld [wInputLen], a
+    jp .loop
+.send:
+    ld a, [wInputLen]
+    or a
+    jr z, .out
+.out:
+    call HideCursor
+    jp ConversationScreen
+
+; ---- Inspector ---------------------------------------------------------------
+; Inspector: fixed labels with live numbers: the ids the model just generated, and how long it took.
+Inspector:
+    ld a, [wMB_State]
+    push af
+    ld a, ST_INSPECT
+    call SetState
+    xor a
+    ld [wWipeArm], a
+    call DrawInspector
 .w:
     call WaitVBlank
     call ConsumePressed
-    ld b, a
-    bit PAD_START, b
-    jr nz, .newrun
-    and (1 << PAD_A) | (1 << PAD_B) | (1 << PAD_SELECT)
+    bit PAD_B, a
+    jr nz, .done
+    bit PAD_SELECT, a
+    jr nz, .done
+    bit PAD_A, a
+    jr nz, .done
+    bit PAD_START, a
     jr z, .w
-    jr .restore
-.newrun:
-    ld a, 2
-    ld [wEndFlag], a
-.restore:
-    ld hl, wSaved
-    ld de, wBgMap
-    ld bc, SCREEN_W * SCREEN_H
-    call MemCopy
-    call MarkAllRows
-    ld a, ST_MENU
+    ld a, [wWipeArm]
+    or a
+    jr nz, .wipe
+    inc a
+    ld [wWipeArm], a
+    ld hl, StrHintWipe
+    call Hint
+    jr .w
+.wipe:
+    call WipeSave
+    ld a, $FF
+    ld [wSeqLen], a
+.done:
+    call ConversationScreen
+    pop af
     jp SetState
 
-MarkAllRows:
+DrawInspector:
+    call ScreenOff
+    call ClearShadow
+    call RobotHide
+    ld hl, StrInspect
     ld b, 0
-    ld c, SCREEN_H
-.m:
-    call MarkRow
-    inc b
-    dec c
-    jr nz, .m
-    ret
-
-StrS1: db "RUN STATS", 0
-StrNoRun1: db "Timings appear once", 0
-StrNoRun2: db "a passage is written", 0
-StrS5: db "Sec/event", 0
-StrS6: db "Sec/word", 0
-StrS7: db "Words", 0
-StrS8: db "Bank sw", 0
-StrS2: db "Events", 0
-StrS3: db "Capped", 0
-
-DrawStats::
-    ld hl, StrS1
-    ld b, 0
-    ld c, TEXT_COL
-    call PrintAt
-    ld hl, StrVariant
+    ld c, 1
+    call Band
+    ld hl, StrInsCpu
     ld b, 2
-    ld c, TEXT_COL
+    ld c, 0
     call PrintAt
     ld hl, StrModelParams
-    ld b, 4
-    ld c, 0
+    ld b, 3
+    ld c, 1
     call PrintAt
-    ; Nothing has been timed yet: say so instead of showing zeros that look broken.
-    ld a, [wMB_Events]
-    or a
-    jr nz, .haveTiming
-    ld hl, StrNoRun1
-    ld b, 7
-    ld c, 0
+    ld hl, StrInsTok
+    ld b, 5
+    ld c, 1
     call PrintAt
-    ld hl, StrNoRun2
-    ld b, 9
-    ld c, 0
-    call PrintAt
-    jp .hints
-.haveTiming:
-    ; centiseconds = frames * 5 / 3 (nominal 60 Hz; the LCD's true rate differs by 0.4%)
-    ld a, [wLastEventFrames]
-    ld l, a
-    ld a, [wLastEventFrames + 1]
-    ld h, a
-    ld d, h
-    ld e, l
-    add hl, hl
-    add hl, hl
-    add hl, de           ; frames * 5
-    ld c, 3
-    call DivHLByC
-    push hl
-    push hl
-    ld hl, StrS6
-    ld b, 6
-    ld c, TEXT_COL
-    call PrintAt
-    ld hl, StrS5
-    ld b, 8
-    ld c, TEXT_COL
-    call PrintAt
-    pop de
-    ld hl, wBgMap + 8 * SCREEN_W + 12
-    call PrintCenti
-    pop hl
+    ld b, 5
+    ld c, 8
+    call RowPtr
     ld a, [wLastEventTokens]
-    or a
-    jr z, .notok
-    ld c, a
-    call DivHLByC
-.notok:
-    ld d, h
-    ld e, l
-    ld hl, wBgMap + 6 * SCREEN_W + 12
-    call PrintCenti
-    ld hl, StrS7
-    ld b, 10
-    ld c, TEXT_COL
-    call PrintAt
-    ld a, [wLastEventTokens]
-    ld hl, wBgMap + 10 * SCREEN_W + 15
-    call PrintDec2
-    ld hl, StrS8
-    ld b, 12
-    ld c, TEXT_COL
-    call PrintAt
-    ld a, [wLastEventBanks]
     ld e, a
-    ld a, [wLastEventBanks + 1]
+    ld d, 0
+    call PrintDec16
+    ld hl, StrInsFrm
+    ld b, 6
+    ld c, 1
+    call PrintAt
+    ld b, 6
+    ld c, 8
+    call RowPtr
+    ld a, [wLastEventFrames]
+    ld e, a
+    ld a, [wLastEventFrames + 1]
     ld d, a
-    ld hl, wBgMap + 12 * SCREEN_W + 12
     call PrintDec16
-    ld hl, StrS2
-    ld b, 14
-    ld c, TEXT_COL
+    ld hl, StrInsIds
+    ld b, 8
+    ld c, 1
     call PrintAt
-    ld a, [wMB_Events]
-    ld hl, wBgMap + 14 * SCREEN_W + 8
-    call PrintDec2
-    ld hl, StrS3
-    ld b, 14
-    ld c, 11
-    call PrintAt
-    ld a, [wTotalFallbacks]
-    ld hl, wBgMap + 14 * SCREEN_W + 18
-    call PrintDec2
-.hints:
-    ld hl, StrChipSt
-    ld b, 16
-    ld c, 0
-    call PrintInvAt
-    ld hl, StrNew
-    ld b, 16
-    ld c, 6
-    call PrintAt
-    ld hl, StrChipA
-    ld b, 16
-    ld c, 12
-    call PrintInvAt
-    ld hl, StrBack
-    ld b, 16
-    ld c, 14
-    jp PrintAt
-
-; DivHLByC: hl = hl / c, unsigned, by restoring division. Clobbers a, b.
-DivHLByC:
+    ; generated ids, four per row. The prompt is available to the harness in wSeq too.
+    ld a, [wSeqLen]
+    cp MODEL_CTX + 1
+    jr nc, .noIds
+    sub PROMPT_LEN
+    jr c, .noIds
+    jr z, .noIds
+    ld [wIdsLeft], a
     xor a
-    ld b, 16
-.bit:
-    add hl, hl
-    rla
-    jr c, .sub           ; 9th bit set: remainder certainly exceeds c
-    cp c
-    jr c, .next
-.sub:
-    sub c
-    inc l
-.next:
-    dec b
-    jr nz, .bit
-    ret
-
-; PrintCenti: de = centiseconds, hl = shadow ptr; prints "ddd.dd" without leading zeros. Clobbers a, bc, de.
-PrintCenti:
+    ld [wIdsDone], a
+.id:
+    ld a, [wIdsDone]
+    ld c, a
+    srl a
+    srl a
+    cp 7
+    jr nc, .noIds
+    add 9
+    ld b, a
+    ld a, c
+    and 3
+    ld c, a
+    add a
+    add a
+    add c
+    inc a
+    ld c, a              ; column 1 + 5 * n
+    call RowPtr
     push hl
-    call PrintDec16
-    ; shift the last two digits right one cell to make room for the point
-    dec hl
-    ld a, [hl]
-    inc hl
-    ld [hl], a
-    dec hl
-    dec hl
-    ld a, [hl]
-    inc hl
-    ld [hl], a
-    dec hl
-    ld [hl], '.' - $20
+    ld a, [wIdsDone]
+    add PROMPT_LEN
+    ld l, a
+    ld h, 0
+    add hl, hl
+    ld de, wSeq
+    add hl, de
+    ld a, [hl+]
+    ld e, a
+    ld d, [hl]
     pop hl
-    ; blank up to two leading zeros, keeping the digit before the point
-    ld b, 2
-.lead:
-    ld a, [hl]
-    cp '0' - $20
-    ret nz
-    xor a
-    ld [hl+], a
-    dec b
-    jr nz, .lead
-    ret
+    push hl
+    push de
+    call PrintDec16Short
+    pop de
+    pop hl
+    ld hl, wIdsDone
+    inc [hl]
+    ld hl, wIdsLeft
+    dec [hl]
+    jr nz, .id
+.noIds:
+    ld hl, StrHintBack
+    call Hint
+    jp ScreenOn
 
-; PrintDec16: de = value, hl = shadow ptr. Five digits. Clobbers a, bc, de.
-PrintDec16::
-    ld bc, -10000
-    call .digit
-    ld bc, -1000
-    call .digit
+; PrintDec16Short: de < 1000, hl = shadow ptr. Three digits. Clobbers a, bc, de, hl.
+PrintDec16Short:
     ld bc, -100
-    call .digit
+    call .d
     ld bc, -10
-    call .digit
+    call .d
     ld bc, -1
-.digit:
-    ld a, '0' - $20 - 1
+.d:
+    ld a, -1
     push hl
     ld h, d
     ld l, e
-.sub:
+.s:
     inc a
     ld d, h
     ld e, l
     add hl, bc
-    jr c, .sub
+    jr c, .s
     pop hl
+    add '0' - $20
     ld [hl+], a
     ret
 
-StrVariant: db VARIANT_NAME, 0
-
+SECTION "ui_vars4", WRAM0
+wIdsLeft: ds 1
+wIdsDone: ds 1
 ENDC

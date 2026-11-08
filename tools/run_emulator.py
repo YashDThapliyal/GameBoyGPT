@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """PyBoy harness: symbol lookup, mailbox access, button input, screenshots. DMG mode is forced (cgb=False)."""
 from __future__ import annotations
+import io
 import re
 import warnings
 from pathlib import Path
@@ -23,11 +24,14 @@ def load_symbols(sym_path: Path) -> dict[str, tuple[int, int]]:
 
 
 class GB:
-    def __init__(self, rom: str | Path, sym: str | Path | None = None):
+    def __init__(self, rom: str | Path, sym: str | Path | None = None, ram_file=None):
+        """ram_file: an open binary file with the cartridge RAM. "auto" lets PyBoy keep <rom>.ram beside the ROM, as a battery would.
+        Without either, every run starts with a blank cartridge."""
         rom = Path(rom)
         self.rom = rom
         self.syms = load_symbols(Path(sym) if sym else rom.with_suffix(".sym"))
-        self.pyboy = PyBoy(str(rom), window="null", cgb=False, sound_emulated=False, log_level="ERROR")
+        ram = None if ram_file == "auto" else ram_file if ram_file is not None else io.BytesIO(bytes(0x2000))
+        self.pyboy = PyBoy(str(rom), window="null", cgb=False, sound_emulated=False, log_level="ERROR", ram_file=ram)
         self.mem = self.pyboy.memory
 
     def addr(self, name: str) -> int:
@@ -77,5 +81,6 @@ class GB:
     def header_cgb_flag(self) -> int:
         return self.rom.read_bytes()[0x143]
 
-    def stop(self) -> None:
-        self.pyboy.stop(save=False)
+    def stop(self, save: bool = False) -> None:
+        """save=True writes cartridge RAM to <rom>.ram, as a battery would keep it."""
+        self.pyboy.stop(save=save)

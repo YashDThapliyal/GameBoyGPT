@@ -11,14 +11,15 @@ import sys
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 import torch
-from training import dataset as ds
+from training import dialogue as ds
 from training.model import weight_shift
 from reference.fixed_point import IntModel
 
-FORMAT_VERSION = 1
+FORMAT_VERSION = 2
 MAGIC = b"GBGT"
-TENSORS = ("tok", "pos", "w_q", "w_k", "w_v", "w_o", "w_f1", "w_f2", "w_out")
-SAMPLE_MARGIN_REAL = 0.7  # logits within this many nats of the best are candidates
+TENSORS = ("tok", "pos", "w_q", "w_k", "w_v", "w_o", "w_f1", "w_f2", "w_b", "w_out")
+SAMPLE_MARGIN_NATS = 2.2  # logits this close to the best can be sampled
+REP_PENALTY_NATS = 2.0    # taken off a word's score per earlier use in the response
 
 
 def _q(t: torch.Tensor, shift: int) -> list[list[int]]:
@@ -30,20 +31,21 @@ def quantize(ckpt_path: Path) -> IntModel:
     ck = torch.load(ckpt_path, weights_only=False)
     st, c = ck["state"], ck["model"]
     assert c["layers"] == 1, "the SM83 engine implements one block"
+    assert c.get("k"), "the SM83 engine implements the bottleneck head"
     block = "blocks.0."
     raw = {"w_q": st[block + "q.w"], "w_k": st[block + "k.w"], "w_v": st[block + "v.w"], "w_o": st[block + "o.w"],
-           "w_f1": st[block + "f1.w"], "w_f2": st[block + "f2.w"], "w_out": st["out.w"]}
+           "w_f1": st[block + "f1.w"], "w_f2": st[block + "f2.w"], "w_b": st["bottleneck.w"], "w_out": st["out.w"]}
     shifts = {k: weight_shift(v) for k, v in raw.items()}
     q = {k: tuple(map(tuple, _q(v, shifts[k]))) for k, v in raw.items()}
-    margin = round(SAMPLE_MARGIN_REAL * (1 << shifts["w_out"]))  # logit = Sum>>4, so one nat is 2^s_out units
-    return IntModel(d=c["d"], heads=c["heads"], ctx=c["ctx"], first_gen=ds.FIRST_GEN, eos=ds.EOS, sample_margin=margin,
+    nat = 1 << shifts["w_out"]  # logit = Sum >> 4 of Q4 inputs and Q(s) weights, so one nat is 2^s units
+    return IntModel(d=c["d"], heads=c["heads"], ctx=c["ctx"], first_emotion=ds.FIRST_EMOTION, eos=ds.EOS, first_word=ds.FIRST_WORD,
+                    sample_margin=round(SAMPLE_MARGIN_NATS * nat), rep_penalty=round(REP_PENALTY_NATS * nat),
                     tok=tuple(map(tuple, _q(st["tok"], 4))), pos=tuple(map(tuple, _q(st["pos"], 4))),
                     **q, **{"s_" + k[2:]: v for k, v in shifts.items()})
 
 
 def to_blob(m: IntModel) -> bytes:
-    body = bytearray(MAGIC + struct.pack("<HBBBBBB", FORMAT_VERSION, m.d, m.heads, m.ctx, m.first_gen, m.eos, len(TENSORS)))
-    body += struct.pack("<H", m.sample_margin)
+    body = bytearray(MAGIC + struct.pack("<HBBBHHHHHB", FORMAT_VERSION, m.d, m.heads, m.ctx, m.first_emotion, m.eos, m.first_word, m.sample_margin, m.rep_penalty, len(TENSORS)))
     data = bytearray()
     for name in TENSORS:
         t = getattr(m, name)
@@ -61,11 +63,11 @@ def from_blob(blob: bytes) -> IntModel:
         raise ValueError("model blob checksum mismatch")
     if payload[:4] != MAGIC:
         raise ValueError("bad magic")
-    ver, d, heads, ctx, first_gen, eos, n = struct.unpack_from("<HBBBBBB", payload, 4)
+    fmt = "<HBBBHHHHHB"
+    ver, d, heads, ctx, first_emotion, eos, first_word, margin, penalty, n = struct.unpack_from(fmt, payload, 4)
     if ver != FORMAT_VERSION:
         raise ValueError(f"unsupported format {ver}")
-    margin = struct.unpack_from("<H", payload, 12)[0]
-    off, table = 14, []
+    off, table = 4 + struct.calcsize(fmt), []
     for _ in range(n):
         name = payload[off:off + 8].rstrip(b"\0").decode()
         rows, cols, shift = struct.unpack_from("<HHB", payload, off + 8)
@@ -76,7 +78,7 @@ def from_blob(blob: bytes) -> IntModel:
         fields[name] = tuple(tuple(b - 256 if b > 127 else b for b in payload[off + r * cols : off + (r + 1) * cols]) for r in range(rows))
         off += rows * cols
         shifts[name] = shift
-    return IntModel(d=d, heads=heads, ctx=ctx, first_gen=first_gen, eos=eos, sample_margin=margin, **fields,
+    return IntModel(d=d, heads=heads, ctx=ctx, first_emotion=first_emotion, eos=eos, first_word=first_word, sample_margin=margin, rep_penalty=penalty, **fields,
                     **{"s_" + k[2:]: v for k, v in shifts.items() if k.startswith("w_")})
 
 
@@ -92,7 +94,7 @@ def main() -> None:
     assert from_blob(blob) == m
     sha = hashlib.sha256(blob).hexdigest()
     print(f"blob {len(blob)} bytes sha256 {sha}")
-    print({k: getattr(m, k) for k in ("s_q", "s_k", "s_v", "s_o", "s_f1", "s_f2", "s_out", "sample_margin")})
+    print({k: getattr(m, k) for k in ("s_q", "s_k", "s_v", "s_o", "s_f1", "s_f2", "s_b", "s_out", "sample_margin", "rep_penalty", "params")})
 
 
 if __name__ == "__main__":

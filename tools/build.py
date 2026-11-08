@@ -9,7 +9,7 @@ from pathlib import Path
 import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
-FIX = ["-v", "-p", "0xFF", "-m", "MBC5", "-t", "GAMEBOYGPT", "-n", "1", "-k", "HB", "-l", "0x33"]
+FIX = ["-v", "-p", "0xFF", "-m", "MBC5+RAM+BATTERY", "-r", "2", "-t", "SYSOVERRIDE", "-n", "1", "-k", "HB", "-l", "0x33"]
 
 
 def run(cmd):
@@ -21,15 +21,15 @@ def run(cmd):
 def selftest_source(gen):
     """Expected tokens come from the integer reference at build time, for the benchmark workloads."""
     sys.path[:0] = [str(ROOT), str(ROOT / "tools")]
-    from benchmark import WORKLOADS
+    from workloads import WORKLOADS
     from export_weights import from_blob
     from reference import fixed_point as fp
-    from training import dataset as ds
+    from training import dialogue as ds
     m = from_blob((ROOT / "generated" / "model.bin").read_bytes())
     lines = ['SECTION "selftest_cases", ROM0', "SelfTestCases::"]
     for sit in WORKLOADS.values():
-        t = fp.generate(m, ds.prompt_ids(*sit))["tokens"]
-        lines.append(f"    db {len(t)}, " + ",".join(map(str, t + [0] * (m.ctx - len(t)))))
+        t = fp.generate(m, ds.prompt_ids(sit))["tokens"]
+        lines.append(f"    db {len(t)}\n    dw " + ",".join(map(str, t + [0] * (m.ctx - len(t)))))
     (gen / "selftest_cases.asm").write_text("\n".join(lines) + "\n")
     with open(gen / "model_constants.inc", "a") as f:
         f.write(f"DEF SELFTEST_CASES EQU {len(WORKLOADS)}\n")
@@ -63,7 +63,7 @@ def build_rom(name, cfg, test, selftest=False):
     objs = []
     for s in sources:
         o = obj / (s.stem + ".o")
-        run(["rgbasm", "-E", "-I", ROOT / "src" / "include", "-I", gen, *defs, "-o", o, s])
+        run(["rgbasm", "-E", "-I", ROOT / "src" / "include", "-I", ROOT / "generated", "-I", gen, *defs, "-o", o, s])
         objs.append(o)
     rom = out / ("selftest.gb" if selftest else "test.gb" if test else "gameboygpt.gb")
     run(["rgblink", "-w", "-p", "0xFF", "-m", rom.with_suffix(".map"), "-n", rom.with_suffix(".sym"), "-o", rom, *objs])

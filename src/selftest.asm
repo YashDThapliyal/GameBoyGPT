@@ -1,10 +1,10 @@
-; selftest.asm - runs on any emulator or real unit with no host involvement. Generates the fixed workloads,
-; compares tokens against expectations baked in from the integer reference, and prints results on screen.
+; selftest.asm - runs on any emulator or real unit with no host involvement. Generates fixed workloads, compares the
+; tokens against expectations baked in from the integer reference, and prints the verdict on screen.
 INCLUDE "constants.inc"
 INCLUDE "model_constants.inc"
 
 IF DEF(SELFTEST)
-DEF CASE_SIZE EQU 1 + MODEL_CTX     ; length, then ids
+DEF CASE_SIZE EQU 1 + MODEL_CTX * 2     ; length, then 16-bit ids
 
 SECTION "selftest_vars", WRAM0
 wStCase: ds 1
@@ -15,20 +15,19 @@ StrStPass: db "SELFTEST PASS", 0
 StrStFail: db "SELFTEST FAIL", 0
 
 SelfTestMain::
-    ld a, ST_GENERATING
-    call SetState
+    ld a, ST_STREAMING
+    ld [wMB_State], a
     ld a, 1
     ld [wMB_Greedy], a
     xor a
     ld [wStCase], a
     ld [wStFail], a
 .case:
-    call ClearText
     ld a, [wStCase]
     call StCasePtr
     inc hl               ; skip length: the prompt is always first
     ld de, wSeq
-    ld b, PROMPT_LEN
+    ld b, PROMPT_LEN * 2
 .copy:
     ld a, [hl+]
     ld [de], a
@@ -41,7 +40,6 @@ SelfTestMain::
     call EventTimerStart
     call GenerateTokens
     call EventTimerStop
-    ; compare
     ld a, [wStCase]
     call StCasePtr
     ld a, [wSeqLen]
@@ -49,8 +47,9 @@ SelfTestMain::
     jr z, .lenok
     ld [wStFail], a
 .lenok:
-    ld c, [hl]
-    inc hl
+    ld a, [hl+]
+    add a
+    ld c, a              ; bytes to compare
     ld de, wSeq
 .cmp:
     ld a, [de]
@@ -63,7 +62,6 @@ SelfTestMain::
     inc hl
     dec c
     jr nz, .cmp
-    ; print "n frames" on rows 0..3
     ld a, [wStCase]
     ld b, a
     ld c, 2
@@ -90,8 +88,8 @@ SelfTestMain::
     ld b, 5
     ld c, 2
     call PrintAt
-    ld a, ST_ENDING
-    call SetState
+    ld a, ST_SELFTEST_DONE
+    ld [wMB_State], a
 .idle:
     call WaitVBlank
     jr .idle

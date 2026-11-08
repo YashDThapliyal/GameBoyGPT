@@ -22,6 +22,7 @@ class Config:
     heads: int = 2
     ffn: int = 64
     layers: int = 1
+    k: int = 0  # output bottleneck width; 0 means a full vocab x d head
 
     def as_dict(self):
         return asdict(self)
@@ -110,7 +111,8 @@ class TinyTransformer(nn.Module):
         self.tok = nn.Parameter(torch.randn(c.vocab, c.d) * 1.0)
         self.pos = nn.Parameter(torch.randn(c.ctx, c.d) * 0.5)
         self.blocks = nn.ModuleList(Block(c) for _ in range(c.layers))
-        self.out = Linear(c.d, c.vocab)
+        self.bottleneck = Linear(c.d, c.k) if c.k else None
+        self.out = Linear(c.k or c.d, c.vocab)
 
     def forward(self, idx, quant=False):
         T = idx.shape[1]
@@ -119,7 +121,29 @@ class TinyTransformer(nn.Module):
         x = fq_act(x) if quant else x
         for b in self.blocks:
             x = b(x, quant)
-        return self.out(norm(x, quant), quant)
+        z = norm(x, quant)
+        if self.bottleneck is not None:
+            z = self.bottleneck(z, quant)
+            z = fq_act(z) if quant else z
+        return self.out(z, quant)
+
+    def num_params(self):
+        return sum(p.numel() for p in self.parameters())
+
+
+class GruLm(nn.Module):
+    """Comparison only, trained in float: a recurrent model has no attention or context cost, but the Game Boy engine does not implement it."""
+
+    def __init__(self, vocab: int, d: int, k: int):
+        super().__init__()
+        self.tok = nn.Embedding(vocab, d)
+        self.gru = nn.GRU(d, d, batch_first=True)
+        self.bottleneck = nn.Linear(d, k)
+        self.out = nn.Linear(k, vocab)
+
+    def forward(self, idx, quant=False):
+        h, _ = self.gru(self.tok(idx))
+        return self.out(torch.relu(self.bottleneck(h)))
 
     def num_params(self):
         return sum(p.numel() for p in self.parameters())
