@@ -1,6 +1,1 @@
-== second emulator
-test -x .third_party/SameBoy/build/bin/tester/sameboy_tester || { git clone https://github.com/LIJI32/SameBoy .third_party/SameBoy && git -C .third_party/SameBoy checkout ea667ad && /Library/Developer/CommandLineTools/usr/bin/make -C .third_party/SameBoy tester CONF=release; }
-.venv/bin/python tools/second_emulator.py --variants V0 V5Z
-V0 {'sameboy': {'frames': [7065, 6431, 5823, 7065], 'verdict': 'SELFTEST PASS'}, 'pyboy': {'frames': [7065, 6431, 5823, 7065], 'verdict': 'SELFTEST PASS'}}
-V5Z {'sameboy': {'frames': [714, 668, 625, 715], 'verdict': 'SELFTEST PASS'}, 'pyboy': {'frames': [714, 668, 625, 715], 'verdict': 'SELFTEST PASS'}}
 == commit code state for benchmark provenance

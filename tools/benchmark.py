@@ -229,9 +229,10 @@ def main():
     ap.add_argument("--variants", nargs="+", default=["V0"])
     ap.add_argument("--rounds", type=int, default=3)
     a = ap.parse_args()
-    quality = json.loads((ROOT / "reports" / "quality.json").read_text())
-    nll = json.loads((ROOT / "checkpoints" / "release.report.json").read_text())["test_nll_quant"]
-    q = {"action": quality["test_heldout_greedy"]["action"]}
+    # Held-out figures come from the sibling model: the shipping model trains on every situation, so nothing is unseen by it.
+    held = json.loads((ROOT / "reports" / "quality_heldout.json").read_text())
+    nll = json.loads((ROOT / "checkpoints" / "heldout.report.json").read_text())["test_nll_quant"]
+    q = {"action": held["test_heldout_greedy"]["event"]}
     raw_path = ROOT / "reports" / "benchmark.json"
     db = json.loads(raw_path.read_text()) if raw_path.exists() else {"variants": {}}
     csv_path = ROOT / "reports" / "benchmark.csv"
