@@ -13,3 +13,6 @@ checkpoints/repro_check*
 checkpoints/generalization*
 assets/data/*.jsonl
 !assets/data/seed_fixture.jsonl
+generated/V*/
+generated/A_*/
+reports/pipeline.log

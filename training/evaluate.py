@@ -34,17 +34,22 @@ def score(m, sits, greedy=True, samples=1, seed=7) -> dict:
 
 
 def action_ablation(m, sits) -> dict:
-    """Do generated events change when ONLY the action token changes, and does shuffling it break validity?"""
-    changed = total = shuffled_ok = 0
+    """Do events change when ONLY the action token changes? WIN and LOSE sentences name no action, so they are
+    excluded here: the oracle's action check passes vacuously for them."""
+    named = [s for s in sits if s[3] not in (g.WIN, g.LOSE)]
+    changed = kept_original = uses_new = 0
     rnd = random.Random(3)
-    for s in sits:
+    for s in named:
         a = fp.generate(m, ds.prompt_ids(*s))["generated"]
         other = rnd.choice([x for x in range(4) if x != s[2]])
         b = fp.generate(m, ds.prompt_ids(s[0], s[1], other, s[3]))["generated"]
+        words = [ds.VOCAB[t] for t in b if t != ds.EOS]
+        opens_with = lambda act: any(words[: len(c)] == c for c in ds.ACT_CLAUSES[act])
         changed += a != b
-        total += 1
-        shuffled_ok += ds.check_sentence(s, [t for t in b if t != ds.EOS])["action"]
-    return {"changed_rate": changed / total, "wrong_action_token_scores_action_ok": shuffled_ok / total, "n": total}
+        kept_original += opens_with(s[2])
+        uses_new += opens_with(other)
+    n = len(named)
+    return {"n": n, "changed_rate": changed / n, "still_uses_original_action_phrase": kept_original / n, "uses_new_action_phrase": uses_new / n}
 
 
 def novelty(m, sits, train_rows) -> dict:

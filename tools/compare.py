@@ -241,7 +241,7 @@ def memory_doc(version="V5Z"):
 
 def fig_memory(game):
     wram = {n: s for n, _, s in game["WRAM0"]}
-    fig, axes = plt.subplots(2, 1, figsize=(8.2, 3.1), gridspec_kw={"hspace": 1.1})
+    fig, axes = plt.subplots(2, 1, figsize=(8.2, 4.4), gridspec_kw={"hspace": 1.25, "height_ratios": [1, 1.4]})
     ax = axes[0]
     left, idx = 0, 0
     groups = [(k, sum(wram.get(n, 0) for n in v)) for k, v in WRAM_GROUPS.items()]
@@ -254,7 +254,7 @@ def fig_memory(game):
     ax.set_xlim(0, 8192)
     ax.set_yticks([])
     ax.set_title(f"Built-in WRAM, bytes (8192 total, {left} allocated)", loc="left", fontweight="bold")
-    ax.legend(ncol=3, loc="upper center", bbox_to_anchor=(.5, -.28), frameon=False, fontsize=8)
+    ax.legend(ncol=3, loc="upper center", bbox_to_anchor=(.5, -.42), frameon=False, fontsize=8)
     ax = axes[1]
     areas = sorted(a for a in game if a.startswith("ROM"))
     for i, a in enumerate(areas):
@@ -399,7 +399,7 @@ All figures are on the integer reference, which the ROM matches bit for bit. Tra
 
 Strict valid means the sentence is an exact member of the grammar for that situation. This is a narrow language, so 100% describes what the task asks of the model, not general language ability.
 
-**Action conditioning.** Changing only the action token changes the greedy event in {q['action_ablation']['changed_rate']:.1%} of {q['action_ablation']['n']} situations. Scored against the original action, the output uses the right action phrase only {q['action_ablation']['wrong_action_token_scores_action_ok']:.1%} of the time, close to chance for 4 actions.
+**Action conditioning.** Over the {q['action_ablation']['n']} situations whose sentences name the action (WIN and LOSE sentences don't, so the action column passes for them by default, which is why even untrained weights score above zero), changing only the action token changes the greedy event {q['action_ablation']['changed_rate']:.1%} of the time. The new event uses the new action's phrase {q['action_ablation']['uses_new_action_phrase']:.1%} of the time and the old one's {q['action_ablation']['still_uses_original_action_phrase']:.1%}.
 
 **Novelty audit** on the 9 held-out test families: {q['novelty_test']['exact_prompt_plus_text_in_train']:.1%} of generated prompt+text pairs exist in training, while {q['novelty_test']['text_seen_in_train_for_any_prompt']:.1%} of the texts appear in training under some other prompt.
 """

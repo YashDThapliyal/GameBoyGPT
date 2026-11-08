@@ -1,5 +1,5 @@
 {
- "rom_sha256": "96bdf1648ba4152c08632ef77d3893a364495caf298f0825dbbb6bc8a13d8394",
+ "rom_sha256": "2c4b1752e646bb8743b849f4774d579b2d2d7933ba4a37f237d80945e7e48469",
  "seed": 321,
  "journey": [
   {
@@ -26,7 +26,7 @@
     27
    ],
    "text": "YOU TURN RIGHT AND THE SILENT COLUMNS WAIT.",
-   "on_device_frames": 347,
+   "on_device_frames": 346,
    "strict_valid": true
   },
   {
@@ -54,7 +54,7 @@
     27
    ],
    "text": "YOU LOOK AND FIND A LAMP UNDER THE COLUMNS.",
-   "on_device_frames": 383,
+   "on_device_frames": 384,
    "strict_valid": true
   },
   {
@@ -111,7 +111,7 @@
     27
    ],
    "text": "YOU LOOK AND FIND A KEY UNDER THE DARK BATS.",
-   "on_device_frames": 420,
+   "on_device_frames": 421,
    "strict_valid": true
   },
   {
@@ -140,7 +140,7 @@
     27
    ],
    "text": "YOU WALK ON AND YOUR KEY HUMS BY SILENT IDOLS.",
-   "on_device_frames": 419,
+   "on_device_frames": 420,
    "strict_valid": true
   },
   {
@@ -161,13 +161,13 @@
     63,
     29,
     85,
-    66,
     51,
-    33,
+    50,
+    93,
     27
    ],
-   "text": "YOU WALK ON AND THE PALE IDOLS BITE.",
-   "on_device_frames": 350,
+   "text": "YOU WALK ON AND THE IDOLS HURT YOU.",
+   "on_device_frames": 348,
    "strict_valid": true
   },
   {
@@ -196,7 +196,7 @@
     27
    ],
    "text": "YOU PRESS ON AND YOUR KEY HUMS BY SILENT REEDS.",
-   "on_device_frames": 418,
+   "on_device_frames": 419,
    "strict_valid": true
   },
   {
@@ -225,7 +225,7 @@
     27
    ],
    "text": "YOU TURN LEFT AND YOUR KEY HUMS BY PALE CHAINS.",
-   "on_device_frames": 418,
+   "on_device_frames": 420,
    "strict_valid": true
   },
   {
@@ -254,7 +254,7 @@
     27
    ],
    "text": "YOU PRESS ON AND YOUR KEY TURNS THE GATE OPENS.",
-   "on_device_frames": 421,
+   "on_device_frames": 422,
    "strict_valid": true
   },
   {
@@ -297,16 +297,16 @@
    ],
    "generated_ids": [
     93,
-    68,
+    91,
     63,
     29,
     85,
-    40,
+    66,
     73,
     33,
     27
    ],
-   "text": "YOU PRESS ON AND THE COLD ROOTS BITE.",
+   "text": "YOU WALK ON AND THE PALE ROOTS BITE.",
    "outcome": "HURT",
    "room": "FOREST"
   },
@@ -320,15 +320,15 @@
    ],
    "generated_ids": [
     93,
-    74,
+    58,
     35,
     45,
     64,
-    42,
-    44,
+    66,
+    73,
     27
    ],
-   "text": "YOU SEARCH BUT FIND ONLY DARK FERNS.",
+   "text": "YOU LOOK BUT FIND ONLY PALE ROOTS.",
    "outcome": "NOTHING",
    "room": "FOREST"
   }

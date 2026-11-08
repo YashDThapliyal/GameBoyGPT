@@ -66,3 +66,122 @@ test -x .third_party/SameBoy/build/bin/tester/sameboy_tester || { git clone http
 V0 {'sameboy': {'frames': [3060, 4023, 3527, 3059], 'verdict': 'SELFTEST PASS'}, 'pyboy': {'frames': [3060, 4023, 3527, 3059], 'verdict': 'SELFTEST PASS'}}
 V5Z {'sameboy': {'frames': [343, 420, 385, 344], 'verdict': 'SELFTEST PASS'}, 'pyboy': {'frames': [343, 420, 385, 344], 'verdict': 'SELFTEST PASS'}}
 == commit code state for benchmark provenance
+== benchmark
+.venv/bin/python tools/benchmark.py --variants V0 V1 V2 V3 V4 V5 V5S V5Z A_QSQ A_NIB A_KV --rounds 3
+V0 6s host; PROMPT_A:5.632s/tok,50.68s/ev,match=SELF PROMPT_B:6.056s/tok,66.61s/ev,match=SELF PROMPT_C:5.841s/tok,58.41s/ev,match=SELF PROMPT_D:5.630s/tok,50.67s/ev,match=SELF
+V1 6s host; PROMPT_A:5.624s/tok,50.62s/ev,match=True PROMPT_B:6.048s/tok,66.53s/ev,match=True PROMPT_C:5.834s/tok,58.34s/ev,match=True PROMPT_D:5.623s/tok,50.61s/ev,match=True
+V2 4s host; PROMPT_A:3.198s/tok,28.79s/ev,match=True PROMPT_B:3.441s/tok,37.85s/ev,match=True PROMPT_C:3.319s/tok,33.19s/ev,match=True PROMPT_D:3.198s/tok,28.78s/ev,match=True
+V3 2s host; PROMPT_A:1.761s/tok,15.85s/ev,match=True PROMPT_B:1.900s/tok,20.90s/ev,match=True PROMPT_C:1.830s/tok,18.30s/ev,match=True PROMPT_D:1.761s/tok,15.85s/ev,match=True
+V4 2s host; PROMPT_A:1.729s/tok,15.56s/ev,match=True PROMPT_B:1.865s/tok,20.52s/ev,match=True PROMPT_C:1.798s/tok,17.98s/ev,match=True PROMPT_D:1.728s/tok,15.55s/ev,match=True
+V5 1s host; PROMPT_A:0.736s/tok,6.63s/ev,match=True PROMPT_B:0.732s/tok,8.05s/ev,match=True PROMPT_C:0.734s/tok,7.34s/ev,match=True PROMPT_D:0.736s/tok,6.62s/ev,match=True
+V5S 1s host; PROMPT_A:0.677s/tok,6.09s/ev,match=True PROMPT_B:0.673s/tok,7.41s/ev,match=True PROMPT_C:0.675s/tok,6.75s/ev,match=True PROMPT_D:0.677s/tok,6.09s/ev,match=True
+V5Z 1s host; PROMPT_A:0.632s/tok,5.69s/ev,match=True PROMPT_B:0.631s/tok,6.94s/ev,match=True PROMPT_C:0.638s/tok,6.38s/ev,match=True PROMPT_D:0.634s/tok,5.70s/ev,match=True
+A_QSQ 4s host; PROMPT_A:3.206s/tok,28.85s/ev,match=True PROMPT_B:3.449s/tok,37.93s/ev,match=True PROMPT_C:3.327s/tok,33.27s/ev,match=True PROMPT_D:3.206s/tok,28.85s/ev,match=True
+A_NIB 6s host; PROMPT_A:4.691s/tok,42.22s/ev,match=True PROMPT_B:5.044s/tok,55.49s/ev,match=True PROMPT_C:4.866s/tok,48.66s/ev,match=True PROMPT_D:4.690s/tok,42.21s/ev,match=True
+A_KV 3s host; PROMPT_A:2.526s/tok,22.74s/ev,match=True PROMPT_B:2.507s/tok,27.58s/ev,match=True PROMPT_C:2.514s/tok,25.14s/ev,match=True PROMPT_D:2.526s/tok,22.73s/ev,match=True
+== integrity
+.....                                                                    [100%]
+== demo
+.venv/bin/python tools/make_art.py
+scene unique tiles: [86, 87, 57, 69, 80, 87, 50, 57] title: 122
+.venv/bin/python tools/build.py V0 V1 V2 V3 V4 V5 V5S V5Z A_QSQ A_NIB A_KV
+build/V0/gameboygpt.gb 65536 342a3b22ac17a069
+build/V0/test.gb 65536 e4f3467eaf63a15b
+build/V1/gameboygpt.gb 65536 e6f335c3c3093a87
+build/V1/test.gb 65536 c047282efd6e7f27
+build/V2/gameboygpt.gb 65536 8462c375bae3e120
+build/V2/test.gb 65536 aacc0bef5932cd0f
+build/V3/gameboygpt.gb 65536 cf01eb77c38b92ea
+build/V3/test.gb 65536 c503fbb9066c8584
+build/V4/gameboygpt.gb 65536 70c0786fbd52abf2
+build/V4/test.gb 65536 354631df4b880aba
+build/V5/gameboygpt.gb 65536 bc4fa7d1cdcfad37
+build/V5/test.gb 65536 8c794432ee2c03f9
+build/V5S/gameboygpt.gb 65536 506eb446530e0dfa
+build/V5S/test.gb 65536 4e7657a64f990cc0
+build/V5Z/gameboygpt.gb 65536 2c4b1752e646bb87
+build/V5Z/test.gb 65536 b5021e31e61cac37
+build/A_QSQ/gameboygpt.gb 65536 5eaecd60a1a47556
+build/A_QSQ/test.gb 65536 6713908f85eb9a8a
+build/A_NIB/gameboygpt.gb 65536 a3faa17eabc4e0a1
+build/A_NIB/test.gb 65536 b27a9e41a4453088
+build/A_KV/gameboygpt.gb 65536 ec6c635159eafd2f
+build/A_KV/test.gb 65536 f1ff1eec01939767
+.venv/bin/python tools/build.py V0 V5Z --selftest
+build/V0/gameboygpt.gb 65536 342a3b22ac17a069
+build/V0/test.gb 65536 e4f3467eaf63a15b
+build/V5Z/gameboygpt.gb 65536 2c4b1752e646bb87
+build/V5Z/test.gb 65536 b5021e31e61cac37
+cp build/V5Z/gameboygpt.gb build/gameboygpt.gb
+cp build/V5Z/gameboygpt.sym build/gameboygpt.sym
+cp build/V0/gameboygpt.gb build/gameboygpt_v0.gb
+cp build/V0/gameboygpt.sym build/gameboygpt_v0.sym
+shasum -a 256 build/gameboygpt.gb build/gameboygpt_v0.gb generated/model.bin
+2c4b1752e646bb8743b849f4774d579b2d2d7933ba4a37f237d80945e7e48469  build/gameboygpt.gb
+342a3b22ac17a069801ba874498633f85a17728b52074d9cc10a367a89449e5f  build/gameboygpt_v0.gb
+2e2ca73681900e21385eeef725f07d31a29dad347b3878b9ed1ad9f40cb153d2  generated/model.bin
+.venv/bin/python tools/capture_demo.py
+ 1 RUINS   RIGHT   MOVE    YOU TURN RIGHT AND THE SILENT COLUMNS WAIT.
+ 2 RUINS   SEARCH  LAMP    YOU LOOK AND FIND A LAMP UNDER THE COLUMNS.
+ 3 CAVE    FORWARD MOVE    YOU PRESS ON AND YOUR LAMP SHOWS SILENT BATS.
+ 4 CAVE    SEARCH  KEY     YOU LOOK AND FIND A KEY UNDER THE DARK BATS.
+ 5 SHRINE  FORWARD MOVE    YOU WALK ON AND YOUR KEY HUMS BY SILENT IDOLS.
+ 6 SHRINE  FORWARD HURT    YOU WALK ON AND THE IDOLS HURT YOU.
+ 7 MARSH   FORWARD MOVE    YOU PRESS ON AND YOUR KEY HUMS BY SILENT REEDS.
+ 8 GATE    LEFT    MOVE    YOU TURN LEFT AND YOUR KEY HUMS BY PALE CHAINS.
+ 9 TOWER   FORWARD OPEN    YOU PRESS ON AND YOUR KEY TURNS THE GATE OPENS.
+10 TOWER   FORWARD WIN     YOU CLIMB THE SILENT STAIRS AND THE GUARDIAN SLEEPS.
+{
+"FORWARD": {
+"input_ids": [
+0,
+1,
+9,
+14,
+23
+],
+"generated_ids": [
+93,
+91,
+63,
+29,
+85,
+66,
+73,
+33,
+27
+],
+"text": "YOU WALK ON AND THE PALE ROOTS BITE.",
+"outcome": "HURT",
+"room": "FOREST"
+},
+"SEARCH": {
+"input_ids": [
+0,
+1,
+9,
+15,
+22
+],
+"generated_ids": [
+93,
+58,
+35,
+45,
+64,
+66,
+73,
+27
+],
+"text": "YOU LOOK BUT FIND ONLY PALE ROOTS.",
+"outcome": "NOTHING",
+"room": "FOREST"
+}
+}
+== report
+.venv/bin/python tools/compare.py
+V0 5.805 s/token -> V5Z 0.634 s/token (9.16x)
+.venv/bin/python tools/render_dashboard.py
+wrote reports/dashboard.html with 132 rows
+PIPELINE OK
+EXIT 0

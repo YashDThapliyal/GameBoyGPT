@@ -28,7 +28,10 @@ rom: variants
 	cp build/$(SHIP)/gameboygpt.sym build/gameboygpt.sym
 	cp build/V0/gameboygpt.gb build/gameboygpt_v0.gb
 	cp build/V0/gameboygpt.sym build/gameboygpt_v0.sym
-	shasum -a 256 build/gameboygpt.gb build/gameboygpt_v0.gb generated/model.bin
+	mkdir -p release
+	cp build/gameboygpt.gb build/gameboygpt_v0.gb release/
+	cd release && shasum -a 256 gameboygpt.gb gameboygpt_v0.gb > SHA256SUMS
+	cat release/SHA256SUMS
 sameboy:
 	test -x $(TESTER) || { git clone https://github.com/LIJI32/SameBoy .third_party/SameBoy && git -C .third_party/SameBoy checkout ea667ad && $(MAKE) -C .third_party/SameBoy tester CONF=release; }
 # Host-only suites, then the full ROM suite on baseline and shipping build, then the kernel+parity suite on every variant.
@@ -53,4 +56,4 @@ compare:
 report: compare
 	$(PY) tools/render_dashboard.py
 clean:
-	rm -rf build generated/V* generated/A_* generated/assets.asm
+	rm -rf build generated/V* generated/A_*

@@ -234,9 +234,10 @@
     ]
   },
   "action_ablation": {
-    "changed_rate": 0.7985865724381626,
-    "wrong_action_token_scores_action_ok": 0.2049469964664311,
-    "n": 283
+    "n": 225,
+    "changed_rate": 1.0,
+    "still_uses_original_action_phrase": 0.0,
+    "uses_new_action_phrase": 1.0
   },
   "novelty_test": {
     "text_seen_in_train_for_any_prompt": 0.3333333333333333,
