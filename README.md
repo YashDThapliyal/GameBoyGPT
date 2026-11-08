@@ -18,7 +18,7 @@ The project then asks a measurement question: **what actually makes neural text 
 | Seconds per token (DMG clock) | 5.80 | 0.63 |
 | Seconds per event | 56.6 | 6.2 |
 | T-cycles per token | 24.3M | 2.7M |
-| WRAM allocated | 2639 B | 2673 B |
+| WRAM allocated | 2631 B | 2665 B |
 | Tokens identical to V0 | n/a | yes |
 
 **9.2x faster, same tokens.** 4.0x against a baseline that already caches K and V.
@@ -86,7 +86,7 @@ The architecture is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), the equatio
 
 ## Reproduce it
 
-You need macOS or Linux, [RGBDS](https://rgbds.gbdev.io/) and [uv](https://docs.astral.sh/uv/). Exact versions are in [toolchain.lock](toolchain.lock).
+You need [RGBDS](https://rgbds.gbdev.io/) and [uv](https://docs.astral.sh/uv/). Exact versions are in [toolchain.lock](toolchain.lock). This was run on macOS on Apple Silicon only; Linux is untested. To check the release independently, see [VERIFY.md](VERIFY.md) or run `scripts/verify_release.sh`.
 
 ```
 uv sync --python 3.12
