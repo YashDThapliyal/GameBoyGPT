@@ -1,5 +1,5 @@
 seed: 1234
-threads: 4
+threads: 1  # multithreaded runs were not byte-reproducible
 n_train: 48000
 n_eval: 4000
 model: {ctx: 16, d: 16, heads: 1, ffn: 32, layers: 1}

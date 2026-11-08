@@ -1,7 +1,7 @@
 {
   "config": {
     "seed": 1234,
-    "threads": 4,
+    "threads": 1,
     "n_train": 48000,
     "n_eval": 4000,
     "model": {
@@ -32,8 +32,8 @@
     "val_nll": 5.274969666774007,
     "uniform_nll": 4.553876891600541
   },
-  "best_val_nll_quant": 0.30377534041190757,
-  "test_nll_quant": 0.3088504794958253,
-  "test_nll_float": 0.3099093897802438,
-  "train_seconds": 174.01506090164185
+  "best_val_nll_quant": 0.3036156969207566,
+  "test_nll_quant": 0.3101390790542717,
+  "test_nll_float": 0.3100334035502883,
+  "train_seconds": 162.3197979927063
 }

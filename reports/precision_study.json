@@ -11,7 +11,7 @@
   "weight_bits": 7,
   "strict_valid": 1.0,
   "heldout_test_strict_valid": 1.0,
-  "token_agreement": 0.33568904593639576,
+  "token_agreement": 0.4664310954063604,
   "cap_rate": 0.0,
   "estimated_packed_rom_bytes": 13380
  },
@@ -19,7 +19,7 @@
   "weight_bits": 6,
   "strict_valid": 1.0,
   "heldout_test_strict_valid": 1.0,
-  "token_agreement": 0.3286219081272085,
+  "token_agreement": 0.26148409893992935,
   "cap_rate": 0.0,
   "estimated_packed_rom_bytes": 11976
  },
@@ -27,24 +27,24 @@
   "weight_bits": 5,
   "strict_valid": 1.0,
   "heldout_test_strict_valid": 1.0,
-  "token_agreement": 0.3286219081272085,
+  "token_agreement": 0.2579505300353357,
   "cap_rate": 0.0,
   "estimated_packed_rom_bytes": 10572
  },
  {
   "weight_bits": 4,
-  "strict_valid": 0.950530035335689,
+  "strict_valid": 1.0,
   "heldout_test_strict_valid": 1.0,
-  "token_agreement": 0.19434628975265017,
+  "token_agreement": 0.17667844522968199,
   "cap_rate": 0.0,
   "estimated_packed_rom_bytes": 9168
  },
  {
   "weight_bits": 3,
-  "strict_valid": 0.19434628975265017,
+  "strict_valid": 0.053003533568904596,
   "heldout_test_strict_valid": 0.0,
-  "token_agreement": 0.10954063604240283,
-  "cap_rate": 0.1413427561837456,
+  "token_agreement": 0.0,
+  "cap_rate": 0.0176678445229682,
   "estimated_packed_rom_bytes": 7764
  }
 ]

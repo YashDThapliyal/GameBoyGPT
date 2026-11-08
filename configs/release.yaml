@@ -1,6 +1,6 @@
 # Release model. Selected by quality/latency comparison (see docs/MODEL.md).
 seed: 1234
-threads: 4
+threads: 1  # multithreaded runs were not byte-reproducible
 n_train: 48000
 n_eval: 4000
 model: {ctx: 16, d: 32, heads: 2, ffn: 64, layers: 1}

@@ -11,3 +11,5 @@ checkpoints/two_layer*
 .third_party/
 checkpoints/repro_check*
 checkpoints/generalization*
+assets/data/*.jsonl
+!assets/data/seed_fixture.jsonl

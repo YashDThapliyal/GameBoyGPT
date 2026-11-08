@@ -1,0 +1,68 @@
+== build
+.venv/bin/python tools/make_art.py
+scene unique tiles: [86, 87, 57, 69, 80, 87, 50, 57] title: 122
+.venv/bin/python tools/build.py V0 V1 V2 V3 V4 V5 V5S V5Z A_QSQ A_NIB A_KV
+build/V0/gameboygpt.gb 65536 342a3b22ac17a069
+build/V0/test.gb 65536 e4f3467eaf63a15b
+build/V1/gameboygpt.gb 65536 e6f335c3c3093a87
+build/V1/test.gb 65536 c047282efd6e7f27
+build/V2/gameboygpt.gb 65536 8462c375bae3e120
+build/V2/test.gb 65536 aacc0bef5932cd0f
+build/V3/gameboygpt.gb 65536 cf01eb77c38b92ea
+build/V3/test.gb 65536 c503fbb9066c8584
+build/V4/gameboygpt.gb 65536 70c0786fbd52abf2
+build/V4/test.gb 65536 354631df4b880aba
+build/V5/gameboygpt.gb 65536 bc4fa7d1cdcfad37
+build/V5/test.gb 65536 8c794432ee2c03f9
+build/V5S/gameboygpt.gb 65536 506eb446530e0dfa
+build/V5S/test.gb 65536 4e7657a64f990cc0
+build/V5Z/gameboygpt.gb 65536 2c4b1752e646bb87
+build/V5Z/test.gb 65536 b5021e31e61cac37
+build/A_QSQ/gameboygpt.gb 65536 5eaecd60a1a47556
+build/A_QSQ/test.gb 65536 6713908f85eb9a8a
+build/A_NIB/gameboygpt.gb 65536 a3faa17eabc4e0a1
+build/A_NIB/test.gb 65536 b27a9e41a4453088
+build/A_KV/gameboygpt.gb 65536 ec6c635159eafd2f
+build/A_KV/test.gb 65536 f1ff1eec01939767
+.venv/bin/python tools/build.py V0 V5Z --selftest
+build/V0/gameboygpt.gb 65536 342a3b22ac17a069
+build/V0/test.gb 65536 e4f3467eaf63a15b
+build/V5Z/gameboygpt.gb 65536 2c4b1752e646bb87
+build/V5Z/test.gb 65536 b5021e31e61cac37
+cp build/V5Z/gameboygpt.gb build/gameboygpt.gb
+cp build/V5Z/gameboygpt.sym build/gameboygpt.sym
+cp build/V0/gameboygpt.gb build/gameboygpt_v0.gb
+cp build/V0/gameboygpt.sym build/gameboygpt_v0.sym
+shasum -a 256 build/gameboygpt.gb build/gameboygpt_v0.gb generated/model.bin
+2c4b1752e646bb8743b849f4774d579b2d2d7933ba4a37f237d80945e7e48469  build/gameboygpt.gb
+342a3b22ac17a069801ba874498633f85a17728b52074d9cc10a367a89449e5f  build/gameboygpt_v0.gb
+2e2ca73681900e21385eeef725f07d31a29dad347b3878b9ed1ad9f40cb153d2  generated/model.bin
+== verify
+.venv/bin/python -m pytest tests/test_smoke.py tests/test_dataset.py tests/test_fixed_point.py tests/test_game_state.py tests/test_export.py tests/test_benchmark_integrity.py -q
+................................sssss                                    [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.12/site-packages/sdl2/_internal.py:24
+  /Users/yash/Documents/GameBoyGPT/.venv/lib/python3.12/site-packages/sdl2/_internal.py:24: UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+    warnings.warn(msg, warntype)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+mkdir -p reports/junit
+for v in V0 V5Z; do GBGPT_VARIANT=$v .venv/bin/python -m pytest tests/test_rom_game.py tests/test_buttons.py tests/test_generated_output.py tests/test_kernel_vectors.py tests/test_model_parity.py -q --junitxml=reports/junit/$v.xml || exit 1; done
+.........................................                                [100%]
+.........................................                                [100%]
+for v in V1 V2 V3 V4 V5 V5S A_QSQ A_NIB A_KV; do GBGPT_VARIANT=$v .venv/bin/python -m pytest tests/test_kernel_vectors.py tests/test_model_parity.py -q --junitxml=reports/junit/$v.xml || exit 1; done
+........................                                                 [100%]
+........................                                                 [100%]
+........................                                                 [100%]
+........................                                                 [100%]
+........................                                                 [100%]
+........................                                                 [100%]
+........................                                                 [100%]
+........................                                                 [100%]
+........................                                                 [100%]
+== second emulator
+test -x .third_party/SameBoy/build/bin/tester/sameboy_tester || { git clone https://github.com/LIJI32/SameBoy .third_party/SameBoy && git -C .third_party/SameBoy checkout ea667ad && /Library/Developer/CommandLineTools/usr/bin/make -C .third_party/SameBoy tester CONF=release; }
+.venv/bin/python tools/second_emulator.py --variants V0 V5Z
+V0 {'sameboy': {'frames': [3060, 4023, 3527, 3059], 'verdict': 'SELFTEST PASS'}, 'pyboy': {'frames': [3060, 4023, 3527, 3059], 'verdict': 'SELFTEST PASS'}}
+V5Z {'sameboy': {'frames': [343, 420, 385, 344], 'verdict': 'SELFTEST PASS'}, 'pyboy': {'frames': [343, 420, 385, 344], 'verdict': 'SELFTEST PASS'}}
+== commit code state for benchmark provenance

@@ -4,8 +4,8 @@
    "frames": [
     3060,
     4023,
-    3528,
-    3060
+    3527,
+    3059
    ],
    "verdict": "SELFTEST PASS"
   },
@@ -13,8 +13,8 @@
    "frames": [
     3060,
     4023,
-    3528,
-    3060
+    3527,
+    3059
    ],
    "verdict": "SELFTEST PASS"
   }
@@ -22,19 +22,19 @@
  "V5Z": {
   "sameboy": {
    "frames": [
-    342,
-    419,
-    386,
-    346
+    343,
+    420,
+    385,
+    344
    ],
    "verdict": "SELFTEST PASS"
   },
   "pyboy": {
    "frames": [
-    342,
-    419,
-    386,
-    346
+    343,
+    420,
+    385,
+    344
    ],
    "verdict": "SELFTEST PASS"
   }

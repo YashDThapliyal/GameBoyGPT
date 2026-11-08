@@ -48,7 +48,7 @@ def event_tokens(gb):
 def visible_text(gb):
     rows = []
     for r in range(7, 12):
-        rows.append("".join(chr(t + 0x20) if t < 64 else "?" for t in gb.read("wBgMap", 18, r * 20 + 1)).rstrip())
+        rows.append("".join(chr(t + 0x20) if t < 64 else "?" for t in gb.read("wBgMap", 19, r * 20 + 1)).rstrip())
     return " ".join(x for x in rows if x)
 
 

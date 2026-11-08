@@ -55,6 +55,18 @@ def novelty(m, sits, train_rows) -> dict:
             "exact_prompt_plus_text_in_train": sum((*ds.prompt_ids(*s), *o) in train_full for s, o in outs) / len(outs)}
 
 
+def untrained_baseline(sits) -> dict:
+    """Same architecture and integer engine with random weights: the floor trained quality is measured against."""
+    import tempfile, torch
+    from training.model import Config, TinyTransformer
+    torch.manual_seed(1234)
+    model = TinyTransformer(Config(vocab=len(ds.VOCAB)))
+    with tempfile.TemporaryDirectory() as d:
+        p = Path(d) / "untrained.pt"
+        torch.save({"state": model.state_dict(), "model": model.c.as_dict()}, p)
+        return score(quantize(p), sits)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--ckpt", default=str(ROOT / "checkpoints" / "release.pt"))
@@ -69,6 +81,7 @@ def main():
     report = {
         "all_greedy": score(m, sits), "test_heldout_greedy": score(m, test), "heldout_all_greedy": score(m, heldout),
         "all_sampled": score(m, sits, greedy=False, samples=3), "test_heldout_sampled": score(m, test, greedy=False, samples=30),
+        "untrained_all_greedy": untrained_baseline(sits),
         "action_ablation": action_ablation(m, sits),
         "novelty_test": novelty(m, test, ds.make_split(48000, 1, 1234)["train"]),
     }

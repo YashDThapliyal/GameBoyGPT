@@ -34,13 +34,13 @@ sameboy:
 # Host-only suites, then the full ROM suite on baseline and shipping build, then the kernel+parity suite on every variant.
 verify:
 	$(PY) -m pytest tests/test_smoke.py tests/test_dataset.py tests/test_fixed_point.py tests/test_game_state.py tests/test_export.py tests/test_benchmark_integrity.py -q
-	GBGPT_VARIANT=V0 $(PY) -m pytest tests/test_rom_game.py tests/test_buttons.py tests/test_generated_output.py tests/test_kernel_vectors.py tests/test_model_parity.py -q
-	GBGPT_VARIANT=$(SHIP) $(PY) -m pytest tests/test_rom_game.py tests/test_buttons.py tests/test_generated_output.py tests/test_kernel_vectors.py tests/test_model_parity.py -q
-	for v in $(filter-out V0 $(SHIP),$(VARIANTS)); do GBGPT_VARIANT=$$v $(PY) -m pytest tests/test_kernel_vectors.py tests/test_model_parity.py -q || exit 1; done
+	mkdir -p reports/junit
+	for v in V0 $(SHIP); do GBGPT_VARIANT=$$v $(PY) -m pytest tests/test_rom_game.py tests/test_buttons.py tests/test_generated_output.py tests/test_kernel_vectors.py tests/test_model_parity.py -q --junitxml=reports/junit/$$v.xml || exit 1; done
+	for v in $(filter-out V0 $(SHIP),$(VARIANTS)); do GBGPT_VARIANT=$$v $(PY) -m pytest tests/test_kernel_vectors.py tests/test_model_parity.py -q --junitxml=reports/junit/$$v.xml || exit 1; done
 second-emulator: sameboy
 	$(PY) tools/second_emulator.py --variants V0 $(SHIP)
 play: rom
-	$(PY) -m pyboy build/gameboygpt.gb --no-renderer 2>/dev/null || $(PY) -m pyboy build/gameboygpt.gb
+	$(PY) -m pyboy build/gameboygpt.gb
 # Fails if any event is not real generation: the capture script asserts token parity with the reference.
 demo: rom
 	$(PY) tools/capture_demo.py
