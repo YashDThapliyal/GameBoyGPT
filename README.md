@@ -18,7 +18,7 @@ The project then asks a measurement question: **what actually makes neural text 
 | Seconds per token (DMG clock) | 5.80 | 0.63 |
 | Seconds per event | 56.6 | 6.2 |
 | T-cycles per token | 24.3M | 2.7M |
-| WRAM allocated | 2631 B | 2665 B |
+| WRAM allocated | 2791 B | 2825 B |
 | Tokens identical to V0 | n/a | yes |
 
 **9.2x faster, same tokens.** 4.0x against a baseline that already caches K and V.

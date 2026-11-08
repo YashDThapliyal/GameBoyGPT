@@ -21,8 +21,8 @@ It rebuilds all 11 variants from source, runs every test, checks that rebuilt RO
 | Artifact | SHA-256 |
 |---|---|
 | `generated/model.bin` | `2e2ca73681900e21385eeef725f07d31a29dad347b3878b9ed1ad9f40cb153d2` |
-| `release/gameboygpt.gb` | `cbcb82e145b851c9d1c7d248790e6cd04802f3df5ac8542c9e653d7c99d4ea4c` |
-| `release/gameboygpt_v0.gb` | `892e578dd624bb92a22fd6b5841c26d9702489aae5eacbc36285e3c0b76d5fff` |
+| `release/gameboygpt.gb` | `c13c869d82225ba89114d0134653ca5e8ed6171a77e5ad4dc1280bc7d4522f05` |
+| `release/gameboygpt_v0.gb` | `b23780020fe8eb62b7d4c3c00cdba8107d671307fd4fbcccb659ee18361f5df4` |
 
 ## What to look at, by claim
 

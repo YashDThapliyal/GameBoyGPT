@@ -1,5 +1,5 @@
 {
- "rom_sha256": "cbcb82e145b851c9d1c7d248790e6cd04802f3df5ac8542c9e653d7c99d4ea4c",
+ "rom_sha256": "c13c869d82225ba89114d0134653ca5e8ed6171a77e5ad4dc1280bc7d4522f05",
  "seed": 321,
  "journey": [
   {
@@ -225,7 +225,7 @@
     27
    ],
    "text": "You turn left and your key hums by pale chains.",
-   "on_device_frames": 420,
+   "on_device_frames": 419,
    "strict_valid": true
   },
   {
