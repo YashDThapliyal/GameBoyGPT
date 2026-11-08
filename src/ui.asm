@@ -1,5 +1,6 @@
 ; ui.asm - UX state machine: BOOT TITLE INTRO MENU PREFILL GENERATING REVEAL UPDATE ENDING STATS.
 INCLUDE "constants.inc"
+IF !DEF(TEST_ROM)
 
 SECTION "ui_vars", WRAM0
 wMenuSel::   ds 1
@@ -124,6 +125,13 @@ NewRun::
     ld d, a
 .gen:
     call GenWorld
+    ; Narration RNG is separate from world RNG, so sampling can never change game truth.
+    ld a, [wRng]
+    xor $A5
+    ld [wNarrRng], a
+    ld a, [wRng + 1]
+    xor $A5
+    ld [wNarrRng + 1], a
     xor a
     ld [wEndFlag], a
     ld [wMenuSel], a
@@ -566,3 +574,95 @@ StatsScreen::
     jr nz, .m
     ld a, ST_MENU
     jp SetState
+
+; ---- Stats content (values measured on this device; N/A until an event has run) ----
+StrS1: db "RUN STATS", 0
+StrS2: db "EVENTS", 0
+StrS3: db "LAST EVENT", 0
+StrS4: db "FRAMES", 0
+StrS5: db "TOKENS", 0
+StrS6: db "CAP HITS", 0
+StrS7: db "SEL NEW RUN  A BACK", 0
+
+DrawStats::
+    ld hl, StrS1
+    ld b, TEXT_ROW
+    ld c, TEXT_COL
+    call PrintAt
+    ld hl, StrVariant
+    ld b, TEXT_ROW + 1
+    ld c, TEXT_COL
+    call PrintAt
+    ld hl, StrS2
+    ld b, TEXT_ROW + 3
+    ld c, TEXT_COL
+    call PrintAt
+    ld a, [wMB_Events]
+    ld hl, wBgMap + (TEXT_ROW + 3) * SCREEN_W + 12
+    call PrintDec2
+    ld hl, StrS3
+    ld b, TEXT_ROW + 4
+    ld c, TEXT_COL
+    call PrintAt
+    ld hl, StrS4
+    ld b, TEXT_ROW + 5
+    ld c, TEXT_COL + 1
+    call PrintAt
+    ld a, [wLastEventFrames]
+    ld e, a
+    ld a, [wLastEventFrames + 1]
+    ld d, a
+    ld hl, wBgMap + (TEXT_ROW + 5) * SCREEN_W + 11
+    call PrintDec16
+    ld hl, StrS5
+    ld b, TEXT_ROW + 6
+    ld c, TEXT_COL + 1
+    call PrintAt
+    ld a, [wLastEventTokens]
+    ld hl, wBgMap + (TEXT_ROW + 6) * SCREEN_W + 12
+    call PrintDec2
+    ld hl, StrS6
+    ld b, TEXT_ROW + 7
+    ld c, TEXT_COL
+    call PrintAt
+    ld a, [wTotalFallbacks]
+    ld hl, wBgMap + (TEXT_ROW + 7) * SCREEN_W + 12
+    call PrintDec2
+    ld hl, StrS7
+    ld b, TEXT_ROW + 9
+    ld c, 0
+    jp PrintAt
+
+; PrintDec16: de = value, hl = shadow ptr. Five digits. Clobbers a, bc, de.
+PrintDec16:
+    ld bc, -10000
+    call .digit
+    ld bc, -1000
+    call .digit
+    ld bc, -100
+    call .digit
+    ld bc, -10
+    call .digit
+    ld bc, -1
+.digit:
+    ld a, '0' - $20 - 1
+    push hl
+    ld h, d
+    ld l, e
+.sub:
+    inc a
+    ld d, h
+    ld e, l
+    add hl, bc
+    jr c, .sub
+    pop hl
+    ld [hl+], a
+    ret
+
+IF DEF(OPTIMIZED_NAME)
+StrVariant: db OPTIMIZED_NAME, 0
+ELSE
+StrVariant: db "V0 VANILLA KERNELS", 0
+ENDC
+
+ENDC
