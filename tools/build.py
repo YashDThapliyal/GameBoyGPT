@@ -57,7 +57,7 @@ def build_rom(name, cfg, test, selftest=False):
     defs += ["-D", f'VARIANT_NAME="{cfg.get("display", name)}"']
     if test:
         defs += ["-D", "TEST_ROM"]
-    sources = sorted((ROOT / "src").glob("*.asm")) + [ROOT / "generated" / "assets.asm", gen / "weights.asm", gen / "luts.asm"]
+    sources = sorted(p for p in (ROOT / "src").glob("*.asm") if not p.name.startswith(".")) + [ROOT / "generated" / "assets.asm", gen / "weights.asm", gen / "luts.asm"]
     if selftest:
         sources.append(gen / "selftest_cases.asm")
     objs = []
