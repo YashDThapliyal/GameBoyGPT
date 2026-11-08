@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Override Race</title>
+<link rel="icon" href="data:,">
+<meta name="description" content="Two emulated 1989 CPUs write the same reply from the same neural network. One has the speed work and one doesn't.">
+<link rel="stylesheet" href="css/race.css">
+<script src="vendor/binjgb/binjgb.js"></script>
+</head>
+<body>
+<main class="race">
+  <header>
+    <h1>The same reply, twice</h1>
+    <p>Two emulated 8-bit CPUs at 4.19 MHz run the same 46,352 weights. The chip has no multiply instruction. The left console has the speed work, and the right one does every multiplication the slow way.</p>
+  </header>
+
+  <div class="picks" id="picks">
+    <span>Make them say:</span>
+    <button type="button" data-item="1" disabled>An insult</button>
+    <button type="button" data-item="2" disabled>A compliment</button>
+    <button type="button" data-item="5" disabled>A threat</button>
+    <label><input type="checkbox" id="fast"> Fast-forward both, 8x</label>
+  </div>
+  <p class="status" id="status" role="status">Loading both ROMs.</p>
+
+  <div class="lanes">
+    <section class="lane" id="laneFast" aria-label="Tuned build">
+      <h2>Tuned</h2>
+      <p class="clock" id="clockFast">0:00.0</p>
+      <div class="glass"><canvas id="screenFast" width="160" height="144"></canvas></div>
+      <p class="words" id="wordsFast" aria-label="Token numbers from the tuned build"></p>
+    </section>
+    <section class="lane" id="laneSlow" aria-label="Plain build">
+      <h2>Plain</h2>
+      <p class="clock" id="clockSlow">0:00.0</p>
+      <div class="glass"><canvas id="screenSlow" width="160" height="144"></canvas></div>
+      <p class="words" id="wordsSlow" aria-label="Token numbers from the plain build"></p>
+    </section>
+  </div>
+
+  <footer>
+    <p>These are two real ROMs in two copies of the <a href="vendor/binjgb/LICENSE">binjgb</a> emulator. Clocks show emulated seconds, so fast-forward doesn't change them. Nothing here has run on a physical console.</p>
+    <a class="back" href="index.html">Back to talking to it</a>
+  </footer>
+</main>
+<script type="module" src="js/race.js"></script>
+</body>
+</html>

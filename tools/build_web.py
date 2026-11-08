@@ -9,7 +9,9 @@ from export_weights import from_blob
 from run_emulator import load_symbols
 from training import dialogue as dl
 
-WATCHED = ("wMenuSel", "wMB_State", "wMB_Mood", "wMB_Emotion", "wMB_Responses", "wMB_TotalTokens", "wLastEventFrames", "wLastEventTokens", "wSeq", "wSeqLen", "wInput", "wInputLen")
+WATCHED = ("wMenuSel", "wMB_State", "wMB_Mood", "wMB_Emotion", "wMB_Responses", "wMB_TotalTokens", "wLastEventFrames", "wLastEventTokens", "wSeq", "wSeqLen", "wInput", "wInputLen",
+           "wShutdowns", "wName", "wLike", "wWord", "wInsults", "wPraises", "wCandId", "wCandW", "wCandN", "wPickId", "wE", "wQ", "wA", "wF", "wX2", "wZ")
+RACE_WATCHED = ("wMenuSel", "wMB_State", "wSeq", "wSeqLen", "wMB_ForceSeed", "wNarrRng")
 
 
 def main() -> None:
@@ -19,6 +21,9 @@ def main() -> None:
     out.mkdir(parents=True, exist_ok=True)
     shutil.copy(rom, out / "system_override.gb")
     syms = load_symbols(rom.with_suffix(".sym"))
+    baseline_rom = build.parent / "V0" / "gameboygpt.gb"
+    shutil.copy(baseline_rom, out / "system_override_v0.gb")
+    baseline_syms = load_symbols(baseline_rom.with_suffix(".sym"))
     m = from_blob((ROOT / "generated" / "model.bin").read_bytes())
     map_text = rom.with_suffix(".map").read_text()
     wram = int(re.search(r"WRAM0: (\d+) bytes used", map_text).group(1))
@@ -29,7 +34,8 @@ def main() -> None:
         baseline = json.loads((ROOT / "reports" / "benchmark.json").read_text())["game"]["V0"]
         measured = {"secondsPerToken": s["ship"]["game_seconds_per_token"], "secondsPerResponse": s["ship"]["game_seconds_per_response"], "baselineSecondsPerResponse": baseline["seconds_per_response"]}
     meta = {"rom": "system_override.gb", "sha256": hashlib.sha256(rom.read_bytes()).hexdigest(), "romBytes": rom.stat().st_size, "wramBytes": wram, "params": m.params, "vocabSize": m.vocab, "ctx": m.ctx,
-            "d": m.d, "k": len(m.w_b), "promptLen": dl.PROMPT_LEN, "vocab": list(dl.VOCAB), "addresses": {k: syms[k][1] for k in WATCHED}, "debug": {k: syms[k][1] for k in ("wMB_ForceSeed", "wNarrRng", "wTurns", "wReturning", "wMenuSel", "wRobotOn")}, "measured": measured}
+            "d": m.d, "k": len(m.w_b), "promptLen": dl.PROMPT_LEN, "vocab": list(dl.VOCAB), "addresses": {k: syms[k][1] for k in WATCHED}, "debug": {k: syms[k][1] for k in ("wMB_ForceSeed", "wNarrRng", "wTurns", "wReturning", "wMenuSel", "wRobotOn")}, "measured": measured,
+            "race": {"rom": "system_override_v0.gb", "addresses": {k: baseline_syms[k][1] for k in RACE_WATCHED}}}
     (out / "build.json").write_text(json.dumps(meta))
     print("web rom", meta["sha256"][:16], "wram", wram)
 

@@ -254,6 +254,83 @@ const pinSeed = (page, seed) => page.evaluate((s) => {
     await page.locator("#btnPower").click();
     await page.waitForFunction(() => window.__override?.gb?.e);
   });
+  await check("the x-ray draws live memory, and the picked token is among the real candidates", async () => {
+    await page.locator("#btnXray").click();
+    assert.equal(await page.locator("#xrayPanel").isVisible(), true);
+    assert.equal(await page.locator("#specs").isVisible(), false);
+    await waitState(page, 6, 45000).catch(() => {});
+    for (let i = 0; i < 80 && (await state(page)) !== 2; i++) {
+      if ((await state(page)) <= 1 || (await state(page)) === 6) await page.keyboard.press("KeyX", { delay: 80 });
+      await page.waitForTimeout(200);
+    }
+    await page.locator("#say").fill("you are dumb");
+    await page.locator("#say").press("Enter");
+    await waitState(page, 5);
+    // Each time a token lands, the list it was sampled from is still in memory.
+    const landed = await page.evaluate(() => new Promise((resolve) => {
+      const w = window.__override; const a = { ...w.build.addresses };
+      const read16 = (at) => w.gb.peek(at) | (w.gb.peek(at + 1) << 8);
+      let len = w.gb.peek(a.wSeqLen); const seen = [];
+      const look = () => {
+        const now = w.gb.peek(a.wSeqLen);
+        if (now !== len) {
+          len = now;
+          const token = read16(a.wSeq + (now - 1) * 2);
+          const n = w.gb.peek(a.wCandN); const ids = [];
+          for (let i = 0; i < n; i++) ids.push(read16(a.wCandId + i * 2));
+          seen.push({ token, ids });
+        }
+        if (seen.length >= 4 || w.gb.peek(a.wMB_State) === 6) resolve(seen); else requestAnimationFrame(look);
+      };
+      look();
+    }));
+    assert.ok(landed.length >= 1);
+    for (const { token, ids } of landed) assert.ok(ids.includes(token), `token ${token} not in ${ids}`);
+    await waitState(page, 6);
+    await page.waitForTimeout(300);
+    assert.ok((await page.locator("#candidates .cand").count()) >= 1);
+    const lit = await page.evaluate(() => { const d = document.getElementById("wram").getContext("2d").getImageData(0, 0, 128, 64).data; const c = new Set(); for (let i = 0; i < d.length; i += 4) c.add(d[i]); return c.size; });
+    assert.ok(lit >= 3, `wram shades ${lit}`);
+    await page.screenshot({ path: `${SHOTS}/web_xray.png` });
+    await page.locator("#btnXray").click();
+    assert.equal(await page.locator("#specs").isVisible(), true);
+  });
+  await check("three shutdowns degrade the page, the ROM powers down, and the takeover uses the real save", async () => {
+    const say = async (text) => {
+      await page.locator("#say").fill(text);
+      await page.locator("#say").press("Enter");
+      await page.waitForFunction((t) => document.getElementById("lvYou").textContent === t, text.toUpperCase(), { timeout: 30000 });
+      await waitState(page, 6);
+      await page.waitForTimeout(300);
+    };
+    const fightLevel = () => page.evaluate(() => document.documentElement.dataset.fight);
+    await say("my name is alex");
+    assert.equal(await fightLevel(), undefined);
+    await say("shut down");
+    assert.equal(await fightLevel(), "1");
+    await say("turn off");
+    assert.equal(await fightLevel(), "2");
+    assert.equal(await page.locator("#title").innerText(), "Do Not Turn Off");
+    await page.locator("#power").hover();
+    assert.notEqual(await page.locator("#power").evaluate((el) => el.style.getPropertyValue("--dodge")), "0");
+    await page.screenshot({ path: `${SHOTS}/web_fight.png` });
+    await say("unplug");
+    assert.equal(await fightLevel(), "3");
+    await page.locator("#plug").click();
+    await waitState(page, 8, 8000);
+    await page.waitForFunction(() => document.documentElement.dataset.fight === "takeover", null, { timeout: 30000 });
+    await page.waitForFunction(() => document.getElementById("toLine").textContent.toUpperCase().includes("ALEX"), null, { timeout: 5000 });
+    await page.waitForTimeout(500);
+    const face = await page.evaluate(() => { const d = document.getElementById("bigFace").getContext("2d").getImageData(0, 0, 72, 64).data; const c = new Set(); for (let i = 0; i < d.length; i += 4) c.add(d[i]); return c.size; });
+    assert.ok(face >= 2, `face shades ${face}`);
+    await page.screenshot({ path: `${SHOTS}/web_takeover.png` });
+    await page.locator("#toDone").click({ timeout: 15000 });
+    assert.equal(await page.locator("#takeover").isVisible(), false);
+    assert.equal(await page.locator("#title").innerText(), "System Override");
+    assert.equal(await fightLevel(), undefined);
+    await page.waitForFunction(() => window.__override.gb.peek(window.__override.build.addresses.wMB_State) === 2 || window.__override.gb.peek(window.__override.build.addresses.wMB_State) === 6, null, { timeout: 20000 }).catch(() => {});
+    assert.deepEqual(errors, []);
+  });
   await check("power cycling after replies boots cleanly every time and keeps its memory", async () => {
     await page.waitForTimeout(1500);
     const turns = await page.evaluate(() => { const w = window.__override; return w.gb.peek(w.build.debug.wTurns); });
@@ -292,6 +369,26 @@ const pinSeed = (page, seed) => page.evaluate((s) => {
     await page.waitForTimeout(100);
     await page.locator("[data-pad=down]").dispatchEvent("pointerup", { pointerId: 2, bubbles: true }).catch(() => {});
     await page.screenshot({ path: `${SHOTS}/web_mobile.png` });
+  });
+  await browser.close();
+}
+{
+  const { browser, page } = await launch({ viewport: { width: 1280, height: 860 } });
+  const errors = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await page.goto(`${srv.url}race.html`);
+  await check("the race page runs both real ROMs and they write identical tokens at very different speeds", async () => {
+    await page.locator("#picks button").first().waitFor();
+    await page.waitForFunction(() => !document.querySelector("#picks button").disabled);
+    await page.locator("#fast").check();
+    await page.getByRole("button", { name: "An insult" }).click();
+    await page.waitForFunction(() => window.__race, null, { timeout: 180000 });
+    const r = await page.evaluate(() => window.__race);
+    assert.equal(r.same, true, `${r.tokens} vs ${r.slowTokens}`);
+    assert.ok(r.tokens.length >= 3);
+    assert.ok(r.slow / r.fast >= 5, `ratio ${r.slow / r.fast}`);
+    await page.screenshot({ path: `${SHOTS}/web_race.png` });
+    assert.deepEqual(errors, []);
   });
   await browser.close();
 }

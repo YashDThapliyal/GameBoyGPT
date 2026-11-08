@@ -3,11 +3,14 @@ import { Handheld } from "./emulator.js";
 import { bindControls } from "./controls.js";
 import { Panel } from "./panel.js";
 import { Composer, cleanText } from "./composer.js";
+import { Fight } from "./fight.js";
+import { XRay } from "./xray.js";
 
 const $ = (id) => document.getElementById(id);
 const SAVE_KEY = "system-override-save-v1";
 const PREF_KEY = "system-override-display-v1";
 const POWER_FLASH_MS = 350;
+const PLUG_PRESS_MS = 120;
 const PANEL_WIDTH = 460;
 const PANEL_GAP = 56;
 const PAGE_PADDING = 48;
@@ -16,6 +19,8 @@ const params = new URLSearchParams(location.search);
 let gb = null;
 let panel = null;
 let composer = null;
+let fight = null;
+let xray = null;
 let romBytes = null;
 let tickCount = 0;
 let audioCtx = null;
@@ -58,6 +63,11 @@ async function prepare() {
     $("say").value = text;
     panel.say("That message didn't reach the chip. Press Reset under the options below, then send it again.");
   });
+  fight = new Fight(build, $("screen"), () => {
+    gb?.press("a", true);
+    setTimeout(() => gb?.press("a", false), PLUG_PRESS_MS);
+  });
+  xray = new XRay(build);
   window.__override = { build, get gb() { return gb; } };
   romBytes = await fetchBytes(`rom/${build.rom}`);
 }
@@ -91,6 +101,7 @@ function powerOff() {
   if (!on) return;
   storeSave(true);
   composer?.cancel();
+  fight?.reset();
   on = false;
   gb?.shutdown();
   gb = null;
@@ -109,8 +120,11 @@ function syncPower() {
 
 function onFrame() {
   composer.step();
+  fight.drawFace();
   if (++tickCount % 6) return;
-  panel.update(gb, composer);
+  fight.update(gb);
+  panel.update(gb, composer, fight.coachLine);
+  xray.update(gb);
   syncSend();
   storeSave();
 }
@@ -118,7 +132,7 @@ function onFrame() {
 function syncSend() {
   const blocked = Boolean(panel?.generating || composer?.busy);
   $("send").disabled = blocked;
-  $("send").textContent = blocked ? "Wait" : "Send";
+  $("send").textContent = blocked ? "Wait" : (fight?.sendLabel ?? "Send");
 }
 
 /** Sends a message from the page, switching the handheld on first when needed. */

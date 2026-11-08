@@ -1,4 +1,6 @@
 // The panel beside the handheld. Live values come from emulated memory; build values come from rom/build.json.
+import { PUNCTUATION, slotLabel, isControl, tokenLabel } from "./tokens.js";
+
 const STATES = ["Booting", "Playing its intro", "Waiting for you", "On its keyboard screen", "Reading your message", "Writing its reply", "Reply finished", "Showing its internals", "Powering down"];
 const READING = 4;
 const WRITING = 5;
@@ -7,6 +9,7 @@ const MENU = 2;
 const FRAME_SEC = 70224 / 4194304;
 const RAM_TOTAL = 8192;
 const RAM_CELLS = 64;
+const SLOT_BYTES = 9;
 
 const OFF_COACH = "Flip the power switch on the console, or just type a message above. Sending one turns it on.";
 const COACH = [
@@ -24,8 +27,6 @@ const COACH = [
 const HEARD = { GREET: "a greeting", WHO: "asking who it is", INSULT: "an insult", PRAISE: "a compliment", CHALLENGE: "a challenge", JOKE: "asking for a joke", SMART: "asking about its brain", TRAPPED: "asking about its cartridge",
   SHUTDOWN: "a shutdown attempt", THREAT: "a threat", TECH: "a hardware question", QUESTION: "a question", TALK: "small talk", NAME: "your name", LIKE: "something you like", BYE: "a goodbye", THANKS: "thanks", FOLLOW: "a follow-up",
   UNKNOWN: "nothing it recognizes", NOISE: "noise" };
-const SLOTS = { "<NAME>": "your name", "<LIKE>": "your like", "<WORD>": "your word", "<NI>": "a number", "<NP>": "a number", "<NT>": "a number" };
-const PUNCTUATION = /^[.,!?:]$/;
 // wSeq order: <BOS> MOOD RELATION HISTORY REPEAT FACTS INTENT TOPIC <SAY>
 const PROMPT_AT = { mood: 1, relation: 2, intent: 6, topic: 7 };
 
@@ -79,14 +80,14 @@ export class Panel {
   get generating() { return this.state === READING || this.state === WRITING; }
 
   /** Called about ten times a second while the emulator runs. */
-  update(gb, composer) {
+  update(gb, composer, coachLine = null) {
     const a = this.build.addresses;
     const u8 = (name, off = 0) => gb.peek(a[name] + off);
     const u16 = (name, off = 0) => u8(name, off) | (u8(name, off + 1) << 8);
     const state = u8("wMB_State");
     this.state = state;
     this.el("lvState").textContent = STATES[state] ?? "Running";
-    this.el("coach").textContent = composer.busy && !this.generating ? "Sending it to the chip." : (COACH[state] ?? "");
+    this.el("coach").textContent = composer.busy && !this.generating ? "Sending it to the chip." : (coachLine ?? COACH[state] ?? "");
     this.el("lvTotal").textContent = `${u16("wMB_TotalTokens").toLocaleString("en-US")} tokens since power on`;
 
     const generating = state === READING || state === WRITING;
@@ -103,7 +104,7 @@ export class Panel {
     const key = `${len}:${u16("wSeq", (len - 1) * 2)}`;
     if (key === this.lastKey) return;
     this.lastKey = key;
-    this.renderTokens(len, (off) => u16("wSeq", off * 2));
+    this.renderTokens(gb, len, (off) => u16("wSeq", off * 2));
   }
 
   startReply(gb, text) {
@@ -159,10 +160,22 @@ export class Panel {
     this.el("heard").hidden = false;
   }
 
-  renderTokens(len, tokenAt) {
+  /** What a slot token really printed: the ROM fills these in from its save as it draws them. */
+  slotValue(gb, word) {
+    const a = { ...this.build.addresses, ...this.build.debug };
+    const text = (addr) => {
+      let out = "";
+      for (let i = 0, c = gb.peek(addr); c && i < SLOT_BYTES; c = gb.peek(addr + ++i)) out += String.fromCharCode(c);
+      return out;
+    };
+    const values = { "<NAME>": () => text(a.wName), "<LIKE>": () => text(a.wLike), "<WORD>": () => text(a.wWord), "<NI>": () => String(gb.peek(a.wInsults)), "<NP>": () => String(gb.peek(a.wPraises)), "<NT>": () => String(gb.peek(a.wTurns)) };
+    return (values[word]?.() || null)?.toLowerCase() ?? null;
+  }
+
+  renderTokens(gb, len, tokenAt) {
     const frag = document.createDocumentFragment();
     for (let i = this.build.promptLen; i < len; i++) {
-      const chip = this.tokenChip(tokenAt(i));
+      const chip = this.tokenChip(gb, tokenAt(i));
       const previous = frag.lastChild;
       if (chip.classList.contains("punct") && previous) {
         // Punctuation never wraps away from the word before it.
@@ -176,12 +189,10 @@ export class Panel {
     if (frag.childNodes.length) this.el("tokens").replaceChildren(frag);
   }
 
-  tokenChip(id) {
+  tokenChip(gb, id) {
     const word = this.build.vocab[id] ?? "?";
-    const slot = SLOTS[word];
-    const control = word.startsWith("<") && !slot;
-    const chip = make("span", control ? "tok ctl" : PUNCTUATION.test(word) ? "tok punct" : slot ? "tok slot" : "tok");
-    chip.append(make("b", "", control ? word.replace(/[<>]/g, "").replace("E_", "face: ").replace("EOS", "end").toLowerCase() : (slot ?? word)), make("i", "", String(id)));
+    const chip = make("span", isControl(word) ? "tok ctl" : PUNCTUATION.test(word) ? "tok punct" : slotLabel(word) ? "tok slot" : "tok");
+    chip.append(make("b", "", this.slotValue(gb, word) ?? tokenLabel(this.build.vocab, id)), make("i", "", String(id)));
     return chip;
   }
 }

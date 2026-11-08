@@ -30,6 +30,7 @@ export class Handheld {
     this.lastSec = 0;
     this.leftover = 0;
     this.saveDirty = false;
+    this.speed = 1;
   }
 
   /** Boots the ROM. extRam restores the battery-backed cartridge RAM. */
@@ -69,7 +70,7 @@ export class Handheld {
     const sec = ms / 1000;
     const delta = Math.min(Math.max(sec - (this.lastSec || sec), 0), MAX_STEP_SEC);
     this.lastSec = sec;
-    const until = this.ticks() + delta * TICKS_PER_SECOND - this.leftover;
+    const until = this.ticks() + delta * this.speed * TICKS_PER_SECOND - this.leftover;
     for (;;) {
       const ev = this.m._emulator_run_until_f64(this.e, until);
       if (ev & EVENT_NEW_FRAME) this.drawFrame();
@@ -90,7 +91,7 @@ export class Handheld {
 
   pushAudio() {
     const ctx = this.audioCtx;
-    if (ctx.state !== "running") return;
+    if (ctx.state !== "running" || this.volume === 0) return;
     const now = ctx.currentTime;
     const later = now + AUDIO_LATENCY_SEC;
     this.audioStart = this.audioStart || later;

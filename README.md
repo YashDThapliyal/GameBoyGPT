@@ -20,6 +20,8 @@ Or load `release/system_override.gb` in any emulator in DMG mode. It needs MBC5 
 
 In the browser, type in the box beside the console and press Enter. The page hands your text to the ROM's own input buffer, and the panel shows what the keyword parser heard. On the console itself, pick an action or choose TYPE and use the on-screen keyboard. Keys for its buttons: arrows, X for A, Z for B, Enter for Start, Shift for Select.
 
+The page has two extras. "See inside it" shows the chip's work RAM, the network's activations and the next-word options the sampler is choosing from, all read from emulated memory. `race.html` runs the tuned ROM against the unoptimized one with the same seed. Try to shut it down three times in a row, too: the page effects and big lines are scripted, using its real save file and sprite.
+
 Things to try: insult it twice. Tell it `MY NAME IS ...`, or `I LIKE ...`. Press SHUT DOWN three times in a row. Press SELECT to see the token ids it just generated.
 
 ## What it is

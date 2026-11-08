@@ -32,6 +32,8 @@ It rebuilds all 12 variants from source, runs every test, checks that rebuilt RO
 | No stored sentences | `test_rom_holds_no_authored_sentences_only_a_vocabulary` | Search the ROM yourself. Fixed interface lines are in `src/ui.asm`; words and short phrases are in the vocabulary table |
 | Bit-exact arithmetic | `reference/fixed_point.py`, `tests/test_kernel_vectors.py`, `tests/test_model_parity.py` | The reference is plain Python integers, sharing no code with the trainer. Add your own vectors using `tests/kernel_harness.py` |
 | The game shows what the model generated | `tests/test_rom_chat.py` | Plays the ROM through its menu and keyboard, and compares prompt, tokens, RNG state and on-screen text with the reference |
+| The x-ray shows real candidates | `tests/web/e2e.mjs` | Each token that lands must be in the candidate list read from emulated memory at that moment |
+| The race is a real comparison | `tests/web/e2e.mjs` | Runs both ROMs in two emulators with one seed, then requires identical tokens and at least a 5x gap in emulated time |
 | Parser and memory are deterministic and match | `reference/conversation.py`, `tests/test_parser_rom.py` | Thousands of random inputs and long conversations |
 | No host involvement | `src/selftest.asm`, `tools/second_emulator.py` | Run `build/V6T/selftest.gb` in any DMG emulator and read the verdict on screen |
 | The browser runs the real ROM | `tests/web/e2e.mjs` | It compares tokens read from emulated RAM with the reference. No generation code exists in `web/js/`; read it, it's short |

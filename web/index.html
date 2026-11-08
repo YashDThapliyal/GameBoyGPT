@@ -7,6 +7,7 @@
 <link rel="icon" href="data:,">
 <meta name="description" content="A neural network running on an emulated 1989 handheld's 8-bit CPU, inside a browser.">
 <link rel="stylesheet" href="css/shell.css">
+<link rel="stylesheet" href="css/effects.css">
 <script src="vendor/binjgb/binjgb.js"></script>
 </head>
 <body>
@@ -42,14 +43,15 @@
         <div><button class="pill" data-pad="select" aria-label="Select"></button><span>select</span></div>
         <div><button class="pill" data-pad="start" aria-label="Start"></button><span>start</span></div>
       </div>
+      <canvas class="wram" id="wram" width="128" height="64" aria-hidden="true"></canvas>
       <div class="grille" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
     </section>
     <p class="keys">To press its buttons: arrow keys, <kbd>X</kbd> for A, <kbd>Z</kbd> for B, <kbd>Enter</kbd> for Start, <kbd>Shift</kbd> for Select.</p>
   </div>
 
   <aside class="panel">
-    <h1>System Override</h1>
-    <p class="lede">A tiny neural network on a 1989 8-bit CPU. It isn't a general chatbot: it spots keywords in what you say, then writes an insult to suit.</p>
+    <h1 id="title">System Override</h1>
+    <p class="lede" id="lede">A tiny neural network on a 1989 8-bit CPU. It isn't a general chatbot: it spots keywords in what you say, then writes an insult to suit.</p>
     <p class="demo-only note">Real emulator footage of the real ROM. The plastic is decoration.</p>
 
     <form class="composer not-demo" id="composer" autocomplete="off">
@@ -65,9 +67,11 @@
         <button type="button">My name is Alex</button>
         <button type="button">I like pizza</button>
         <button type="button">Are you alive?</button>
+        <button type="button">Shut it down</button>
       </div>
     </form>
     <p class="coach not-demo" id="coach" role="status"></p>
+    <button class="plug not-demo" id="plug" type="button" hidden>Pull the plug</button>
 
     <section class="slip" aria-label="The current exchange">
       <header class="slip-head"><span id="lvState">Powered off</span><span id="lvLast"></span></header>
@@ -83,10 +87,24 @@
       <p class="slip-foot"><span>Blocks show the time spent on each token</span><span id="lvTotal">0 tokens since power on</span></p>
     </section>
 
-    <section class="specs" aria-label="What this build is">
-      <h2>One reply, identical words, two builds</h2>
+    <div class="actions not-demo">
+      <button id="btnXray" type="button" aria-pressed="false">See inside it</button>
+      <a href="race.html">Race it against its slow self</a>
+    </div>
+
+    <section class="xray-panel" id="xrayPanel" aria-label="Inside the chip" hidden>
+      <h2>What it's choosing between</h2>
+      <div class="candidates" id="candidates"><p class="note">Send it something and its next-word options show up here, with the odds it's about to roll.</p></div>
+      <p id="candMore"></p>
+      <h2>Its network, this moment</h2>
+      <div class="layers" id="layers"></div>
+      <p>The grid in the console is the chip's whole 8 KB of work RAM, one dot per byte. The top quarter holds the attention cache. The scores for all 763 tokens sit a little over a third of the way down.</p>
+    </section>
+
+    <section class="specs" id="specs" aria-label="What this build is">
+      <h2>The same reply, before and after the speed work</h2>
       <div class="speed">
-        <div class="speed-row"><span>Plain code</span><span id="speedBase"></span><i class="bar base" style="width:100%"></i></div>
+        <div class="speed-row"><span>Unoptimized</span><span id="speedBase"></span><i class="bar base" style="width:100%"></i></div>
         <div class="speed-row"><span>This ROM</span><span id="speedShip"></span><i class="bar ship" id="barShip"></i></div>
       </div>
       <dl class="figures" id="build"></dl>
@@ -108,10 +126,18 @@
         <label><input type="checkbox" id="optGhost"> Ghosting</label>
         <label><input type="checkbox" id="optClean"> Clean test display</label>
       </div>
-      <p class="note">The plastic is CSS. The screen shows the real ROM's machine code running in <a href="vendor/binjgb/LICENSE">binjgb</a>, an open-source emulator compiled to WebAssembly. Your message goes into the ROM's own input buffer. JavaScript takes no part in generating the reply, and nothing is sent over the network. Everything on this panel marked as a reply, a token or a time is read from emulated memory. This has not been tested on a physical console.</p>
+      <p class="note">The plastic is CSS. The screen shows the real ROM's machine code running in <a href="vendor/binjgb/LICENSE">binjgb</a>, an open-source emulator compiled to WebAssembly. Your message goes into the ROM's own input buffer. JavaScript takes no part in generating replies, and nothing leaves your browser. Replies, tokens, times and the x-ray are read from emulated memory. The shutdown fight's page effects and big lines are scripted, using what's in its save. None of this has run on a physical console.</p>
     </details>
   </aside>
 </main>
+<div class="takeover" id="takeover" role="dialog" aria-label="The robot has taken over the page" hidden>
+  <canvas id="bigFace" width="72" height="64" aria-hidden="true"></canvas>
+  <div class="takeover-text">
+    <p id="toLine" aria-live="polite"></p>
+    <button id="toDone" type="button" hidden>Let it win</button>
+  </div>
+  <small>Scripted page effect using its real save file and real sprite. Replies on the console still come from the model.</small>
+</div>
 <script type="module" src="js/main.js"></script>
 </body>
 </html>
