@@ -166,6 +166,7 @@ AppendRaw:
     sub $20
     push af
     ld a, [wTextRowN]
+    add a                ; double-spaced lines
     add TEXT_ROW
     ld b, a
     ld a, [wTextColN]

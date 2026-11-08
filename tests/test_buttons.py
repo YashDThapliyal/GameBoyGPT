@@ -9,7 +9,7 @@ from run_emulator import GB
 from reference import game as g
 
 ROM = ROOT / "build" / os.environ.get("GBGPT_VARIANT", "V0") / "gameboygpt.gb"
-ST_TITLE, ST_MENU, ST_REVEAL, ST_STATS = 1, 3, 6, 9
+ST_TITLE, ST_INTRO, ST_MENU, ST_REVEAL, ST_STATS = 1, 2, 3, 6, 9
 
 
 @pytest.fixture
@@ -21,7 +21,9 @@ def gb():
     b.write("wMB_Seed", [7, 0])
     b.write("wMB_Greedy", [1])
     b.press("start")
-    b.wait_state(ST_MENU, 3000)
+    b.wait_state(ST_INTRO, 3000)
+    b.press("a")
+    b.wait_state(ST_MENU, 600)
     yield b
     b.stop()
 
@@ -39,9 +41,9 @@ def test_each_direction_selects_the_action_drawn_on_that_side(gb):
 def test_selected_label_is_highlighted(gb):
     gb.press("down")
     gb.tick(6)
-    row = gb.read("wBgMap", 6, (13 + 2) * 20 + 8)
+    row = gb.read("wBgMap", 6, 14 * 20 + 9)
     assert all(t >= 116 for t in row), "SEARCH is drawn in the inverse font"
-    row = gb.read("wBgMap", 5, 13 * 20 + 8)
+    row = gb.read("wBgMap", 5, 10 * 20 + 9)
     assert all(t < 96 for t in row), "AHEAD is back to the normal font"
 
 
@@ -77,6 +79,16 @@ def test_stats_overlay_restores_screen_and_new_run_resets(gb):
     gb.press("select")
     gb.wait_for(lambda: gb.read1("wMB_Turn") == 0, 600)
     w = g.gen_world(7)
-    gb.wait_state(ST_MENU, 3000)
+    gb.wait_state(ST_INTRO, 3000)
+    gb.press("a")
+    gb.wait_state(ST_MENU, 600)
     assert gb.read1("wMB_Room") == g.FOREST and gb.read1("wLives") == g.START_LIVES
     assert gb.read("wExits", 24) == [x for e in w.exits for x in e]
+
+
+def test_stats_page_fits_and_story_lines_are_double_spaced(gb):
+    gb.press("a")
+    gb.wait_state(ST_REVEAL, 400000)
+    gb.tick(8)
+    for row in (9, 11, 13, 15):
+        assert gb.read("wBgMap", 20, row * 20) == [0] * 20, f"row {row} must stay blank between story lines"

@@ -63,7 +63,7 @@ Tests found each of these, and all are now covered by tests or documented:
 6. **A misleading metric.** An early report called a 20.5% action score "close to chance." Untrained weights scored the same 20.5%, which exposed the real cause: WIN and LOSE sentences name no action, so they pass that check by default. The metric now excludes them.
 7. **A hardware hazard, found by reading the code.** The LCD could be disabled right after a VBlank wait without re-checking LY. Doing that outside VBlank can damage a real screen. It now re-checks.
 
-8. **An unreadable first UI.** All-caps text, a grid menu that didn't match the D-pad and an unexplained status bar were hard to follow in real play, which emulator tests can't judge. The redesign added a lowercase font, a D-pad-shaped menu, button chips and a goal line. It also introduced a bug: a wrong table stride wrote stray bytes over the selection variable. Scripted input caught it before the rebuild.
+8. **An unreadable UI, twice.** The tests can't judge readability, and neither could small screenshots: a person playing in the real window could barely read it. The first fix added lowercase and a D-pad menu and it was still bad. What worked was copying what games of the era do: a bold font with 2-pixel strokes, text on every other row, and one job per screen. Inverse letters also needed a dark margin above and below to keep their outline. A wrong table stride during this work wrote stray bytes over the selection variable, and scripted input caught it.
 
 ## Limitations and future work
 

@@ -10,7 +10,7 @@ from run_emulator import GB
 from reference import game as g
 
 ROM = ROOT / "build" / os.environ.get("GBGPT_VARIANT", "V0") / "gameboygpt.gb"
-ST_TITLE, ST_MENU, ST_REVEAL = 1, 3, 6
+ST_TITLE, ST_INTRO, ST_MENU, ST_REVEAL = 1, 2, 3, 6
 BUTTON_FOR_ACTION = {g.LEFT: ("left",), g.RIGHT: ("right",), g.FORWARD: ("up",), g.SEARCH: ("down",)}
 
 
@@ -22,7 +22,9 @@ def boot(seed):
     gb.write("wMB_Seed", [seed & 255, seed >> 8])
     gb.write("wMB_Greedy", [1])
     gb.press("start")
-    gb.wait_state(ST_MENU, 3000)
+    gb.wait_state(ST_INTRO, 3000)
+    gb.press("a")
+    gb.wait_state(ST_MENU, 600)
     return gb
 
 

@@ -43,11 +43,11 @@ ROMs are in [`release/`](release/): `gameboygpt.gb` is the fast build and `gameb
 | Button | Action |
 |---|---|
 | D-pad | Pick the action on that side: left, right, up for AHEAD, down for SEARCH |
-| A | Confirm, continue |
+| A | Confirm, next |
 | START | Run stats, measured on the device |
 | SELECT on stats | New run |
 
-In `make play`, the keys are the arrow keys, `A`, `S` for B, Enter for START and Backspace for SELECT.
+In `make play`, the keys are the arrow keys, `A`, `S` for B, Enter for START and Backspace for SELECT. Text looks sharpest if you leave the window at its opening size.
 
 Find a lamp, take the key from the cave, open the gate and climb the tower. The bottom bar shows your current goal. See [docs/GAMEPLAY.md](docs/GAMEPLAY.md).
 

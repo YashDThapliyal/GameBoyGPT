@@ -20,7 +20,7 @@ def test_geometry_and_parameter_count_match_the_on_screen_claim():
     fields = ("tok", "pos", "w_q", "w_k", "w_v", "w_o", "w_f1", "w_f2", "w_out")
     params = sum(len(getattr(m, f)) * len(getattr(m, f)[0]) for f in fields)
     assert params == 14784
-    assert "MODEL 14784 PARAMS" in (ROOT / "src" / "ui.asm").read_text()
+    assert "14784 params" in (ROOT / "src" / "ui.asm").read_text()
     assert (m.d, m.heads, m.head_dim, m.ctx) == (32, 2, 16, 16)
     assert len(m.w_out) == len(ds.VOCAB) == 95 and m.eos == ds.EOS == m.first_gen == 27
 

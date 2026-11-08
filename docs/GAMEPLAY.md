@@ -2,14 +2,16 @@
 
 You wake in a misty forest. Somewhere beyond it is a ruined tower. Find a lamp, go into the cave for the key, open the iron gate, and climb past the sleeping guardian.
 
-## Controls
+## Screens and controls
+
+The game shows one thing at a time: read the story, press A, then choose what to do.
 
 | Button | Action |
 |---|---|
-| D-pad | Select the action drawn on that side: left LEFT, right RIGHT, up AHEAD, down SEARCH. The selected label is highlighted |
-| A | Confirm, continue |
-| B | Continue |
-| START | Run stats: variant, seconds per word, seconds per event and bank switches measured on the device |
+| D-pad | On the choice screen, select the action drawn on that side: left LEFT, right RIGHT, up AHEAD, down SEARCH. The selected label is highlighted |
+| A | Confirm, next |
+| B | Next |
+| START | Run stats page: build, seconds per word, seconds per event and bank switches measured on the device |
 | SELECT (on the stats page) | New run |
 
 The bottom bar always shows your current goal and the turn number. Lamp and key icons appear on the room-name band once you have them.

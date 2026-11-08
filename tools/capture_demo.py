@@ -20,7 +20,7 @@ SHIP = ROOT / "build" / "gameboygpt.gb"
 BASE = ROOT / "build" / "gameboygpt_v0.gb"
 MODEL = from_blob((ROOT / "generated" / "model.bin").read_bytes())
 BUTTONS = {g.LEFT: ("left",), g.RIGHT: ("right",), g.FORWARD: ("up",), g.SEARCH: ("down",)}
-ST_TITLE, ST_MENU, ST_GEN, ST_REVEAL, ST_ENDING, ST_STATS = 1, 3, 5, 6, 8, 9
+ST_TITLE, ST_INTRO, ST_MENU, ST_GEN, ST_REVEAL, ST_ENDING, ST_STATS = 1, 2, 3, 5, 6, 8, 9
 SCALE, GIF_STEP = 3, 6  # 6 LCD frames at 59.73 Hz is 100.5 ms: the GIF's 100 ms delay is real time within 0.5%
 SEED = 321
 
@@ -74,8 +74,12 @@ def play_gif_run() -> list[dict]:
     r.advance(90)
     shot(gb, "title")
     r.press("start")
-    r.until(lambda: gb.read1("wMB_State") == ST_MENU)
+    r.until(lambda: gb.read1("wMB_State") == ST_INTRO)
     r.advance(60)
+    shot(gb, "intro")
+    r.press("a")
+    r.until(lambda: gb.read1("wMB_State") == ST_MENU)
+    r.advance(40)
     shot(gb, "menu")
     w = g.gen_world(SEED)
     s = g.start(w)
@@ -118,7 +122,7 @@ def play_gif_run() -> list[dict]:
         if turn == 3:
             gb.tick(20)
             gb.press("start")
-            gb.tick(12)
+            gb.tick(14)
             shot(gb, "stats_ship")
             gb.press("b")
             gb.tick(10)
@@ -144,7 +148,9 @@ def play_gif_run() -> list[dict]:
 def baseline_stats():
     gb = boot(BASE, SEED, False)
     gb.press("start")
-    gb.wait_state(ST_MENU, 3000)
+    gb.wait_state(ST_INTRO, 3000)
+    gb.press("a")
+    gb.wait_state(ST_MENU, 600)
     w = g.gen_world(SEED)
     s = g.start(w)
     for _ in range(3):
@@ -159,7 +165,7 @@ def baseline_stats():
         gb.wait_state(ST_MENU, 3000)
     gb.tick(20)
     gb.press("start")
-    gb.tick(12)
+    gb.tick(14)
     shot(gb, "stats_v0")
     gb.stop()
 
@@ -171,7 +177,9 @@ def action_pair() -> dict:
     for a in (g.FORWARD, g.SEARCH):
         gb = boot(SHIP, SEED, True)
         gb.press("start")
-        gb.wait_state(ST_MENU, 3000)
+        gb.wait_state(ST_INTRO, 3000)
+        gb.press("a")
+        gb.wait_state(ST_MENU, 600)
         w = g.gen_world(SEED)
         s, out = g.step(w, g.start(w), a)
         for b in BUTTONS[a]:

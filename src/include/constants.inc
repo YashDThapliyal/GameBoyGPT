@@ -58,13 +58,13 @@ DEF TILE_ART       EQU 156
 DEF SCREEN_W    EQU 20
 DEF SCREEN_H    EQU 18
 DEF BAND_ROW    EQU 6
-DEF PANEL_ROW   EQU 7     ; first row of the area the stats page takes over
-DEF TEXT_ROW    EQU 8     ; row 7 stays blank so the story clears the band
+DEF BODY_ROW    EQU 7     ; rows 7..16 belong to whichever screen is showing
+DEF BODY_ROWS   EQU 10
+DEF TEXT_ROW    EQU 8     ; story lines sit on every other row, like the text boxes of the era
 DEF TEXT_ROWS   EQU 4
 DEF TEXT_COL    EQU 1
 DEF TEXT_WIDTH  EQU 18
-DEF RULE_ROW    EQU 12
-DEF MENU_ROW    EQU 13
+DEF HINT_ROW    EQU 16
 DEF STATUS_ROW  EQU 17
 
 ; Game

@@ -189,7 +189,9 @@ def ux_mode(version, rom, rows, model_sha, wram, nll, quality, baseline_tokens) 
     gb.write("wMB_Seed", [seed & 255, seed >> 8])
     gb.write("wMB_Greedy", [1])
     gb.press("start")
-    gb.wait_state(3, 3000)
+    gb.wait_state(2, 3000)
+    gb.press("a")
+    gb.wait_state(3, 600)
     gb.write("wStackBottom", [0xA5] * 0xF0)  # measures depth with the ISR and UI live, unlike kernel mode
     w, s = g.gen_world(seed), None
     s = g.start(w)

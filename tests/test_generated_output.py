@@ -15,7 +15,7 @@ import dataclasses
 
 VARIANT = os.environ.get("GBGPT_VARIANT", "V0")
 ROM = ROOT / "build" / VARIANT / "gameboygpt.gb"
-ST_TITLE, ST_MENU, ST_GENERATING, ST_REVEAL, ST_ENDING = 1, 3, 5, 6, 8
+ST_TITLE, ST_INTRO, ST_MENU, ST_GENERATING, ST_REVEAL, ST_ENDING = 1, 2, 3, 5, 6, 8
 BUTTONS = {g.LEFT: ("left",), g.RIGHT: ("right",), g.FORWARD: ("up",), g.SEARCH: ("down",)}
 MODEL = from_blob((ROOT / "generated" / "model.bin").read_bytes())
 
@@ -28,7 +28,9 @@ def start(rom, seed, greedy):
     gb.write("wMB_Seed", [seed & 255, seed >> 8])
     gb.write("wMB_Greedy", [1 if greedy else 0])
     gb.press("start")
-    gb.wait_state(ST_MENU, 3000)
+    gb.wait_state(ST_INTRO, 3000)
+    gb.press("a")
+    gb.wait_state(ST_MENU, 600)
     return gb
 
 
@@ -47,7 +49,7 @@ def event_tokens(gb):
 
 def visible_text(gb):
     rows = []
-    for r in range(8, 12):
+    for r in (8, 10, 12, 14):
         rows.append("".join(chr(t + 0x20) if t < 96 else "?" for t in gb.read("wBgMap", 19, r * 20 + 1)).rstrip())
     return " ".join(x for x in rows if x)
 

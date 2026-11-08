@@ -23,18 +23,18 @@
   "sameboy": {
    "frames": [
     343,
-    420,
-    386,
-    344
+    419,
+    385,
+    345
    ],
    "verdict": "SELFTEST PASS"
   },
   "pyboy": {
    "frames": [
     343,
-    420,
-    386,
-    344
+    419,
+    385,
+    345
    ],
    "verdict": "SELFTEST PASS"
   }

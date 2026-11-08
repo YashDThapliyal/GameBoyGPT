@@ -43,7 +43,7 @@ verify:
 second-emulator: sameboy
 	$(PY) tools/second_emulator.py --variants V0 $(SHIP)
 play: rom
-	$(PY) -m pyboy build/gameboygpt.gb --window SDL2 --scale 4 --dmg
+	SDL_RENDER_SCALE_QUALITY=nearest $(PY) -m pyboy build/gameboygpt.gb --window SDL2 --scale 4 --dmg
 # Fails if any event is not real generation: the capture script asserts token parity with the reference.
 demo: rom
 	$(PY) tools/capture_demo.py
