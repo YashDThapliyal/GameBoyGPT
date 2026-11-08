@@ -1,0 +1,85 @@
+{
+"heldout_sampled": {
+"n": 600,
+"grammar_valid": 0.9983333333333333,
+"closed_with_eos": 1.0,
+"capped": 0.0,
+"fits_screen": 0.965,
+"immediate_word_repeats": 0.015,
+"repeated_sentence": 0.0,
+"mean_tokens": 13.088333333333333,
+"unique_responses": 0.95
+},
+"untrained_sampled": {
+"n": 100,
+"grammar_valid": 0.0,
+"closed_with_eos": 0.01,
+"capped": 0.99,
+"fits_screen": 0.0,
+"immediate_word_repeats": 0.17,
+"repeated_sentence": 0.0,
+"mean_tokens": 22.97,
+"unique_responses": 1.0
+},
+"heldout_conditioning": {
+"on_target": 0.99,
+"control_wrong_pool": 0.0
+},
+"mood": {
+"n": 300,
+"openers_seen": 135,
+"opener_matches_mood": 1.0,
+"emotion_matches_mood_or_intent": 1.0
+},
+"field_sensitivity": {
+"intent": 0.96,
+"mood": 0.9,
+"relation": 0.3,
+"history": 0.34,
+"repeat": 0.43333333333333335,
+"facts": 0.24,
+"topic": 1.0
+},
+"memory": {
+"repeat_complaint": {
+"when_true": 0.4375,
+"when_false": 0.0
+},
+"insult_count": {
+"when_true": 0.3375,
+"when_false": 0.0
+},
+"compliment_count": {
+"when_true": 0.3125,
+"when_false": 0.0
+},
+"minion_line": {
+"when_true": 0.6625,
+"when_false": 0.0
+},
+"enemy_line": {
+"when_true": 0.4125,
+"when_false": 0.0
+},
+"uses_name": {
+"when_true": 0.6,
+"when_false": 0.0
+},
+"uses_like": {
+"when_true": 0.4875,
+"when_false": 0.0
+}
+},
+"diversity": {
+"seeds_per_situation": 12,
+"situations": 40,
+"mean_unique_fraction": 0.9083333333333334
+},
+"memorization": {
+"valid_responses_not_seen_verbatim": 0.2832080200501253,
+"valid_responses_with_a_sentence_absent_from_training": 0.000835421888053467,
+"sentences_held_out_of_training": 26,
+"training_examples": 120000
+}
+}
+{'unsupported_routed_to_admission_intents': 0.7, 'unsupported_admitted': 1.0, 'adversarial_all_valid': False}

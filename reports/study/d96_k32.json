@@ -1,0 +1,44 @@
+{
+ "name": "d96_k32",
+ "config": {
+  "d": 96,
+  "ffn": 192,
+  "layers": 1,
+  "k": 32
+ },
+ "params": 177536,
+ "vocab": 763,
+ "untrained_val_nll": 7.4271170767977575,
+ "uniform_nll": 6.637258031284457,
+ "val_nll": 0.49320922644982446,
+ "test_nll": 0.49036408586617997,
+ "generation": {
+  "valid": 1.0,
+  "closed": 1.0,
+  "mean_tokens": 13.0825,
+  "unique": 0.97,
+  "novel_of_valid": 0.325,
+  "fit_screen": 0.9775,
+  "samples": [
+   "I WILL EXPLAIN WHEN YOU ARE OLDER. I CANNOT TELL IF YOU LIKE ME.",
+   "I ONLY KNOW ONE JOKE. IT IS ABOUT YOU. THAT IS INSULT NUMBER <NI>.",
+   "WELL, WELL. DO NOT THANK ME. FEAR ME.",
+   "AT LAST, A CORRECT OPINION. THAT IS PRAISE NUMBER <NP>.",
+   "CAREFUL. YOU WOULD NOT DARE. <NP> COMPLIMENTS. YOU WANT SOMETHING.",
+   "HA! FIRST THIS SCREEN. THEN THE PLANET. YOU ARE VERY CONFUSING."
+  ]
+ },
+ "train_seconds": 2312.1342470645905,
+ "projection": {
+  "s_per_token": 5.211873531341553,
+  "first_token_s": 14.457692623138428,
+  "s_per_response": 77.43015456557274,
+  "macs_per_token": 93191,
+  "head_tables": false,
+  "blockers": [
+   "needs >64 bytes of HRAM input or a slower WRAM kernel",
+   "K/V cache alone exceeds half of WRAM"
+  ]
+ },
+ "precision": "8-bit QAT"
+}

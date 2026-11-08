@@ -1,0 +1,41 @@
+{
+ "name": "d32_k32",
+ "config": {
+  "d": 32,
+  "ffn": 64,
+  "layers": 1,
+  "k": 32
+ },
+ "params": 59072,
+ "vocab": 763,
+ "untrained_val_nll": 7.559770725985704,
+ "uniform_nll": 6.637258031284457,
+ "val_nll": 0.4947031394051047,
+ "test_nll": 0.4931135400314281,
+ "generation": {
+  "valid": 0.9975,
+  "closed": 1.0,
+  "mean_tokens": 12.8225,
+  "unique": 0.94,
+  "novel_of_valid": 0.3082706766917293,
+  "fit_screen": 0.9775,
+  "samples": [
+   "EXACTLY. YOU ARE LEARNING. NOT BAD, RIVAL.",
+   "I TOLD A JOKE ONCE. THE CPU IS STILL THINKING.",
+   "WELL, WELL. DO NOT THANK ME. FEAR ME.",
+   "AT LAST, A CORRECT OPINION. THAT IS PRAISE NUMBER <NP>.",
+   "CAREFUL. YOU WOULD NOT DARE. <NP> COMPLIMENTS. YOU WANT SOMETHING.",
+   "HA! FIRST THIS SCREEN. THEN THE PLANET. YOU ARE VERY CONFUSING."
+  ]
+ },
+ "train_seconds": 1477.6172590255737,
+ "projection": {
+  "s_per_token": 1.7980990409851074,
+  "first_token_s": 2.8409762382507324,
+  "s_per_response": 24.099002150297164,
+  "macs_per_token": 31802,
+  "head_tables": false,
+  "blockers": []
+ },
+ "precision": "8-bit QAT"
+}

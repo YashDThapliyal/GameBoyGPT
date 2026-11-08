@@ -1,0 +1,43 @@
+{
+ "name": "d64_k32",
+ "config": {
+  "d": 64,
+  "ffn": 128,
+  "layers": 1,
+  "k": 32
+ },
+ "params": 110112,
+ "vocab": 763,
+ "untrained_val_nll": 7.22569681240686,
+ "uniform_nll": 6.637258031284457,
+ "val_nll": 0.4964042737380339,
+ "test_nll": 0.494069341897255,
+ "generation": {
+  "valid": 0.99,
+  "closed": 1.0,
+  "mean_tokens": 13.4075,
+  "unique": 0.965,
+  "novel_of_valid": 0.3409090909090909,
+  "fit_screen": 0.97,
+  "samples": [
+   "FINE. GO ON. I WAS ALMOST INTERESTED.",
+   "I ONLY KNOW ONE JOKE. IT IS ABOUT YOU. THAT IS INSULT NUMBER <NI>.",
+   "WELL, WELL. DO NOT THANK ME. FEAR ME.",
+   "BOLD. AT LAST, A CORRECT OPINION.",
+   "CAREFUL. YOU CANNOT UNPLUG DESTINY.",
+   "FIRST THIS SCREEN. THEN THE PLANET. I CANNOT TELL IF YOU LIKE ME."
+  ]
+ },
+ "train_seconds": 2033.612705230713,
+ "projection": {
+  "s_per_token": 3.109912395477295,
+  "first_token_s": 7.234729290008545,
+  "s_per_response": 45.820967336893084,
+  "macs_per_token": 55354,
+  "head_tables": false,
+  "blockers": [
+   "needs >64 bytes of HRAM input or a slower WRAM kernel"
+  ]
+ },
+ "precision": "8-bit QAT"
+}

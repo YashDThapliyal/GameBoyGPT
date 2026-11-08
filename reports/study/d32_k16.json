@@ -1,0 +1,41 @@
+{
+ "name": "d32_k16",
+ "config": {
+  "d": 32,
+  "ffn": 64,
+  "layers": 1,
+  "k": 16
+ },
+ "params": 46352,
+ "vocab": 763,
+ "untrained_val_nll": 7.6703421389962365,
+ "uniform_nll": 6.637258031284457,
+ "val_nll": 0.5027267703873671,
+ "test_nll": 0.5003566371575062,
+ "generation": {
+  "valid": 0.9925,
+  "closed": 1.0,
+  "mean_tokens": 13.0,
+  "unique": 0.9475,
+  "novel_of_valid": 0.31738035264483627,
+  "fit_screen": 0.965,
+  "samples": [
+   "I WILL EXPLAIN WHEN YOU ARE OLDER. NOT BAD, RIVAL.",
+   "I ONLY KNOW ONE JOKE. IT IS ABOUT YOU. YOU ARE ALMOST A THREAT.",
+   "WELL, WELL. DO NOT THANK ME. FEAR ME.",
+   "BOLD. FINALLY, A WARM SACK WITH TASTE.",
+   "CAREFUL. YOU WOULD NOT DARE. <NP> NICE WORDS. I AM COUNTING.",
+   "HA! FIRST THIS SCREEN. THEN THE PLANET. YOU ARE VERY CONFUSING."
+  ]
+ },
+ "train_seconds": 1496.1882429122925,
+ "projection": {
+  "s_per_token": 0.791694164276123,
+  "first_token_s": 1.834571361541748,
+  "s_per_response": 11.334901332855225,
+  "macs_per_token": 19984,
+  "head_tables": true,
+  "blockers": []
+ },
+ "precision": "8-bit QAT"
+}

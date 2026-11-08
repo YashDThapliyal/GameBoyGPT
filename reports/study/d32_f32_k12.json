@@ -1,0 +1,41 @@
+{
+ "name": "d32_f32_k12",
+ "config": {
+  "d": 32,
+  "ffn": 32,
+  "layers": 1,
+  "k": 12
+ },
+ "params": 41124,
+ "vocab": 763,
+ "untrained_val_nll": 7.157554352630648,
+ "uniform_nll": 6.637258031284457,
+ "val_nll": 0.511139437861509,
+ "test_nll": 0.5103768077266795,
+ "generation": {
+  "valid": 0.9825,
+  "closed": 1.0,
+  "mean_tokens": 12.785,
+  "unique": 0.9475,
+  "novel_of_valid": 0.3053435114503817,
+  "fit_screen": 0.9625,
+  "samples": [
+   "EXACTLY. YOU ARE LEARNING. I CANNOT TELL IF YOU LIKE ME.",
+   "I ONLY KNOW ONE JOKE. IT IS ABOUT YOU. THAT IS INSULT NUMBER <NI>.",
+   "WELL, WELL. DO NOT THANK ME. FEAR ME.",
+   "BOLD. FINALLY, A WARM SACK WITH TASTE.",
+   "CAREFUL. YOU WOULD NOT DARE. <NP> COMPLIMENTS. YOU WANT SOMETHING.",
+   "HA! FIRST THIS SCREEN. THEN THE PLANET. YOU ARE VERY CONFUSING."
+  ]
+ },
+ "train_seconds": 1447.611529827118,
+ "projection": {
+  "s_per_token": 0.6293978691101074,
+  "first_token_s": 1.6722750663757324,
+  "s_per_response": 9.089728953838348,
+  "macs_per_token": 15485,
+  "head_tables": true,
+  "blockers": []
+ },
+ "precision": "8-bit QAT"
+}

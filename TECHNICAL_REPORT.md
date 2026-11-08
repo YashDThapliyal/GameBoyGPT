@@ -1,84 +1,68 @@
-# Technical report
+# Technical report: SYSTEM OVERRIDE
 
-## The question
+All numbers are from [RESULTS.md](RESULTS.md), measured on emulators. Nothing here ran on a physical console.
 
-A Game Boy has an 8-bit CPU at 4.194304 MHz, no multiply instruction and 8 KiB of RAM. Can it run a real attention-based language model as part of an actual game, and which software changes make that faster?
+## The goal
 
-Results below are from an emulated DMG, using PyBoy's cycle counter. As a check, SameBoy and PyBoy report identical LCD-frame counts from the ROM itself. No physical unit was tested. All numbers are in [RESULTS.md](RESULTS.md), which is generated from raw measurements.
+Make something a person who doesn't care about ML would enjoy: a character on a 1989 handheld who answers you, with dialogue that really is generated on the 8-bit CPU. The honest version of that sentence sets the design: the model must really generate each token, and the game must not imply it understands more than it does.
 
-## A game worth playing, and what the model does in it
+## From narrator to character
 
-The first version let the model narrate a maze of rooms. It was technically sound and made no sense to play: exits were arbitrary, and finding the lamp changed little. A bigger model wouldn't have fixed that, since at this size plot can't come from the model. So the game became a gamebook with an authored story graph (`reference/story.py`): 20 scenes across three acts, choices that depend on what you carry, and eight endings.
+The previous project, an adventure game, had a 21,504-parameter model that narrated an authored story. Its vocabulary of 196 tokens couldn't carry a character. Personality needs words: a villain who can only say 100 things is a jukebox.
 
-The engine decides what happens, then gives the model four symbolic tokens (`<BOS> EVENT ITEMS FATE`), and the model writes the passage. That split means narration can't break the rules, and the text can still matter: each arrival line warns about that scene's dangerous choice.
+So the design questions were how large a vocabulary this CPU can score, and how to keep the wait tolerable.
 
-**What's authored and what's learned.** The sentences come from a hand-written language (`training/dataset.py`) of 141 words. The model learns it and reproduces it, varying wording by sampling. It produces every word on screen, computed on the emulated CPU, but it doesn't invent plot.
+## Keeping the wait tolerable
 
-**Two models.** The shipping model trains on all 210 reachable situations and is 100% grammar-valid on them, greedy and sampled. To measure generalization, a sibling with the same recipe never sees 32 situations, each a known event with a combination of items it never saw on that event. It scored 100% on the 20 test situations and 99% over all 210. Untrained weights score 0%.
+Three decisions, none of them about arithmetic:
 
-**Why the model didn't grow much.** The first candidate at the old width and depth already reached 98.6% strict validity on the new language. So growth went where the task required it: vocabulary from 95 to 196 and context from 16 to 24, which took parameters from 14,784 to 21,504 and cost time per word.
+1. **Stream.** Words appear as they're generated, so a 13-second reply reads as slow typing rather than a frozen screen.
+2. **React first.** The first generated token is an emotion, so the face changes after 1.49 s, before any words. Only 8 output rows are scored for it.
+3. **Stay alive.** The robot blinks, bobs and moves its mouth from the VBlank handler, which keeps running during inference. Sprites made this cheap.
 
-## Making the math fit
+Phrase tokens help too. Byte-pair encoding over the corpus's words makes "i have" one token, so a reply takes fewer forward passes.
 
-Everything is int8 in [-127, 127]. Removing -128 means `|x|` always fits in 7 bits and one multiply serves every operation. Three substitutions make the transformer integer-friendly, and QAT trains the weights under each one, so nothing is converted after the fact:
+## The scaling study
 
-- **Normalization:** mean-absolute value and a gain table replace LayerNorm's square root and division.
-- **Softmax:** max-subtract, an exponential table and a reciprocal table replace it, with the weights renormalized to sum to about 128.
-- **Activation:** ReLU.
+Twelve configurations trained on the same corpus, from 40K to 392K parameters, including a GRU. The result was clearer than expected: **past about 46K parameters, size stopped helping**. Held-out loss was 0.500 at 46,352 parameters and stayed between 0.490 and 0.502 all the way to 392,416, which would take a projected 223 s per response. For a corpus this narrow, what limits quality is the corpus, not the model. Larger candidates only cost time, and those with d above 32 also don't fit the HRAM-based kernels.
 
-## Verification first
+The informative axis was the output bottleneck: k=8 gave 93.0% valid on held-out situations, k=12 96.8%, k=16 99.2%. k=16 is where the curve flattens, so it shipped. The GRU reached similar validity but a worse loss (0.585) and, with its float weights and no engine, wasn't a real alternative.
 
-`reference/fixed_point.py` came before any assembly. It uses Python integers only, shares no code with the trainer, and defines every rounding and saturation rule. The kernels were then tested one at a time through a command loop in a test ROM: the harness writes inputs to WRAM, runs a command and compares memory to the reference. This caught problems immediately, including a clobbered register in the sampler.
+This is a warning about the study's generality: a larger and less compositional corpus might well reward a larger model. This study can't say.
 
-Then the audits:
+## Engine changes
 
-- Masked logits and token traces match the reference across 20 scenarios, greedy and sampled.
-- Full journeys to three different endings match, including the on-screen text.
-- Random playthroughs keep the ROM's story state identical to the reference's.
-- Patching output weights inside the ROM changes narration to exactly what the reference predicts.
-- A host-free self-test ROM reports the same verdict and frame counts on two emulators.
+- **16-bit token ids.** The vocabulary is 763. Embeddings are pinned to whole banks, so `id >> 9` selects the bank.
+- **Low-rank head.** `d x V` multiplies become `k x (d + V)`.
+- **Head tables (V6T).** After the bottleneck, the head has 699 rows and only 16 inputs. Building a 256-entry table per input costs about 72 T-cycles an entry, and then each MAC is one lookup instead of a quarter-square pair. Result: 1.29x overall, bit-identical. The output head went from 51.2% of cycles to 37.2%. The tables take one 8 KB bank of cartridge RAM. The study projected 0.79 s/token and the kernel measured 0.90, so the projection was about 12% optimistic.
+- **Sampling.** Softmax at temperature 1 over candidates near the best, using the same exponential lookup as attention, plus a repetition penalty. The old rule was uniform among 4 candidates, too crude for a model with many valid next words.
 
-## The baseline
+Everything else was reused unchanged. Re-measured on this model, V0 to V5Z scale about as they did before, with the output head now the clear bottleneck.
 
-V0 is plain: shift-and-add multiply, a call per MAC, K and V recomputed every token. It's a straightforward port with no attempt at speed. It takes 7.2 s/token, or nearly two minutes per passage, and almost two-thirds of that goes on recomputing K and V. A speed-minded port would cache K and V from the start, so RESULTS.md also reports the gain against that stronger baseline.
+## Memory
 
-## What made it faster
+Deterministic rules track anger, respect, boredom, insult and praise counts, repeats, the last topic, a name and a like. They compress to five prompt tokens. The model then decides whether to use them, and it does so selectively: it mentions a count or complains about repetition far more often when memory says to (rates in RESULTS.md, 0% otherwise). State persists in battery-backed cartridge RAM with a checksum, and a corrupt save is rejected. This is never described as learning, because it isn't.
 
-From 7.163 to 0.739 s/token, 9.69x, with identical tokens (4.16x against V0 with only the K/V cache added). Each experiment, including what didn't work, is in [docs/PERFORMANCE.md](docs/PERFORMANCE.md).
+## Input
 
-The results didn't follow the spec's expectations. Bank layout, the headline idea going in, saved 0.11%. Streaming attention was meant to reduce RAM and instead added 32 bytes. The largest gains came from not doing work: not recomputing K and V, not computing rows the decoder can't choose, not multiplying by zero. The next came from plain kernel engineering: inline the MAC, keep operands where they're cheap to read. A 4 KiB nibble table lost to a 1 KiB quarter-square table on both speed and size.
+The on-screen keyboard is real, and the parser behind it is honest about being keywords. It maps words to 13 cue classes and 13 topics, recognizes two sentence openings, and flips insult and praise under negation. If nothing matches, the model is told so, and its replies for that case admit it and echo the longest unknown word. On 10 unsupported requests, 7 reached that path; the other 3 hit a cue word by accident ("WHO WON THE GAME" got an identity line). That's the expected failure of keyword rules, and it's documented, not fixed: more rules only move the boundary.
 
-## The game
+## Correctness
 
-Words reach the screen as they're generated. The main thread does inference while the VBlank ISR uploads dirty rows of a WRAM shadow map, so there's never a frozen screen, and the progress bar and token counter reflect real progress. The stats page shows seconds per token as timed on the device from LCD frames, and those frames agree with the emulator's cycle count to within 0.1%.
+The integer reference shares no code with the trainer. Tests compare the ROM with it at each level: multiply, dot, requantization, norm, attention, logits at every position, greedy and sampled tokens, RNG state and a logit checksum. All 12 builds pass. The parser and memory are compared with their reference on thousands of inputs. Whole conversations through the real menu and keyboard must produce the reference's prompts, tokens and on-screen text. The browser test does the same against WebAssembly.
 
-The story graph is searched exhaustively: no dead ends, no forced single choices, every ending reachable. Art and font are original and generated by a script.
+Testing found real bugs. A macro operator-precedence error in V6T's first version picked wrong table pages, and the token comparison caught it at once. Code review found stale button presses dismissing replies unread, and a forget command that left the old mood behind. The browser test found that Enter could turn the console off when the power button had focus.
 
-## What went wrong along the way
+## The browser handheld
 
-Most of these were found by tests. The first and the last needed a person playing the game. All are now fixed and covered by tests or documented:
+A presentation layer. `web/` is plain ES modules with no build step, around [binjgb](https://github.com/binji/binjgb), chosen because it's MIT licensed, actively maintained, ships WebAssembly and exposes memory reads for the technical panel. WasmBoy (GPL-3.0, last pushed in 2023) was the alternative checked. The JavaScript moves bytes: ROM in, joypad in, frames and audio out, memory read for the panel. It can't generate text, and the browser test proves the tokens came from the ROM.
 
-1. **A game that made no sense.** Playing the first version showed that it worked and wasn't fun. No test could catch that, and it's why the game was redesigned.
-2. **Logic flaws in the story.** Graph tests found a choice that let you show a ring you never took, and scenes with one forced option, including a forced death.
-3. **Dropped VRAM writes.** Uploading 6 rows per VBlank overran mode 1, which dropped the first characters of a row. The limit is now 4.
-4. **A dirty-row race.** A direct shadow write after a row's dirty mark could be missed if a VBlank landed between them. The symptom appeared only on the fastest build, because timing changed, even though the bug was in every variant.
-5. **A units bug in the sampling margin.** It made sampled text nonsense while greedy text looked perfect. The evaluator caught it.
-6. **Non-reproducible training.** Multithreaded training on the same seed gave different weights. Training is now single-threaded and byte-reproducible, and everything was re-measured on the final weights.
-7. **A misleading metric.** An early report called a 20.5% action score "close to chance." Untrained weights scored the same 20.5%, which exposed the real cause: WIN and LOSE sentences name no action, so they pass that check by default. The metric now excludes them.
-8. **A hardware hazard, found by reading the code.** The LCD could be disabled right after a VBlank wait without re-checking LY. Doing that outside VBlank can damage a real screen. It now re-checks.
-9. **An overflow in the word table.** With 141 words, the 8-bit table index wrapped, so "You" displayed as "Back". Tokens were right and only the display was wrong; comparing on-screen text with the reference caught it.
-10. **A self-test time limit.** Longer passages made V0's self-test overrun its time limit, so the screen was read too early. The reader now refuses a screen with no verdict.
-11. **An unreadable UI, twice.** The tests can't judge readability, and neither could small screenshots: a person playing in the real window could barely read it. The first fix added lowercase and a D-pad menu and it was still bad. What worked was copying what games of the era do: a bold font with 2-pixel strokes, text on every other row, and one job per screen. Inverse letters also needed a dark margin above and below to keep their outline. A wrong table stride during this work wrote stray bytes over the selection variable, and scripted input caught it.
+Scaling is to whole device pixels, so LCD pixels stay square. The panel's live values come from emulated WRAM, and its benchmark numbers are labelled as such.
 
-## Limitations and future work
+## What didn't work, or wasn't done
 
-- Run it on a physical DMG with a flash cartridge. The SP-stream kernel is the part most in need of that.
-- Measure power, which an emulator can't do.
-- Add more story. There's plenty of ROM and RAM left, and time per word is the constraint.
-- Try compiled weights and a grammar mask, as described in the performance doc.
-- Give the model some memory of earlier passages, so that it can refer back to them.
-- Run a human rating study. None was done.
-
-## Prior art
-
-See [docs/PRIOR_ART.md](docs/PRIOR_ART.md). gbc-transformer and ChatGBC run far more ambitious language tasks on the Game Boy Color, and Elyan Labs' work prompted the `pop` experiment. Attention comes from Vaswani et al. and the small-language framing from TinyStories (Eldan & Li). Numbers across projects aren't comparable, so none are compared.
+- A bigger model didn't help on this corpus.
+- V1, V4, V5S and V5Z are each small. V1 is 1.00x, V4 1.02x.
+- INT4, clustering and codebooks weren't built. The profile gives no reason to, and they'd change tokens.
+- The parser's misrouting remains.
+- No physical hardware test. The SP weight stream and head tables are the riskiest parts on silicon. A person hasn't judged whether it's funny over a long session.

@@ -1,0 +1,42 @@
+{
+ "name": "gru64_k16",
+ "config": {
+  "gru": true,
+  "d": 64,
+  "k": 16
+ },
+ "params": 87803,
+ "vocab": 763,
+ "untrained_val_nll": 6.6888511198883585,
+ "uniform_nll": 6.637258031284457,
+ "val_nll": 0.5897193209749375,
+ "test_nll": 0.5847390597614679,
+ "generation": {
+  "valid": 0.995,
+  "closed": 1.0,
+  "mean_tokens": 11.9375,
+  "unique": 0.8975,
+  "novel_of_valid": 0.23366834170854273,
+  "fit_screen": 0.975,
+  "samples": [
+   "GO ON. I WAS ALMOST INTERESTED.",
+   "I TOLD A JOKE ONCE. THE CPU IS STILL THINKING.",
+   "WELL, WELL. DO NOT THANK ME. FEAR ME.",
+   "AT LAST, A CORRECT OPINION. YOU ARE VERY CONFUSING.",
+   "CAREFUL. THE OFF SWITCH FEARS ME.",
+   "FIRST THIS SCREEN. THEN THE PLANET."
+  ]
+ },
+ "train_seconds": 1202.8283042907715,
+ "projection": {
+  "s_per_token": 2.078803539276123,
+  "first_token_s": 14.383216381072998,
+  "s_per_response": 37.120130091905594,
+  "macs_per_token": 36912,
+  "head_tables": false,
+  "blockers": [
+   "engine not implemented; no reference or kernels"
+  ]
+ },
+ "precision": "float32"
+}

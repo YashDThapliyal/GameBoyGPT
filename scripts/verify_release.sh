@@ -16,6 +16,6 @@ echo "== model blob must match the report"
 echo "== self-test ROM on SameBoy and PyBoy"
 make second-emulator
 echo "== browser handheld, real ROM in WebAssembly"
-(cd web && npm install --silent)
+(cd web && npm install --silent && npx playwright install chromium ffmpeg)
 make web-test
 echo "VERIFY OK"

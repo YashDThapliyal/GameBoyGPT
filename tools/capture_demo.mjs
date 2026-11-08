@@ -49,29 +49,29 @@ await page.waitForFunction(() => window.__override?.gb?.e);
 for (let i = 0; i < 120 && (await state(page)) !== 2; i++) {
   const onIntroText = await page.evaluate(() => { const w = window.__override; return w.gb.peek(w.build.debug.wRobotOn) === 1 && w.gb.peek(w.build.addresses.wMB_State) === 1; });
   if (onIntroText) {
-    await page.waitForTimeout(800);
+    await page.waitForTimeout(520);
     await press("a");
   } else {
     await page.waitForTimeout(100);
   }
 }
 await waitState(2);
-await page.waitForTimeout(450);
+await page.waitForTimeout(150);
 await press("right");
 await page.waitForTimeout(200);
 await pin(seeds.first);
 await press("a");
 await waitState(6);
 const first = await tokens();
-await page.waitForTimeout(1300);
+await page.waitForTimeout(600);
 await press("a");
 await waitState(2, 5000);
-await page.waitForTimeout(300);
+await page.waitForTimeout(120);
 await pin(seeds.second);
 await press("a");
 await waitState(6);
 const second = await tokens();
-await page.waitForTimeout(2200);
+await page.waitForTimeout(1000);
 const seconds = (Date.now() - t0) / 1000;
 await page.screenshot({ path: `${OUT}/final_frame.png` });
 const video = page.video();
@@ -82,7 +82,8 @@ const raw = await video.path();
 renameSync(raw, `${OUT}/raw.webm`);
 rmSync(TMP, { recursive: true, force: true });
 const f = (args) => execFileSync("ffmpeg", ["-y", "-loglevel", "error", ...args]);
-f(["-ss", "0.6", "-i", `${OUT}/raw.webm`, "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "20", "-movflags", "+faststart", `${OUT}/system_override_demo.mp4`]);
+const rawSeconds = Number(execFileSync("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", `${OUT}/raw.webm`]).toString());
+f(["-ss", String(Math.max(0, rawSeconds - seconds - 0.1)), "-i", `${OUT}/raw.webm`, "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "20", "-movflags", "+faststart", `${OUT}/system_override_demo.mp4`]);
 f(["-i", `${OUT}/system_override_demo.mp4`, "-vf", "crop=500:720:200:0,fps=12,scale=320:-1:flags=neighbor,split[a][b];[a]palettegen=max_colors=48[p];[b][p]paletteuse=dither=none", `${OUT}/system_override_demo.gif`]);
 rmSync(`${OUT}/raw.webm`);
 const expectFile = { seconds, first, second };

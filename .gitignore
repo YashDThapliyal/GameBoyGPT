@@ -28,3 +28,4 @@ web/node_modules/
 web/package-lock.json
 reports/train_release.log
 reports/study_run.log
+checkpoints/dev*

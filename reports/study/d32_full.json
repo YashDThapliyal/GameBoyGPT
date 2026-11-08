@@ -1,0 +1,41 @@
+{
+ "name": "d32_full",
+ "config": {
+  "d": 32,
+  "ffn": 64,
+  "layers": 1,
+  "k": 0
+ },
+ "params": 58048,
+ "vocab": 763,
+ "untrained_val_nll": 7.376804387360764,
+ "uniform_nll": 6.637258031284457,
+ "val_nll": 0.49317061139605595,
+ "test_nll": 0.4903155458780955,
+ "generation": {
+  "valid": 0.99,
+  "closed": 1.0,
+  "mean_tokens": 13.24,
+  "unique": 0.9625,
+  "novel_of_valid": 0.3484848484848485,
+  "fit_screen": 0.9775,
+  "samples": [
+   "IF YOU MUST. NO COLOR. NO BACKLIGHT. NO PROBLEM.",
+   "I ONLY KNOW ONE JOKE. IT IS ABOUT YOU. THAT IS INSULT NUMBER <NI>.",
+   "WELL, WELL. DO NOT THANK ME. FEAR ME.",
+   "BOLD. AT LAST, A CORRECT OPINION. <NP> NICE WORDS. I AM COUNTING.",
+   "CAREFUL. YOU WOULD NOT DARE. <NP> NICE WORDS. I AM COUNTING.",
+   "HA! I WILL RULE THE WORLD IN FOUR GREENS."
+  ]
+ },
+ "train_seconds": 1468.2676169872284,
+ "projection": {
+  "s_per_token": 1.7408804893493652,
+  "first_token_s": 2.7837576866149902,
+  "s_per_response": 24.092134876251222,
+  "macs_per_token": 30791,
+  "head_tables": false,
+  "blockers": []
+ },
+ "precision": "8-bit QAT"
+}

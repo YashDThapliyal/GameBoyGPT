@@ -2,39 +2,39 @@
  "V0": {
   "sameboy": {
    "frames": [
-    7065,
-    6431,
-    5823,
-    7065
+    7200,
+    5053,
+    5054,
+    5055
    ],
    "verdict": "SELFTEST PASS"
   },
   "pyboy": {
    "frames": [
-    7065,
-    6431,
-    5823,
-    7065
+    7200,
+    5053,
+    5054,
+    5055
    ],
    "verdict": "SELFTEST PASS"
   }
  },
- "V5Z": {
+ "V6T": {
   "sameboy": {
    "frames": [
-    714,
-    668,
-    625,
-    715
+    689,
+    525,
+    522,
+    523
    ],
    "verdict": "SELFTEST PASS"
   },
   "pyboy": {
    "frames": [
-    714,
-    668,
-    625,
-    715
+    689,
+    525,
+    522,
+    523
    ],
    "verdict": "SELFTEST PASS"
   }

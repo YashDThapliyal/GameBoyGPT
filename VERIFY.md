@@ -1,12 +1,12 @@
 # Verifying this release
 
-This repository claims that a transformer runs on an emulated original Game Boy's CPU, that its output matches an independent reference bit for bit, and that the optimized build is faster with identical tokens. Here is how to check each claim without trusting the author.
+This repository claims that a transformer runs on an emulated original Game Boy's CPU, writes a robot's dialogue there, matches an independent reference bit for bit, and runs the same way in a browser. Here is how to check each claim without trusting the author.
 
 ## Requirements
 
 - macOS on Apple Silicon is the only platform this was run on. Linux should work but is **untested**.
-- [RGBDS](https://rgbds.gbdev.io/) **v1.0.4** and [uv](https://docs.astral.sh/uv/). Other RGBDS versions may build working ROMs with different hashes.
-- A C compiler and network access, for `make second-emulator` (it clones and builds SameBoy at commit `ea667ad`).
+- [RGBDS](https://rgbds.gbdev.io/) **v1.0.4**, [uv](https://docs.astral.sh/uv/) and Node 22. Other RGBDS versions may build working ROMs with different hashes.
+- A C compiler and network access, for `make second-emulator` (it clones and builds SameBoy at commit `ea667ad`) and `npm install` (Playwright, and its Chromium if not already installed).
 
 ## One command
 
@@ -14,40 +14,37 @@ This repository claims that a transformer runs on an emulated original Game Boy'
 scripts/verify_release.sh
 ```
 
-It rebuilds all 11 variants from source, runs every test, checks that rebuilt ROMs equal `release/`, and runs the self-test ROM on SameBoy and PyBoy. It ends with `VERIFY OK` and stops at the first failure. Allow around half an hour, mostly the slow baseline running on two emulators.
+It rebuilds all 12 variants from source, runs every test, checks that rebuilt ROMs equal `release/`, runs the self-test ROM on SameBoy and PyBoy, and runs the browser test. It ends with `VERIFY OK` and stops at the first failure. It doesn't retrain or re-measure.
 
 ## Expected values
 
 | Artifact | SHA-256 |
 |---|---|
-| `generated/model.bin` | `dd7e1c8f5e293a267bbcab1b43603293f7461a8df338b5969e0a72582628ab69` |
-| `release/gameboygpt.gb` | `03db35f59af2c28fd42db7dbc09d5fafe0ba359a77730e2f39e67e92a19fd300` |
-| `release/gameboygpt_v0.gb` | `5743bb939284240b77f3e7a970694ab84b094f7676727e1c3e60827f07c7e2d8` |
+| `generated/model.bin` | `b1be530b1a529a8e9d203332c02ac431db4a4002490facfee8a941db49c9d988` |
+| `release/system_override.gb` | `2f19f24005f192f8b84f225a6eda454077b5b8fc2d720abc6cfc825bc3022e89` |
+| `release/system_override_v0.gb` | `a66be8ecae9d784c7ee44f6d006474a002860b7463957d7e13b88fa541538d02` |
 
 ## What to look at, by claim
 
 | Claim | Where it's checked | How to challenge it |
 |---|---|---|
-| Inference runs on the SM83 | `src/matvec.asm`, `src/attention.asm`, `src/model.asm`, `tests/test_generated_output.py` | Patch weights in the ROM and watch the text change: `test_output_changes_when_rom_weights_are_patched` |
-| No stored sentences | `test_rom_contains_real_weights_and_no_canned_narration` | Search the ROM yourself; words exist only as a vocabulary table |
-| Bit-exact arithmetic | `reference/fixed_point.py`, `tests/test_kernel_vectors.py`, `tests/test_model_parity.py` | Read the reference: plain Python integers, sharing no code with the trainer. Add your own vectors using `tests/kernel_harness.py` |
-| No host involvement | `src/selftest.asm`, `tools/second_emulator.py` | Run `build/V5Z/selftest.gb` in any DMG emulator and read the verdict on screen |
-| The timing is real | `tests/test_smoke.py`, `tools/benchmark.py` | `make benchmark` re-measures. Compare `reports/benchmark.csv` with on-screen frames at 70,224 T-cycles per frame |
-| Tokens match across builds | `token_match_baseline` in `reports/benchmark.csv` | `tests/test_benchmark_integrity.py` fails on any mismatch |
-| Quality numbers | `training/evaluate.py`, `reports/quality.json`, `reports/quality_heldout.json` | `make quality` and `make heldout` recompute them. Read `training/dataset.py` to judge how narrow the task is |
-| Story integrity | `reference/story.py`, `tests/test_story.py`, `tests/test_rom_game.py` | The graph tests search every reachable state. ROM tables are generated from the same file |
-| Training reproduces | `configs/release.yaml` | `make train`, then compare the blob hash. Byte equality was confirmed on one machine and may not hold across machines or PyTorch builds |
+| Dialogue is generated on the SM83 | `tests/test_neural_genuine.py` | Patch the weights in the ROM and the words change. The test does this to the head and to attention |
+| No stored sentences | `test_rom_holds_no_authored_sentences_only_a_vocabulary` | Search the ROM yourself. Fixed interface lines are in `src/ui.asm`; words and short phrases are in the vocabulary table |
+| Bit-exact arithmetic | `reference/fixed_point.py`, `tests/test_kernel_vectors.py`, `tests/test_model_parity.py` | The reference is plain Python integers, sharing no code with the trainer. Add your own vectors using `tests/kernel_harness.py` |
+| The game shows what the model generated | `tests/test_rom_chat.py` | Plays the ROM through its menu and keyboard, and compares prompt, tokens, RNG state and on-screen text with the reference |
+| Parser and memory are deterministic and match | `reference/conversation.py`, `tests/test_parser_rom.py` | Thousands of random inputs and long conversations |
+| No host involvement | `src/selftest.asm`, `tools/second_emulator.py` | Run `build/V6T/selftest.gb` in any DMG emulator and read the verdict on screen |
+| The browser runs the real ROM | `tests/web/e2e.mjs` | It compares tokens read from emulated RAM with the reference. No generation code exists in `web/js/`; read it, it's short |
+| The timing is real | `tests/test_smoke.py`, `tools/benchmark.py` | `make benchmark` re-measures. The self-test ROM's frame counts on SameBoy equal PyBoy's |
+| Tokens match across builds | `reports/benchmark.csv` | `tests/test_benchmark_integrity.py` fails on any mismatch |
+| Held-out quality | `training/evaluate.py`, `reports/evaluation.json` | `make evaluate`. Read `training/corpus.py` to judge how narrow the task is |
+| Memory is not learning | `src/convo.asm` | Weights are in ROM. Nothing can write to them |
+| v0.3.1 is preserved | `scripts/reproduce_v031.sh` | Rebuilds the old ROMs from the tag and compares hashes |
+| Training reproduces | `configs/release.yaml` | `make train`, then compare the blob hash. Byte equality isn't promised across machines or PyTorch builds |
 
 ## What this does not establish
 
-- **Physical hardware.** Everything here ran on emulators. The shipping build's SP-based weight stream is the part most likely to matter on real silicon. `V5` avoids it.
-- **PPU timing on every screen.** PyBoy's memory reads don't model PPU access locks, and SameBoy only runs the self-test ROM, not full gameplay.
-- **General language ability or creativity.** The plot and sentences are authored, and the model learned them, as `reference/story.py` and `training/dataset.py` show.
-- **Readability of the UI.** Only a person can judge this; tests check correctness, not clarity.
-
-## Also useful
-
-- `RESULTS.md`: all measurements, generated by `tools/compare.py`. Regenerate with `make report`.
-- `docs/NUMERICS.md`: the numeric contract the reference implements.
-- `docs/BENCHMARK_METHOD.md`: what's inside and outside each timing window.
-- Git tags: `baseline` is V0 as first measured, and `cp0`-`cp9` mark each phase. V0 can also be rebuilt from any later commit, since all variants share one source tree.
+- **Physical hardware.** Everything here ran on emulators. The SP weight stream and head tables are the parts most likely to matter on real silicon. Build V5 avoids both.
+- **PPU timing.** PyBoy's memory reads don't model PPU access locks. SameBoy runs only the self-test ROM, not the whole game. The VBlank code was reviewed by reading it, which is not a hardware test.
+- **General language ability.** The sentences are authored and the model recombines them. See [docs/EVALUATION.md](docs/EVALUATION.md).
+- **Whether it's funny or readable.** Only a person can judge that.

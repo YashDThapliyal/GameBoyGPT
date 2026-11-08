@@ -1,0 +1,41 @@
+{
+ "name": "d32_L2_k12",
+ "config": {
+  "d": 32,
+  "ffn": 64,
+  "layers": 2,
+  "k": 12
+ },
+ "params": 51364,
+ "vocab": 763,
+ "untrained_val_nll": 7.2522698893056505,
+ "uniform_nll": 6.637258031284457,
+ "val_nll": 0.49405396004221286,
+ "test_nll": 0.4936540183919025,
+ "generation": {
+  "valid": 0.9925,
+  "closed": 1.0,
+  "mean_tokens": 12.9925,
+  "unique": 0.96,
+  "novel_of_valid": 0.35768261964735515,
+  "fit_screen": 0.9675,
+  "samples": [
+   "IF YOU MUST. YES. NO. IT DOES NOT MATTER. YOU ARE VERY CONFUSING.",
+   "I ONLY KNOW ONE JOKE. IT IS ABOUT YOU. THAT IS INSULT NUMBER <NI>.",
+   "WELL, WELL. DO NOT THANK ME. FEAR ME.",
+   "AT LAST, A CORRECT OPINION. THAT IS PRAISE NUMBER <NP>.",
+   "CAREFUL. YOU WOULD NOT DARE. <NP> NICE WORDS. I AM COUNTING.",
+   "FIRST THIS SCREEN. THEN THE PLANET."
+  ]
+ },
+ "train_seconds": 2042.4782662391663,
+ "projection": {
+  "s_per_token": 1.1763663291931152,
+  "first_token_s": 3.2621207237243652,
+  "s_per_response": 17.3696939265728,
+  "macs_per_token": 25186,
+  "head_tables": true,
+  "blockers": []
+ },
+ "precision": "8-bit QAT"
+}

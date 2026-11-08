@@ -153,6 +153,7 @@ kbd { font: inherit; font-weight: 600; color: var(--ink); }
 .demo .panel h2 { margin-top: 14px; }
 .demo .tokens { min-height: 118px; }
 .demo .lede { margin-bottom: 4px; }
+.demo .demo-only { margin: 0; }
 .fullscreen .panel, .fullscreen .keys { display: none; }
 .fullscreen .bench { align-items: center; padding: 0; }
 

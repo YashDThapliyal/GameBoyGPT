@@ -147,7 +147,7 @@ def game_mode(version: str, model) -> dict:
     from chat_harness import action, boot, generated, next_page, pin, say
     rom = ROOT / "build" / version / "gameboygpt.gb"
     gb = boot(rom=rom)
-    gb.write("wStackBottom", [0xA5] * 0xF0)
+    gb.write("wStackBottom", [0xA5] * 0xC0)  # leaves the live frames at the top alone, even if a frame ended inside the ISR
     t = Timers(gb)
     t.on("ProfileTokenStart", "ProfileTokenEnd", "BuildPrompt")
     events = []
@@ -203,15 +203,16 @@ def main():
         existing = [r for r in existing if r["version"] != v] + rows
         db["variants"][v] = raw
         print(v, " ".join(f"{r['workload']}:{r['seconds_per_token']:.3f}s/tok,{r['seconds_per_response']:.1f}s,match={r['token_match_baseline']},ref={r['matches_reference']}" for r in rows if r["round"] == 0), flush=True)
-    for v in a.game:
-        db["game"][v] = game_mode(v, model)
-        g = db["game"][v]
-        print("game", v, {k: g[k] for k in ("seconds_per_token", "seconds_per_response", "first_token_s", "first_word_s", "mean_tokens", "stack_peak", "all_match_reference")}, flush=True)
     with open(csv_path, "w", newline="") as f:
         w = csv.DictWriter(f, CSV_FIELDS)
         w.writeheader()
         w.writerows(existing)
     raw_path.write_text(json.dumps(db, indent=1))
+    for v in a.game:
+        db["game"][v] = game_mode(v, model)
+        g = db["game"][v]
+        print("game", v, {k: g[k] for k in ("seconds_per_token", "seconds_per_response", "first_token_s", "first_word_s", "mean_tokens", "stack_peak", "all_match_reference")}, flush=True)
+        raw_path.write_text(json.dumps(db, indent=1))
 
 
 if __name__ == "__main__":

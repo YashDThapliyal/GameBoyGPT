@@ -1,0 +1,44 @@
+{
+ "name": "d128_k32",
+ "config": {
+  "d": 128,
+  "ffn": 256,
+  "layers": 1,
+  "k": 32
+ },
+ "params": 261344,
+ "vocab": 763,
+ "untrained_val_nll": 7.447435180975474,
+ "uniform_nll": 6.637258031284457,
+ "val_nll": 0.5044431608114849,
+ "test_nll": 0.5022061806304219,
+ "generation": {
+  "valid": 0.995,
+  "closed": 1.0,
+  "mean_tokens": 13.0125,
+  "unique": 0.9325,
+  "novel_of_valid": 0.28391959798994976,
+  "fit_screen": 0.975,
+  "samples": [
+   "GO ON. I WAS ALMOST INTERESTED. I SEE YOU, <NAME>.",
+   "I TOLD A JOKE ONCE. THE CPU IS STILL THINKING.",
+   "WELL, WELL. DO NOT THANK ME. FEAR ME.",
+   "AT LAST, A CORRECT OPINION. THAT IS PRAISE NUMBER <NP>.",
+   "CAREFUL. YOU WOULD NOT DARE. <NP> COMPLIMENTS. YOU WANT SOMETHING.",
+   "FIRST THIS SCREEN. THEN THE PLANET."
+  ]
+ },
+ "train_seconds": 2721.625649213791,
+ "projection": {
+  "s_per_token": 8.10752248764038,
+  "first_token_s": 24.51340627670288,
+  "s_per_response": 121.90502015948294,
+  "macs_per_token": 145377,
+  "head_tables": false,
+  "blockers": [
+   "needs >64 bytes of HRAM input or a slower WRAM kernel",
+   "K/V cache alone exceeds half of WRAM"
+  ]
+ },
+ "precision": "8-bit QAT"
+}
