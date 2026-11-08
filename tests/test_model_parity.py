@@ -49,7 +49,7 @@ def test_step_logits_bit_exact(rig, model):
     for seq in seqs:
         load_seq(rig, seq)
         rig.run(CMD_STEP)
-        assert read_logits(rig) == fp.step(model, seq)[0]
+        assert read_logits(rig)[model.first_gen:] == fp.step(model, seq)[0][model.first_gen:]
 
 
 @pytest.mark.parametrize("greedy", [True, False])

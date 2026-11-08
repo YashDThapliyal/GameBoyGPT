@@ -1,0 +1,4 @@
+# Isolated A/B: V0 plus K/V cache only.
+display: V0+KV CACHE
+layout: naive
+defines: [KV_CACHE]

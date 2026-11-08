@@ -27,10 +27,13 @@ def build_rom(name, cfg, test):
     cmd = [sys.executable, ROOT / "tools" / "rom_layout.py", "--layout", layout, "--outdir", gen]
     if cfg.get("biased"):
         cmd.append("--biased")
+    if cfg.get("tables"):
+        cmd += ["--tables", *cfg["tables"]]
     run(cmd)
     defs = []
     for d in cfg.get("defines", []):
         defs += ["-D", d]
+    defs += ["-D", f'VARIANT_NAME="{cfg.get("display", name)}"']
     if test:
         defs += ["-D", "TEST_ROM"]
     sources = sorted((ROOT / "src").glob("*.asm")) + [ROOT / "generated" / "assets.asm", gen / "weights.asm", gen / "luts.asm"]

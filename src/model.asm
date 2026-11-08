@@ -104,7 +104,12 @@ ForwardStep::
     ld a, 1
     ld [wMB_Phase], a
     ; V0: recompute every key/value. The last iteration leaves wE/wN for the current position.
+    ; KV_CACHE: start from the first position not cached; K,V of a position never change once computed.
+IF DEF(KV_CACHE)
+    ld a, [wCacheLen]
+ELSE
     xor a
+ENDC
 .kv:
     push af
     call ComputeKV
@@ -114,6 +119,9 @@ ForwardStep::
     cp [hl]
     jr nz, .kv
     ld [wAttnL], a
+IF DEF(KV_CACHE)
+    ld [wCacheLen], a
+ENDC
     ld a, 2
     ld [wMB_Phase], a
 BlockAfterKV::
@@ -172,6 +180,44 @@ PhFfn::
 PhOut::
     jp OutputLogits
 
+IF DEF(FAST_DOT)
+; OutputLogits: wN3 -> wLogits for generatable tokens only: the mask is fixed, so masked rows are never computed.
+OutputLogits::
+    ld hl, TOut
+    call LoadTensor
+    ld de, wN3
+    ld a, MODEL_D
+    call LoadXBiased
+    ld a, [wMvBank]
+    call BankSwitch
+    ld hl, DataOut + TOK_FIRST_GEN * MODEL_D
+    ld b, h
+    ld c, l
+    ld hl, wLogits + TOK_FIRST_GEN * 2
+    ld a, MODEL_VOCAB - TOK_FIRST_GEN
+    ld [wMvRows], a
+.row:
+    push hl
+    xor a
+    ldh [hAcc + 2], a
+    ld d, a
+    ld e, a
+    call DotW32
+    push bc
+    ld c, LOGIT_SHIFT
+    call RsAcc
+    pop bc
+    pop hl
+    ld a, e
+    ld [hl+], a
+    ld a, d
+    ld [hl+], a
+    ld a, [wMvRows]
+    dec a
+    ld [wMvRows], a
+    jr nz, .row
+    ret
+ELSE
 ; OutputLogits: wN3 -> wLogits. Vanilla computes every row, then the sampler applies the mask.
 OutputLogits::
     ld hl, TOut
@@ -198,6 +244,8 @@ OutputLogits::
     ld [wMvRows], a
     jr nz, .row
     ret
+
+ENDC
 
 ; ModelReset: invalidates per-event state before a new prompt.
 ModelReset::

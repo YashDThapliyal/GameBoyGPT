@@ -1,0 +1,6 @@
+# V5 = V4 + K/V cache across tokens (same RAM as V0: the buffer already existed).
+display: V5 KV CACHE
+layout: bank_aware
+biased: true
+tables: [qsq_table]
+defines: [BANK_SKIP, MUL_QSQ, FAST_DOT, ATTN_SPARSE, KV_CACHE]

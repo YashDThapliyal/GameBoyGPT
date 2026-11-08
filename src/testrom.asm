@@ -19,16 +19,17 @@ TestMain::
     ld [wMB_Greedy], a
     ld a, 1
     ld [wMB_State], a
-.wait:
+TestWaitLoop:
     ld a, [wMB_CmdDone]
     ld b, a
     ld a, [wMB_CmdSeq]
     cp b
-    jr z, .wait
+    jr z, TestWaitLoop
     call Dispatch
+TestDispatchEnd::
     ld a, [wMB_CmdSeq]
     ld [wMB_CmdDone], a
-    jr .wait
+    jr TestWaitLoop
 
 Dispatch:
     ld a, [wMB_Cmd]

@@ -1,0 +1,6 @@
+# V4 = V3 + position-wise attention aggregation with zero-weight skipping.
+display: V4 SPARSE ATTN
+layout: bank_aware
+biased: true
+tables: [qsq_table]
+defines: [BANK_SKIP, MUL_QSQ, FAST_DOT, ATTN_SPARSE]

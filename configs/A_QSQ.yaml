@@ -1,0 +1,5 @@
+# Isolated A/B: V0 plus quarter-square multiply only.
+display: V0+QSQ
+layout: naive
+tables: [qsq_table]
+defines: [MUL_QSQ]

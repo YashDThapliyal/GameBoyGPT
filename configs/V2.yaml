@@ -1,0 +1,5 @@
+# V2 = V1 + quarter-square multiply (drop-in MulS8 replacement).
+display: V2 QSQ MULTIPLY
+layout: bank_aware
+tables: [qsq_table]
+defines: [BANK_SKIP, MUL_QSQ]

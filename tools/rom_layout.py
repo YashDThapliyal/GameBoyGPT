@@ -33,6 +33,20 @@ def luts() -> str:
                       'SECTION "recip_lut", ROM0, ALIGN[8]', "RecipLut::", _db(fp.RECIP_LUT), ""])
 
 
+def qsq_table() -> str:
+    """Quarter squares q(n)=floor(n^2/4). Pages: [q(i-256) lo, q(i) lo, q(i-256) hi, q(i) hi] for i in 0..255."""
+    neg = [((i - 256) ** 2) // 4 for i in range(256)]
+    pos = [(i ** 2) // 4 for i in range(256)]
+    return "\n".join(['SECTION "qsq", ROM0, ALIGN[8]', "QTab::", _db(v & 255 for v in neg), _db(v & 255 for v in pos),
+                      _db(v >> 8 for v in neg), _db(v >> 8 for v in pos), ""])
+
+
+def nibble_table() -> str:
+    """Products |a|*n for |a| in 0..127, n in 0..15: 2 KiB low bytes then 2 KiB high bytes."""
+    vals = [a * n for a in range(128) for n in range(16)]
+    return "\n".join(['SECTION "nib", ROM0, ALIGN[8]', "NibTab::", _db(v & 255 for v in vals), _db(v >> 8 for v in vals), ""])
+
+
 def words() -> str:
     out = ['SECTION "words", ROM0', "WordPtrs::"]
     gen = ds.VOCAB[ds.FIRST_GEN:]
@@ -56,7 +70,7 @@ def weights(m, layout: str, biased: bool) -> str:
             out.append(f'SECTION "w_{name}", ROMX')
         out.append(f"Data{lab}::")
         for row in t:
-            out.append(_db((v + 128) if biased else v for v in row))
+            out.append(_db((v + 128) if biased and name.startswith("w_") else v for v in row))
         table.append(f"T{lab}:: db BANK(Data{lab})\n    dw Data{lab}\n    db {len(t)}, {len(t[0])}, {shift}")
     return "\n".join(out + table) + "\n"
 
@@ -80,12 +94,14 @@ def main() -> None:
     ap.add_argument("--layout", default="naive", choices=["naive", "bank_aware"])
     ap.add_argument("--biased", action="store_true")
     ap.add_argument("--outdir", required=True)
+    ap.add_argument("--tables", nargs="*", default=[])
     a = ap.parse_args()
     m = from_blob(Path(a.blob).read_bytes())
     d = Path(a.outdir)
     d.mkdir(parents=True, exist_ok=True)
     (d / "weights.asm").write_text(weights(m, a.layout, a.biased))
-    (d / "luts.asm").write_text(luts() + words())
+    extra = ("qsq_table" in a.tables and qsq_table() or "") + ("nibble" in a.tables and nibble_table() or "")
+    (d / "luts.asm").write_text(luts() + words() + extra)
     (d / "model_constants.inc").write_text(constants(m))
 
 

@@ -1,3 +1,4 @@
 # V0 vanilla baseline: shift-add multiply, full K/V recompute each token, per-row bank select, naive layout.
+display: V0 VANILLA
 layout: naive
 defines: []

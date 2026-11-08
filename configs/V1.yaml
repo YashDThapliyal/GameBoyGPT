@@ -1,0 +1,4 @@
+# V1 = V0 + bank-aware layout: all tensors in one bank, redundant bank writes skipped.
+display: V1 BANK LAYOUT
+layout: bank_aware
+defines: [BANK_SKIP]

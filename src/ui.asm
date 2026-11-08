@@ -728,10 +728,6 @@ PrintDec16:
     ld [hl+], a
     ret
 
-IF DEF(OPTIMIZED_NAME)
-StrVariant: db OPTIMIZED_NAME, 0
-ELSE
-StrVariant: db "V0 VANILLA KERNELS", 0
-ENDC
+StrVariant: db VARIANT_NAME, 0
 
 ENDC

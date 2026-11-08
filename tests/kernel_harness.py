@@ -26,11 +26,13 @@ class KernelRig:
         marks = {}
         seq = (gb.read1("wMB_CmdSeq") + 1) & 0xFF
         bank, addr = gb.syms["Dispatch"]
+        ebank, eaddr = gb.syms["TestDispatchEnd"]
         gb.pyboy.hook_register(bank, addr, lambda _: marks.setdefault("start", gb.cycles()), None)
+        gb.pyboy.hook_register(ebank, eaddr, lambda _: marks.setdefault("end", gb.cycles()), None)
         gb.write("wMB_CmdSeq", [seq])
         gb.wait_for(lambda: gb.read1("wMB_CmdDone") == seq, max_frames)
-        marks["end"] = gb.cycles()
         gb.pyboy.hook_deregister(bank, addr)
+        gb.pyboy.hook_deregister(ebank, eaddr)
         return marks["end"] - marks["start"]
 
     def stop(self):

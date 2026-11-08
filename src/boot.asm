@@ -1,6 +1,9 @@
 ; boot.asm - vectors, cartridge header, hardware init, entry dispatch.
 INCLUDE "constants.inc"
 
+SECTION "vec_rst0", ROM0[$00]
+    jp hl                   ; rst $00 = call hl
+
 SECTION "vec_vblank", ROM0[$40]
     jp VBlankIsr
 SECTION "vec_stat", ROM0[$48]

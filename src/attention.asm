@@ -36,6 +36,40 @@ AttendHead::
     ld [wAttnOut], a
     ld a, b
     ld [wAttnOut + 1], a
+IF DEF(FAST_DOT)
+    ; scores via the fused kernel: q is biased into the HRAM slots once
+    ld a, MODEL_HEAD_DIM
+    call LoadXBiased
+    xor a
+.fscore:
+    push af
+    ld hl, wKCache
+    call KVRowPtr
+    ld a, [wAttnHead]
+    ld e, a
+    ld d, 0
+    add hl, de
+    ld b, h
+    ld c, l
+    xor a
+    ldh [hAcc + 2], a
+    ld d, a
+    ld e, a
+    call DotRaw16
+    ld c, ATTN_SHIFT
+    call RequantAcc
+    ld c, a
+    pop af
+    ld hl, wScore
+    ld e, a
+    ld d, 0
+    add hl, de
+    ld [hl], c
+    inc a
+    ld hl, wAttnL
+    cp [hl]
+    jr nz, .fscore
+ELSE
     ; scores
     xor a
 .score:
@@ -65,7 +99,11 @@ AttendHead::
     ld hl, wAttnL
     cp [hl]
     jr nz, .score
+ENDC
     call ScoresToWeights
+IF DEF(ATTN_SPARSE)
+    jp AggregateSparse
+ENDC
     ; value aggregation, one output element at a time
     ld b, 0              ; b = element index
 .elem:
@@ -221,3 +259,139 @@ ScoresToWeights::
     dec b
     jr nz, .norm
     ret
+
+IF DEF(ATTN_SPARSE)
+SECTION "attn_sparse_vars", WRAM0, ALIGN[8]
+wAcc16: ds MODEL_HEAD_DIM * 2
+
+SECTION "attn_sparse_hram", HRAM
+hWb:    ds 1                  ; biased weight of the current position
+hLoopJ: ds 1
+hLoopI: ds 1
+
+SECTION "attn_sparse", ROM0
+; AggregateSparse: position-wise sum into 16-bit accumulators, skipping weights that rounded to zero.
+; Result is identical to the column-wise form: sum w' stays below 2^15 / 127, see docs/NUMERICS.md.
+AggregateSparse:
+    ld hl, wAcc16
+    ld b, MODEL_HEAD_DIM * 2
+    xor a
+.clr:
+    ld [hl+], a
+    dec b
+    jr nz, .clr
+    ldh [hLoopJ], a
+.pos:
+    ldh a, [hLoopJ]
+    ld hl, wWeight
+    add l
+    ld l, a
+    jr nc, .ncw
+    inc h
+.ncw:
+    ld a, [hl]
+    or a
+    jr z, .nextpos
+    xor $80
+    ldh [hWb], a
+    ldh a, [hLoopJ]
+    ld hl, wVCache
+    call KVRowPtr
+    ld a, [wAttnHead]
+    ld e, a
+    ld d, 0
+    add hl, de
+    ld d, h
+    ld e, l              ; de -> V[j][head]
+    ld bc, wAcc16
+    ld a, MODEL_HEAD_DIM
+    ldh [hLoopI], a
+.elem:
+    ; acc += q(v'+w') - q(v'-w'), two in-place 16-bit updates
+    ldh a, [hWb]
+    ld l, a
+    ld a, [de]
+    xor $80
+    add l
+    ld l, a
+    ld a, HIGH(QTab)
+    adc 0
+    ld h, a
+    ld a, [bc]
+    add [hl]
+    ld [bc], a
+    inc c
+    inc h
+    inc h
+    ld a, [bc]
+    adc [hl]
+    ld [bc], a
+    dec c
+    ldh a, [hWb]
+    ld l, a
+    ld a, [de]
+    xor $80
+    sub l
+    ld l, a
+    ld a, HIGH(QTab) + 1
+    sbc 0
+    ld h, a
+    ld a, [bc]
+    sub [hl]
+    ld [bc], a
+    inc c
+    inc h
+    inc h
+    ld a, [bc]
+    sbc [hl]
+    ld [bc], a
+    inc c
+    inc de
+    ldh a, [hLoopI]
+    dec a
+    ldh [hLoopI], a
+    jr nz, .elem
+.nextpos:
+    ldh a, [hLoopJ]
+    inc a
+    ldh [hLoopJ], a
+    ld hl, wAttnL
+    cp [hl]
+    jr nz, .pos
+    ; requantize each accumulator: (acc + 64) >> 7 then sat8, shared helpers keep the semantics single-sourced
+    ld hl, wAcc16
+    ld a, MODEL_HEAD_DIM
+    ldh [hLoopI], a
+.out:
+    ld a, [hl+]
+    ld e, a
+    ld a, [hl+]
+    ld d, a
+    push hl
+    ld a, e
+    ldh [hAcc], a
+    ld a, d
+    ldh [hAcc + 1], a
+    rlca
+    sbc a
+    ldh [hAcc + 2], a
+    ld c, W_SHIFT
+    call RequantAcc
+    ld c, a
+    ld hl, wAttnOut
+    ld a, [hl+]
+    ld h, [hl]
+    ld l, a
+    ld [hl], c
+    inc hl
+    ld a, l
+    ld [wAttnOut], a
+    ld a, h
+    ld [wAttnOut + 1], a
+    pop hl
+    ldh a, [hLoopI]
+    dec a
+    ldh [hLoopI], a
+    jr nz, .out
+    ret
+ENDC

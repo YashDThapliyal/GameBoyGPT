@@ -1,0 +1,5 @@
+# Isolated A/B: V0 plus 4-bit nibble-table multiply only (alternative to quarter squares).
+display: V0+NIBBLE
+layout: naive
+tables: [nibble]
+defines: [MUL_NIBBLE]

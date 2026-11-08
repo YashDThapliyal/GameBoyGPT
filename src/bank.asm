@@ -9,6 +9,13 @@ SECTION "bank_code", ROM0
 ; Writing the register when already selected is skipped only by callers that want that: the
 ; vanilla baseline deliberately keeps this plain, unconditional behaviour.
 BankSwitch::
+IF DEF(BANK_SKIP)
+    push hl
+    ld hl, hCurBank
+    cp [hl]
+    pop hl
+    ret z
+ENDC
     ldh [hCurBank], a
     ld [MBC5_ROMB0], a
     push hl

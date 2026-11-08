@@ -1,0 +1,6 @@
+# V3 = V2 + fused unrolled dot kernels (x in HRAM, biased weights) and pruning of masked output rows.
+display: V3 FUSED DOT
+layout: bank_aware
+biased: true
+tables: [qsq_table]
+defines: [BANK_SKIP, MUL_QSQ, FAST_DOT]
