@@ -9,3 +9,5 @@ checkpoints/two_layer*
 *.ram
 *.state
 .third_party/
+checkpoints/repro_check*
+checkpoints/generalization*
