@@ -12,14 +12,14 @@ SHORT = DEMO / "system_override_short.mp4"
 ART = ROOT / "build" / "demo_captions"
 H = 720
 END_CARD_SEC = 2.5
-BLACK_BEAT_SEC = 0.9  # how long the fade lasts on screen, right before the scare
+BLACK_BEAT_SEC = 1.4  # how long the fade lasts on screen, right before the scare
 # From this logged moment until the next one, at this speed, with this caption.
 BEATS = {
-    "power": (6, None), "powered": (6, None), "typeName": (1, "name"), "waitName": (5, "name"), "readName": (1, None),
-    "toSmash": (3, None), "typeSmash": (1, None), "waitSmash": (5, None), "coverOff": (1, None), "chipLive": (3, "inside"), "readSmash": (1, "inside"),
-    "coverOn": (1, None), "toFlip0": (3, "off"), "flip0": (1, "off"), "waitFlip0": (5, "off"), "readFlip0": (1, "off"),
-    "toFlip1": (3, None), "flip1": (1, None), "waitFlip1": (5, None), "readFlip1": (1, None),
-    "toFlip2": (3, None), "flip2": (1, None), "waitFlip2": (5, None), "readFlip2": (1, None),
+    "power": (5, None), "powered": (5, None), "typeName": (1, "name"), "waitName": (3, "name"), "readName": (1, None),
+    "toSmash": (2, None), "typeSmash": (1, None), "waitSmash": (3, None), "coverOff": (1, None), "chipLive": (1, "inside"), "readSmash": (1, "inside"),
+    "coverOn": (1, None), "toFlip0": (2, "off"), "flip0": (1, "off"), "waitFlip0": (3, "off"), "readFlip0": (1, "off"),
+    "toFlip1": (2, None), "flip1": (1, None), "waitFlip1": (3, None), "readFlip1": (1, None),
+    "toFlip2": (2, None), "flip2": (1, None), "waitFlip2": (3, None), "readFlip2": (1, None),
     "plug": (1, None), "fade": (None, None), "takeover": (1, None),
 }
 

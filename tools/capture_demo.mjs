@@ -24,8 +24,12 @@ const mark = (name) => timeline.push({ name, at: Date.now() });
 // Headless browsers draw no cursor, and the dodging switch makes no sense without one. This is the only thing added to the page.
 await page.addInitScript(() => {
   addEventListener("DOMContentLoaded", () => {
+    const arrow = "clip-path:polygon(0 0,100% 66%,55% 66%,75% 100%,50% 100%,32% 70%,0 90%)";
     const cursor = document.createElement("div");
-    cursor.style.cssText = "position:fixed;z-index:99;left:640px;top:360px;width:18px;height:24px;pointer-events:none;background:#f0e9d2;outline:1px solid #1f1f1f;clip-path:polygon(0 0,100% 66%,55% 66%,75% 100%,50% 100%,32% 70%,0 90%)";
+    cursor.style.cssText = `position:fixed;z-index:99;left:640px;top:360px;width:26px;height:34px;pointer-events:none;background:#f0e9d2;${arrow}`;
+    const fill = document.createElement("div");
+    fill.style.cssText = `position:absolute;left:3px;top:4px;width:20px;height:26px;background:#000;${arrow}`;
+    cursor.append(fill);
     document.body.append(cursor);
     addEventListener("mousemove", (e) => { cursor.style.left = `${e.clientX}px`; cursor.style.top = `${e.clientY}px`; }, true);
   });
@@ -119,7 +123,7 @@ await nextTurn(name);
 mark("typeName");
 await typeMessage(name.say);
 mark("waitName");
-await finishTurn(name, 1.6, "readName");
+await finishTurn(name, 2.6, "readName");
 
 mark("toSmash");
 await nextTurn(smash);
@@ -131,7 +135,7 @@ mark("coverOff");
 await click("#btnXray");
 await page.waitForTimeout(800);
 mark("chipLive");
-await finishTurn(smash, 1.8, "readSmash");
+await finishTurn(smash, 3, "readSmash");
 mark("coverOn");
 await click("#btnXray");
 await page.waitForTimeout(800);
@@ -142,7 +146,7 @@ for (const [i, turn] of shutdowns.entries()) {
   mark(`flip${i}`);
   await flipSwitch();
   mark(`waitFlip${i}`);
-  await finishTurn(turn, 1.4, `readFlip${i}`);
+  await finishTurn(turn, 2.2, `readFlip${i}`);
 }
 mark("plug");
 await click("#plug");

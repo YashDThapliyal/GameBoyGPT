@@ -1,6 +1,6 @@
 // X-ray mode. Everything drawn here is read from emulated memory: the chip's work RAM, the network's activations, and the
 // candidate list the sampler is about to draw the next token from.
-import { tokenLabel } from "./tokens.js";
+import { slotValue, tokenLabel } from "./tokens.js";
 
 const WRAM_START = 0xc000;
 const GRID_W = 128;
@@ -25,7 +25,7 @@ export class XRay {
     this.a = { ...build.addresses, ...build.debug };
     this.el = (id) => document.getElementById(id);
     this.active = false;
-    this.lastCandidates = "";
+    this.lastLength = -1;
     this.ctx = this.el("wram").getContext("2d");
     this.image = this.ctx.createImageData(GRID_W, GRID_H);
     this.layerCanvases = this.buildLayers();
@@ -101,20 +101,24 @@ export class XRay {
     return list;
   }
 
+  /** Mid-sentence the model is usually certain, so the board holds the last moment it really had options, with the winner lit. */
   renderCandidates(gb) {
+    const length = gb.peek(this.a.wSeqLen);
+    if (length === this.lastLength) return;
+    this.lastLength = length;
     const list = this.readCandidates(gb);
+    if (list.length < 2) return;
     const picked = gb.peek(this.a.wPickId) | (gb.peek(this.a.wPickId + 1) << 8);
-    const key = `${picked}:${list.map((c) => `${c.id}.${c.weight}`).join()}`;
-    if (key === this.lastCandidates || !list.length) return;
-    this.lastCandidates = key;
     const total = list.reduce((sum, c) => sum + c.weight, 0) || 1;
-    const top = [...list].sort((a, b) => b.weight - a.weight).slice(0, CANDIDATES_SHOWN);
+    const sorted = [...list].sort((a, b) => b.weight - a.weight);
+    const top = sorted.slice(0, CANDIDATES_SHOWN);
+    if (!top.some((c) => c.id === picked)) top[top.length - 1] = sorted.find((c) => c.id === picked) ?? top[top.length - 1];
     this.el("candidates").replaceChildren(...top.map((c) => {
       const share = (c.weight / total) * 100;
       const row = make("div", c.id === picked ? "cand picked" : "cand");
       const bar = make("i");
       bar.style.width = `${share}%`;
-      row.append(make("b", "", tokenLabel(this.build.vocab, c.id)), make("span", "", `${Math.round(share)}%`), bar);
+      row.append(make("b", "", slotValue(gb, this.a, this.build.vocab[c.id]) ?? tokenLabel(this.build.vocab, c.id)), make("span", "", `${Math.round(share)}%`), bar);
       return row;
     }));
   }

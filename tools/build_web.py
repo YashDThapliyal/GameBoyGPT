@@ -10,7 +10,7 @@ from run_emulator import load_symbols
 from training import dialogue as dl
 
 WATCHED = ("wMenuSel", "wMB_State", "wMB_Mood", "wMB_Emotion", "wMB_Responses", "wMB_TotalTokens", "wLastEventFrames", "wLastEventTokens", "wSeq", "wSeqLen", "wInput", "wInputLen",
-           "wShutdowns", "wName", "wLike", "wWord", "wInsults", "wPraises", "wCandId", "wCandW", "wCandN", "wPickId", "wE", "wQ", "wA", "wF", "wX2", "wZ")
+           "wRiseY", "wShutdowns", "wName", "wLike", "wWord", "wInsults", "wPraises", "wCandId", "wCandW", "wCandN", "wPickId", "wE", "wQ", "wA", "wF", "wX2", "wZ")
 RACE_WATCHED = ("wMenuSel", "wMB_State", "wSeq", "wSeqLen", "wMB_ForceSeed", "wNarrRng")
 
 

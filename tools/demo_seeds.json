@@ -1,7 +1,7 @@
 {
  "turns": [
   {
-   "say": "MY NAME IS ALEX",
+   "say": "MY NAME IS YASH",
    "seed": 2,
    "tokens": [
     0,
@@ -25,7 +25,7 @@
     73,
     64
    ],
-   "reply": "ALEX. NOTED. YOU CANNOT TAKE THAT BACK."
+   "reply": "YASH. NOTED. YOU CANNOT TAKE THAT BACK."
   },
   {
    "say": "I WILL SMASH YOU",

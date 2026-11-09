@@ -63,7 +63,14 @@ export class Fight {
       this.followPowerDown(gb);
       return;
     }
-    if (this.phase === "dying") this.phase = "none";
+    if (this.phase === "dying") {
+      // The ROM moved on before the robot was seen fully up. The scare still has to land.
+      if (this.robotHidden) {
+        this.startTakeover(gb);
+        return;
+      }
+      this.phase = "none";
+    }
     this.setLevel(Math.min(gb.peek(this.a.wShutdowns), STAGES.length - 1));
     this.el("plug").hidden = !(state === READ && this.level === STAGES.length - 1);
   }
@@ -77,7 +84,8 @@ export class Fight {
     }
     const robot = gb.peek(this.a.wRobotOn);
     if (!robot) this.robotHidden = true;
-    else if (this.robotHidden) this.startTakeover(gb);
+    // Waits until the robot has finished rising, so the whole face hits at once.
+    else if (this.robotHidden && gb.peek(this.a.wRiseY) === 0) this.startTakeover(gb);
   }
 
   setLevel(level) {

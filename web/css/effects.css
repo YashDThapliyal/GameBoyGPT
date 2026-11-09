@@ -25,16 +25,16 @@
 .layers { position: absolute; left: calc(var(--p) * 78); right: calc(var(--p) * 9); top: calc(var(--p) * 177); display: flex; flex-direction: column; gap: calc(var(--u) * 1); }
 .layer { display: grid; grid-template-columns: calc(var(--u) * 86) 1fr; gap: calc(var(--u) * 4); align-items: center; color: var(--cream); font: 400 calc(var(--u) * 15)/1 var(--body); }
 .layer canvas { display: block; width: 100%; height: calc(var(--u) * 9); image-rendering: pixelated; background: var(--ink); }
-.choosing { position: absolute; left: calc(var(--p) * 10); right: calc(var(--p) * 9); top: calc(var(--p) * 222); }
-.choosing h2 { margin: 0 0 calc(var(--u) * 5); font-size: calc(var(--u) * 9); line-height: 1; color: var(--lcd); }
-.candidates { display: flex; flex-direction: column; gap: calc(var(--u) * 2); }
+.choosing { position: absolute; left: calc(var(--p) * 10); right: calc(var(--p) * 9); top: calc(var(--p) * 228); }
+.choosing h2 { margin: 0 0 calc(var(--u) * 4); font-size: calc(var(--u) * 9); line-height: 1; color: var(--lcd); }
+.candidates { display: flex; flex-direction: column; gap: var(--u); }
 .candidates .note { color: var(--cream-soft); font-size: calc(var(--u) * 19); }
 .cand { display: grid; grid-template-columns: 1fr auto; column-gap: calc(var(--u) * 8); color: var(--cream); font: 400 calc(var(--u) * 19)/1 var(--body); }
 .cand b { font-weight: 400; overflow: hidden; white-space: nowrap; text-overflow: clip; }
 .cand i { grid-column: 1 / -1; display: block; height: calc(var(--u) * 3); min-width: var(--p); background: var(--lcd-mid); }
-.cand.picked { color: var(--lcd); }
-.cand.picked i { background: var(--lcd); }
-.timing { position: absolute; left: calc(var(--p) * 10); right: calc(var(--p) * 30); top: calc(var(--p) * 296); }
+.cand.picked { color: var(--ink); background: var(--lcd); padding: 0 var(--p); margin: 0 calc(var(--p) * -1); }
+.cand.picked i { background: var(--ink); }
+.timing { position: absolute; left: calc(var(--p) * 10); right: calc(var(--p) * 30); top: calc(var(--p) * 299); }
 .timing p { margin: var(--u) 0 0; color: var(--cream-soft); font: 400 calc(var(--u) * 15)/1 var(--body); }
 .strip { display: flex; gap: 1px; height: calc(var(--u) * 7); background: var(--ink); }
 .strip i { flex: 1 1 0; min-width: 1px; background: var(--lcd-mid); }

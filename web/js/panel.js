@@ -1,5 +1,5 @@
 // The words around the console. Live values come from emulated memory, so nothing here can disagree with the ROM.
-import { PUNCTUATION, slotLabel, isControl, tokenLabel } from "./tokens.js";
+import { PUNCTUATION, slotLabel, slotValue, isControl, tokenLabel } from "./tokens.js";
 
 const STATES = ["Booting", "Introducing itself", "Your turn", "On its keyboard", "Reading", "Writing", "Your turn", "Showing its internals", "Powering down"];
 const READING = 4;
@@ -7,7 +7,6 @@ const WRITING = 5;
 const REPLY = 6;
 const MENU = 2;
 const FRAME_SEC = 70224 / 4194304;
-const SLOT_BYTES = 9;
 
 const OFF_COACH = "Flip the switch, or type something and send it.";
 const COACH = [
@@ -144,18 +143,6 @@ export class Panel {
     this.el("heardShort").textContent = `${heard}${about}, mood ${name(PROMPT_AT.mood).toLowerCase()}, you are its ${name(PROMPT_AT.relation).toLowerCase()}`;
   }
 
-  /** What a slot token really printed: the ROM fills these in from its save as it draws them. */
-  slotValue(gb, word) {
-    const a = { ...this.build.addresses, ...this.build.debug };
-    const text = (addr) => {
-      let out = "";
-      for (let i = 0, c = gb.peek(addr); c && i < SLOT_BYTES; c = gb.peek(addr + ++i)) out += String.fromCharCode(c);
-      return out;
-    };
-    const values = { "<NAME>": () => text(a.wName), "<LIKE>": () => text(a.wLike), "<WORD>": () => text(a.wWord), "<NI>": () => String(gb.peek(a.wInsults)), "<NP>": () => String(gb.peek(a.wPraises)), "<NT>": () => String(gb.peek(a.wTurns)) };
-    return (values[word]?.() || null)?.toLowerCase() ?? null;
-  }
-
   renderTokens(gb, len, tokenAt) {
     const frag = document.createDocumentFragment();
     for (let i = this.build.promptLen; i < len; i++) {
@@ -176,7 +163,7 @@ export class Panel {
   tokenChip(gb, id) {
     const word = this.build.vocab[id] ?? "?";
     const chip = make("span", isControl(word) ? "tok ctl" : PUNCTUATION.test(word) ? "tok punct" : slotLabel(word) ? "tok slot" : "tok");
-    chip.append(make("b", "", this.slotValue(gb, word) ?? tokenLabel(this.build.vocab, id)), make("i", "", String(id)));
+    chip.append(make("b", "", slotValue(gb, { ...this.build.addresses, ...this.build.debug }, word) ?? tokenLabel(this.build.vocab, id)), make("i", "", String(id)));
     return chip;
   }
 }

@@ -34,7 +34,7 @@
         <figure class="ram"><canvas id="wram" width="128" height="64" aria-hidden="true"></canvas><figcaption>8 KB work RAM</figcaption></figure>
         <div class="layers" id="layers"></div>
         <div class="choosing">
-          <h2>Next word</h2>
+          <h2>Its last real choice</h2>
           <div class="candidates" id="candidates"><p class="note">Send it something.</p></div>
         </div>
         <div class="timing">
@@ -95,7 +95,7 @@
     <div class="quiet">
       <button id="btnXray" type="button" aria-pressed="false">See inside the chip</button>
     </div>
-    <p class="case-note" id="caseNote" hidden>The dots are the chip's real memory, one per byte, and the odds are the ones it's about to roll. Close the case to get the buttons back.</p>
+    <p class="case-note" id="caseNote" hidden>The dots are the chip's real memory, one per byte. The list is the last time it had real options, and the lit one won. Close the case to get the buttons back.</p>
     <p class="sr-only" id="spoken" aria-live="polite"></p>
 
     <div id="tokens" hidden></div>
