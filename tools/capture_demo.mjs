@@ -148,7 +148,6 @@ const start = Math.max(0, rawSeconds - seconds - 0.1);
 const openStart = start + takeoverAt + COLD_OPEN.after;
 const graph = `[0:v]trim=start=${openStart}:duration=${COLD_OPEN.length},setpts=PTS-STARTPTS[open];[0:v]trim=start=${start},setpts=PTS-STARTPTS[main];[open][main]concat=n=2:v=1[out]`;
 ffmpeg(["-i", raw, "-filter_complex", graph, "-map", "[out]", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "20", "-movflags", "+faststart", `${OUT}/system_override_demo.mp4`]);
-ffmpeg(["-i", `${OUT}/system_override_demo.mp4`, "-vf", "fps=10,scale=480:-1:flags=neighbor,split[a][b];[a]palettegen=max_colors=32[p];[b][p]paletteuse=dither=none", `${OUT}/system_override_demo.gif`]);
 rmSync(raw);
 writeFileSync(`${OUT}/demo_tokens.json`, JSON.stringify({ seconds, coldOpenSeconds: COLD_OPEN.length, turns: turns.map((t) => ({ say: t.say, reply: t.reply, tokens: t.tokens })) }));
 console.log(JSON.stringify({ seconds, takeoverAt, replies: turns.map((t) => t.reply) }));

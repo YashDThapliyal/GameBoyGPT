@@ -13,4 +13,6 @@
 
 The takeover's page effects and big lines are scripted, and the screen says so. They use the ROM's real sprite and real save.
 
-To rerecord: `make demo`.
+`docs/demo/system_override_short.mp4` is the same footage cut for sharing by `tools/make_short_demo.py`. Waits play 8 times faster with a label on screen. A wait is any frame where the ROM shows THINKING ON THE CPU, plus the intro and the power-down fade. Replies landing, the cover coming off and the takeover stay at real speed.
+
+To rerecord: `make demo`, then `make demo-short`.
