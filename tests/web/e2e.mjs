@@ -63,6 +63,7 @@ const pinSeed = (page, seed) => page.evaluate((s) => {
   await check("page loads powered off, with build facts from the ROM's metadata", async () => {
     assert.equal(await page.locator("#lvState").innerText(), "Powered off");
     assert.equal(await page.locator("nav a[aria-current=page]").innerText(), "Play");
+    assert.equal(await page.locator("#visits").isVisible(), false, "only the live site counts visits");
     assert.equal(await page.locator("h1").innerText(), "A TRANSFORMER ON A 1989 GAME BOY");
   });
   await check("the power switch boots the ROM", async () => {

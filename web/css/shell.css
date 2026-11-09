@@ -144,6 +144,6 @@ kbd { font: inherit; color: var(--cream); }
   .talk { padding-bottom: 12px; }
   .coach { display: none; }
   .limits { font-size: 18px; line-height: 1.1; text-align: center; }
-  .heard-line { margin: 0; font-size: 19px; line-height: 1.1; text-align: center; }
+  .heard-line { margin: 0; font-size: 16px; line-height: 1.1; text-align: center; }
   .heard-line:not([hidden]) ~ .limits { display: none; }
 }

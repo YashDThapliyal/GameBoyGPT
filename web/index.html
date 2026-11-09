@@ -14,6 +14,7 @@
 <body>
 <header class="top">
   <a class="logo" href="index.html"><img src="assets/robot.png" alt="" width="32" height="32">GameBoyGPT</a>
+  <span class="visits" id="visits" hidden></span>
   <nav aria-label="Pages">
     <a href="index.html" aria-current="page">Play</a>
     <a href="about.html">About</a>
@@ -24,7 +25,7 @@
 <main class="play">
   <div class="intro">
     <h1 id="title">A TRANSFORMER ON A 1989 GAME BOY</h1>
-    <p id="lede">Talk to a tiny AI that actually runs on an 8-bit CPU in assembly.</p>
+    <p id="lede">Talk to a tiny AI that actually runs on an 8-bit CPU. Written in assembly :)</p>
   </div>
 
   <div class="stage">
@@ -133,5 +134,6 @@
   <small>A scripted page effect, built from its real save file and real sprite. Replies on the console still come from the model.</small>
 </div>
 <script type="module" src="js/main.js"></script>
+<script type="module" src="js/visits.js"></script>
 </body>
 </html>

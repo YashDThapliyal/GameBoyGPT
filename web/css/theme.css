@@ -63,6 +63,8 @@ h1, h2, h3 { font-family: var(--display); font-weight: 400; }
 .top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 24px; width: 100%; max-width: 1240px; margin: 0 auto; padding: 14px 24px; }
 .logo { display: flex; align-items: center; gap: 12px; font: 400 14px/1 var(--display); text-decoration: none; }
 .logo img { display: block; width: 32px; height: 32px; image-rendering: pixelated; }
+.visits { margin-right: auto; color: var(--lcd); font-size: 20px; line-height: 1; white-space: nowrap; }
+.visits[hidden] { display: none; }
 .top nav { display: flex; gap: 6px; }
 .top nav a { padding: 8px 12px; font: 400 11px/1 var(--display); text-decoration: none; color: var(--cream-soft); }
 .top nav a:hover { color: var(--cream); }
@@ -77,7 +79,11 @@ h1, h2, h3 { font-family: var(--display); font-weight: 400; }
 .menu-button:disabled { background: var(--lcd-mid); cursor: default; }
 .menu-button.hot { background: var(--cream); }
 
+@media (max-width: 349px) {
+  .visits { display: none; }
+}
 @media (max-width: 620px) {
+  .visits { font-size: 16px; }
   .top { padding: 12px 16px; justify-content: center; }
   .logo { font-size: 12px; }
   .top nav a { padding: 7px 8px; font-size: 10px; }
