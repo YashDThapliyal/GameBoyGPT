@@ -1,5 +1,5 @@
 // Records a real session of the site. The ROM, replies and page are real and run at real speed. Only the seeds are chosen,
-// and this script fails if the ROM's tokens differ from the reference. The video opens with two seconds of the ending. Run by `make demo`.
+// and this script fails if the ROM's tokens differ from the reference. Run by `make demo`.
 import { readFileSync, mkdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import assert from "node:assert/strict";
@@ -8,13 +8,13 @@ import { startServer, launch, readU8 } from "../tests/web/lib.mjs";
 const { turns } = JSON.parse(readFileSync("tools/demo_seeds.json"));
 const OUT = "docs/demo";
 const TMP = `${OUT}/raw`;
-const COLD_OPEN = { after: 0.3, length: 2 };
 const POWER_DOWN = 8;
 const READ = 6;
 const MENU = 2;
 const WRITING = 5;
 mkdirSync(TMP, { recursive: true });
 const srv = await startServer(8126);
+process.on("exit", () => srv.stop());
 const { browser, context, page } = await launch({ viewport: { width: 1280, height: 720 }, recordVideo: { dir: TMP, size: { width: 1280, height: 720 } } });
 
 const recordingStart = Date.now();
@@ -182,9 +182,8 @@ const videoAt = (wallSeconds) => ledFrame + (wallSeconds - atWall("powered")) * 
 const start = Math.max(0, videoAt(0));
 const videoSeconds = videoAt(seconds) - start;
 // The finished video plays at true speed: its clock and the timeline below are real seconds.
-const openStart = takeoverFrame + COLD_OPEN.after;
-const graph = `[0:v]trim=start=${openStart}:duration=${COLD_OPEN.length * scale},setpts=(PTS-STARTPTS)/${scale}[open];[0:v]trim=start=${start}:duration=${videoSeconds},setpts=(PTS-STARTPTS)/${scale}[main];[open][main]concat=n=2:v=1[out]`;
+const graph = `[0:v]trim=start=${start}:duration=${videoSeconds},setpts=(PTS-STARTPTS)/${scale}[out]`;
 ffmpeg(["-i", raw, "-filter_complex", graph, "-map", "[out]", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "20", "-movflags", "+faststart", `${OUT}/system_override_demo.mp4`]);
 rmSync(raw);
-writeFileSync(`${OUT}/demo_tokens.json`, JSON.stringify({ seconds, coldOpenSeconds: COLD_OPEN.length, timeline: timeline.map((m) => ({ name: m.name, seconds: (m.at - t0) / 1000 })), turns: turns.map((t) => ({ say: t.say, reply: t.reply, tokens: t.tokens })) }));
+writeFileSync(`${OUT}/demo_tokens.json`, JSON.stringify({ seconds, timeline: timeline.map((m) => ({ name: m.name, seconds: (m.at - t0) / 1000 })), turns: turns.map((t) => ({ say: t.say, reply: t.reply, tokens: t.tokens })) }));
 console.log(JSON.stringify({ seconds, videoSeconds, scale, ledFrame, takeoverFrame, replies: turns.map((t) => t.reply) }));

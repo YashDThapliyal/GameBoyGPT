@@ -3,7 +3,7 @@ import { mkdirSync } from "node:fs";
 import { startServer, launch } from "../tests/web/lib.mjs";
 
 const OUT = "build/demo_captions";
-const CAPTIONS = { name: "Tell it your name", inside: "The real chip, live", off: "Now try to turn it off", remembers: "It remembers you", speed: "Sped up" };
+const CAPTIONS = { name: "Tell it your name", inside: "The real chip, live", off: "Now try to turn it off", speed: "Sped up" };
 mkdirSync(OUT, { recursive: true });
 const srv = await startServer(8137);
 const { browser, page } = await launch({ viewport: { width: 1280, height: 720 } });
@@ -16,7 +16,9 @@ for (const [name, text] of Object.entries(CAPTIONS)) {
     const el = document.createElement("div");
     el.id = "cap";
     el.textContent = t;
-    el.style.cssText = `display:inline-block;padding:${small ? "8px 10px" : "14px 18px"};background:#1f1f1f;color:#c4cfa1;font:400 ${small ? 12 : 24}px/1 "Press Start 2P",monospace;white-space:nowrap`;
+    el.style.cssText = small
+      ? 'display:inline-block;padding:8px 10px;background:#1f1f1f;color:#c4cfa1;font:400 12px/1 "Press Start 2P",monospace;white-space:nowrap'
+      : 'display:inline-block;padding:18px 22px;background:#ffd23f;color:#1f1f1f;border:5px solid #1f1f1f;font:400 28px/1 "Press Start 2P",monospace;white-space:nowrap';
     document.body.replaceChildren(el);
   }, [text, name === "speed"]);
   await page.locator("#cap").screenshot({ path: `${OUT}/${name}.png`, omitBackground: true });
