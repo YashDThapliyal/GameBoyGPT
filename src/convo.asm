@@ -192,13 +192,10 @@ ApplyTurn::
     ld de, wLike
     call CopySlot
 .noLike:
-    ld a, [wParsedWord]
-    or a
-    jr z, .noWord
+    ; only this turn's word, so an old one can't turn up in a later reply
     ld hl, wParsedWord
     ld de, wWord
     call CopySlot
-.noWord:
     call UpdateMood
     ret
 

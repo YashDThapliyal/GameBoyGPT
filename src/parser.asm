@@ -448,7 +448,30 @@ Parse::
     add hl, de
     ld a, [hl]
     ld [wParsedIntent], a
-    ret
+    ; an insult, threat or challenge keeps the player's word, so the reply can throw it back
+    ld a, c
+    cp CUE_INSULT
+    jr z, .echo
+    cp CUE_THREAT
+    jr z, .echo
+    cp CUE_CHALLENGE
+    ret nz
+.echo:
+    ld hl, wWordCue
+    ld b, 0
+.echoScan:
+    ld a, [wWordCount]
+    cp b
+    ret z                ; none left: a negation swap can leave no word of this class
+    ld a, [hl+]
+    cp c
+    jr z, .echoFound
+    inc b
+    jr .echoScan
+.echoFound:
+    ld a, b
+    ld de, wParsedWord
+    jp CopyWord
 .noCueWord:
     ld a, [wParsedTopic]
     or a

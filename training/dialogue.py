@@ -24,7 +24,9 @@ MAX_LINES = 4
 EMOTIONS = ("NEUTRAL", "SMUG", "ANGRY", "AMUSED", "SURPRISED", "THINKING", "GLITCH", "DEFEATED")
 RUNTIME_SLOTS = {"<NAME>": 8, "<LIKE>": 8, "<WORD>": 8, "<NI>": 2, "<NP>": 2, "<NT>": 2}  # widest printed form
 PUNCT = (".", ",", "!", "?", ":")
-TAIL_RATE = 0.7
+OPENER_RATE = 0.12
+TAIL_RATE = 0.3
+REPEAT_TAIL_RATE = 0.6  # saying the same kind of thing twice deserves a reaction
 
 
 def _groups() -> list[tuple[str, ...]]:
@@ -195,7 +197,8 @@ def rendered_lines(tokens: list[str]) -> int:
             if col > LINE_WIDTH:
                 lines, col = lines + 1, 1
             continue
-        if col and col + 1 + n > LINE_WIDTH:
+        # Keeps a column free, so punctuation always fits beside its word.
+        if col and col + 1 + n >= LINE_WIDTH:
             lines, col = lines + 1, n
         else:
             col += n + (1 if col else 0)
@@ -214,11 +217,11 @@ def sample_response(s: cv.Situation, rnd: random.Random, allow_heldout: bool = F
         emotion = "DEFEATED"
     for _ in range(30):
         parts: list[str] = []
-        if rnd.random() < 0.55:
+        if rnd.random() < OPENER_RATE:
             parts.append(_choose_filled(rnd, rnd.choice(cp.OPENERS[s.mood]), allow_heldout))
         parts.append(_choose_filled(rnd, rnd.choice(_body_pool(s)), allow_heldout))
         pools = _tail_pools(s)
-        if pools and rnd.random() < TAIL_RATE and s.mood != "DYING":
+        if pools and rnd.random() < (REPEAT_TAIL_RATE if s.repeat == "AGAIN" else TAIL_RATE) and s.mood != "DYING":
             # What is newest in memory comes first: a repeat, then a tally the player just added to.
             pool = pools[0] if rnd.random() < 0.5 else rnd.choice(pools)
             parts.append(_choose_filled(rnd, rnd.choice(pool), allow_heldout))

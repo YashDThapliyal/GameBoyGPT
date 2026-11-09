@@ -20,7 +20,7 @@
     "out": "checkpoints/release.pt"
   },
   "model": {
-    "vocab": 763,
+    "vocab": 720,
     "ctx": 32,
     "d": 32,
     "heads": 2,
@@ -28,13 +28,13 @@
     "layers": 1,
     "k": 16
   },
-  "params": 46352,
+  "params": 44288,
   "untrained": {
-    "val_nll": 7.673580666568876,
-    "uniform_nll": 6.637258031284457
+    "val_nll": 7.50498795710878,
+    "uniform_nll": 6.579251212010101
   },
-  "best_val_nll_quant": 0.49813243558243747,
-  "test_nll_quant": 0.4958437213181305,
-  "test_nll_float": 0.5231144244799021,
-  "train_seconds": 2177.8179140090942
+  "best_val_nll_quant": 0.41444612289828386,
+  "test_nll_quant": 0.4211468713893703,
+  "test_nll_float": 0.46256664996750435,
+  "train_seconds": 965.3819377422333
 }

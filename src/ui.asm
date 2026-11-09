@@ -985,7 +985,7 @@ AppendText:
     jr z, .raw
     add b
     inc a
-    cp TEXT_WIDTH + 1
+    cp TEXT_WIDTH        ; keeps a column free, so punctuation always fits beside its word
     jr c, .space
     call NewLine
     jr .raw

@@ -67,7 +67,6 @@ export class Panel {
     this.state = state;
     this.el("lvState").textContent = STATES[state] ?? "Running";
     this.el("coach").textContent = composer.busy && !this.generating ? "Sending it to the chip." : (coachLine ?? COACH[state] ?? "");
-    this.el("lvTotal").textContent = `${u16("wMB_TotalTokens").toLocaleString("en-US")} tokens since power on`;
 
     const generating = state === READING || state === WRITING;
     if (generating && !this.wasGenerating) this.startReply(gb, composer.takeSent());
@@ -95,8 +94,6 @@ export class Panel {
   }
 
   startReply(gb, text) {
-    this.el("lvYou").textContent = text ?? "Chosen on the console's menu";
-    this.el("you").hidden = false;
     this.el("youShort").textContent = text ?? "a choice on its own menu";
     this.el("heardShort").textContent = "";
     this.el("heardLine").hidden = false;
@@ -142,11 +139,6 @@ export class Panel {
     const intent = name(PROMPT_AT.intent);
     const topic = name(PROMPT_AT.topic);
     const heard = HEARD[intent] ?? intent.toLowerCase();
-    this.el("hdIntent").textContent = heard;
-    this.el("hdTopic").textContent = topic === "NONE" ? "no topic" : topic.toLowerCase();
-    this.el("hdMood").textContent = name(PROMPT_AT.mood).toLowerCase();
-    this.el("hdRelation").textContent = name(PROMPT_AT.relation).toLowerCase();
-    this.el("heard").hidden = false;
     // The model never sees the sentence. These labels are what actually goes into its prompt.
     const about = topic === "NONE" ? "" : `, about ${topic.toLowerCase()}`;
     this.el("heardShort").textContent = `${heard}${about}, mood ${name(PROMPT_AT.mood).toLowerCase()}, you are its ${name(PROMPT_AT.relation).toLowerCase()}`;

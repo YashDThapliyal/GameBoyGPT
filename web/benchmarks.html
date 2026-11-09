@@ -22,112 +22,64 @@
 
 <main class="race">
   <div class="race-intro">
-    <h1>The same reply, twice</h1>
-    <p>Two emulated 8-bit CPUs at 4.19 MHz run the same 46,352 weights. The chip has no multiply instruction. The left console has the speed work, and the right one does every multiplication the slow way.</p>
+    <p class="kicker">Two emulated 8-bit CPUs with the same <span id="headParams">46,352</span> weights.</p>
+    <h1>After <span id="headCount">8</span> optimizations, we get a <span id="headSpeedup">9.90×</span> average speedup</h1>
   </div>
 
   <div class="picks" id="picks">
-    <span>Make them say:</span>
+    <span>Race:</span>
     <button class="menu-button" type="button" data-item="1" disabled>An insult</button>
     <button class="menu-button" type="button" data-item="2" disabled>A compliment</button>
     <button class="menu-button" type="button" data-item="5" disabled>A threat</button>
     <label><input type="checkbox" id="fast"> Fast-forward both, 8x</label>
   </div>
-  <p class="status" id="status" role="status">Loading both ROMs.</p>
 
-  <section class="result" id="result" aria-label="Race result" hidden>
-    <p class="multiple" id="resultMultiple"></p>
-    <div class="result-detail">
-      <p id="resultLine"></p>
-      <div class="time-row"><span>Tuned</span><i id="timeBarFast"></i><b id="timeFast"></b></div>
-      <div class="time-row"><span>Untuned</span><i id="timeBarSlow"></i><b id="timeSlow"></b></div>
+  <div class="arena">
+    <div class="lanes">
+      <section class="lane" id="laneFast" aria-label="Tuned build">
+        <h2>Tuned</h2>
+        <p class="clock" id="clockFast">0:00.0</p>
+        <div class="glass"><canvas id="screenFast" width="160" height="144"></canvas></div>
+        <p class="words" id="wordsFast" aria-label="Token numbers from the tuned build"></p>
+      </section>
+      <section class="lane" id="laneSlow" aria-label="Untuned build">
+        <h2>Untuned</h2>
+        <p class="clock" id="clockSlow">0:00.0</p>
+        <div class="glass"><canvas id="screenSlow" width="160" height="144"></canvas></div>
+        <p class="words" id="wordsSlow" aria-label="Token numbers from the untuned build"></p>
+      </section>
     </div>
-  </section>
-
-  <section class="track" aria-label="Tokens written so far">
-    <div class="rail"><span>Tuned</span><div class="groove"><i class="fill" id="fillFast"></i><canvas class="runner" id="runnerFast" width="72" height="64" aria-hidden="true"></canvas></div><b id="countFast">0</b></div>
-    <div class="rail"><span>Untuned</span><div class="groove"><i class="fill" id="fillSlow"></i><canvas class="runner" id="runnerSlow" width="72" height="64" aria-hidden="true"></canvas></div><b id="countSlow">0</b></div>
-  </section>
-
-  <div class="lanes">
-    <section class="lane" id="laneFast" aria-label="Tuned build">
-      <h2>Tuned</h2>
-      <p class="clock" id="clockFast">0:00.0</p>
-      <div class="glass"><canvas id="screenFast" width="160" height="144"></canvas></div>
-      <p class="words" id="wordsFast" aria-label="Token numbers from the tuned build"></p>
-    </section>
-    <section class="lane" id="laneSlow" aria-label="Untuned build">
-      <h2>Untuned</h2>
-      <p class="clock" id="clockSlow">0:00.0</p>
-      <div class="glass"><canvas id="screenSlow" width="160" height="144"></canvas></div>
-      <p class="words" id="wordsSlow" aria-label="Token numbers from the untuned build"></p>
-    </section>
+    <div class="scoreboard">
+      <p class="status" id="status" role="status">Loading both ROMs.</p>
+      <section class="track" aria-label="Tokens written so far">
+        <div class="rail"><span>Tuned</span><div class="groove"><i class="fill" id="fillFast"></i><canvas class="runner" id="runnerFast" width="72" height="64" aria-hidden="true"></canvas></div><b id="countFast">0</b></div>
+        <div class="rail"><span>Untuned</span><div class="groove"><i class="fill" id="fillSlow"></i><canvas class="runner" id="runnerSlow" width="72" height="64" aria-hidden="true"></canvas></div><b id="countSlow">0</b></div>
+      </section>
+      <section class="result" id="result" aria-label="Race result" hidden>
+        <p class="multiple" id="resultMultiple"></p>
+        <p id="resultLine"></p>
+        <div class="time-row"><span>Tuned</span><i id="timeBarFast"></i><b id="timeFast"></b></div>
+        <div class="time-row"><span>Untuned</span><i id="timeBarSlow"></i><b id="timeSlow"></b></div>
+      </section>
+      <p class="live-note">Live: two real ROMs, emulated in your browser. Clocks show emulated seconds, so fast-forward doesn't change them.</p>
+    </div>
   </div>
 
-  <section class="recorded">
-    <h2>What's live and what's recorded</h2>
-    <p>The race above is live: two real ROMs in two copies of the <a href="vendor/binjgb/LICENSE">binjgb</a> emulator, in your browser, right now. Its clocks show emulated seconds, so fast-forward doesn't change them. Its result changes with every reply.</p>
-    <p>These numbers are different. They're recorded, averaged over the benchmark's test conversation in the PyBoy emulator, and they don't update here.</p>
-    <dl>
-      <div><dt>Tuned</dt><dd id="recTuned"></dd></div>
-      <div><dt>Untuned</dt><dd id="recUntuned"></dd></div>
-      <div><dt>Recorded speedup, inference alone</dt><dd id="recSpeedup"></dd></div>
-      <div><dt>Against a baseline that already caches attention</dt><dd id="recCached"></dd></div>
-    </dl>
-    <p>Nothing here has run on a physical console.</p>
-  </section>
-
   <section class="opts">
-    <h2>How it beat a plain forward pass</h2>
-    <p class="opts-note">Each step keeps the ones above it and has to write exactly the same tokens. Bars show the recorded time left for one reply, with inference alone.</p>
-    <ol class="opt-list">
-      <li class="opt" data-step="V0">
-        <p class="gain"></p>
-        <div class="opt-text"><h3>Plain forward pass</h3><p>The baseline. Every multiply is shift-and-add, and every token recomputes attention for all the tokens before it.</p><p class="origin">Where we started.</p></div>
-        <div class="left"><i></i><b></b></div>
-      </li>
-      <li class="opt" data-step="V1">
-        <p class="gain"></p>
-        <div class="opt-text"><h3>Bank layout</h3><p>Keeps tensors in one ROM bank and skips repeat bank switches. Barely helped, because no tensor here crosses a bank in a hot loop.</p><p class="origin">Framing from <a href="https://arxiv.org/abs/2205.14135">FlashAttention</a>: treat data movement as a cost.</p></div>
-        <div class="left"><i></i><b></b></div>
-      </li>
-      <li class="opt" data-step="V2">
-        <p class="gain"></p>
-        <div class="opt-text"><h3>Quarter-square multiply</h3><p>Replaces shift-and-add with two table lookups, which is the identity at the bottom of the About page.</p><p class="origin">A classic maths trick. We also tried a nibble table, and it lost.</p></div>
-        <div class="left"><i></i><b></b></div>
-      </li>
-      <li class="opt" data-step="V3">
-        <p class="gain"></p>
-        <div class="opt-text"><h3>Fused dot product, row pruning</h3><p>Runs each row as one unrolled loop instead of calling multiply each time, and skips words that can't be chosen. The first token only scores 8 faces.</p><p class="origin">From our own profiling.</p></div>
-        <div class="left"><i></i><b></b></div>
-      </li>
-      <li class="opt" data-step="V4">
-        <p class="gain"></p>
-        <div class="opt-text"><h3>Sparse attention</h3><p>Skips attention weights that rounded to zero. Attention is a small share of the time, so the gain is small.</p><p class="origin">Same idea as the zero skips in <a href="https://github.com/crashtheuniverse/chatgbc">chatgbc</a>.</p></div>
-        <div class="left"><i></i><b></b></div>
-      </li>
-      <li class="opt" data-step="V5">
-        <p class="gain"></p>
-        <div class="opt-text"><h3>Cached attention</h3><p>An earlier token's keys and values never change in a one-layer model, so each is computed once. This is why token time stops growing with context.</p><p class="origin">Standard transformer practice. <a href="https://github.com/maddiedreese/gbc-transformer">gbc-transformer</a> also caches them.</p></div>
-        <div class="left"><i></i><b></b></div>
-      </li>
-      <li class="opt" data-step="V5S">
-        <p class="gain"></p>
-        <div class="opt-text"><h3>Weights through the stack pointer</h3><p>Reads weights with <code>pop</code>, the fastest way to read in sequence on this CPU. Interrupts are held off per row, and it's untested on hardware.</p><p class="origin">Technique also used in the <a href="https://www.elyanlabs.ai/gbc-llm.html">Elyan Labs</a> fork, which warns about the same risk.</p></div>
-        <div class="left"><i></i><b></b></div>
-      </li>
-      <li class="opt" data-step="V5Z">
-        <p class="gain"></p>
-        <div class="opt-text"><h3>Zero-column skip</h3><p>An activation of zero makes a whole column of products zero, so that column is skipped.</p><p class="origin">Same idea as the zero skips in <a href="https://github.com/crashtheuniverse/chatgbc">chatgbc</a>.</p></div>
-        <div class="left"><i></i><b></b></div>
-      </li>
-      <li class="opt" data-step="V6T">
-        <p class="gain"></p>
-        <div class="opt-text"><h3>Per-token head tables</h3><p>Scoring 763 tokens from 16 inputs is the slowest part. So it builds a times table for each input, then every multiply is one lookup. Uses 8 KB of cartridge RAM.</p><p class="origin">Found in our own profile. Closest earlier idea: chatgbc's 27-sum lookup.</p></div>
-        <div class="left"><i></i><b></b></div>
-      </li>
-    </ol>
-    <p class="opts-note">No code was copied from any project named here. Two of them also shaped how we test: <a href="https://github.com/crashtheuniverse/chatgbc">chatgbc</a> for checking a ROM against an integer reference, and Elyan Labs for measuring every change as its own step. The 16-unit bottleneck isn't listed because it changes the model, so it had to pass a quality check instead.</p>
+    <h2>Where the time went</h2>
+    <p class="opts-note">One reply, build by build. Recorded earlier in PyBoy, with inference alone, so these aren't from the race above. Every build writes identical tokens. Click a row.</p>
+    <ul class="opt-legend" id="optLegend"></ul>
+    <div class="opt-grid">
+      <div class="opt-list" id="optList"></div>
+      <aside class="opt-detail" id="optDetail" aria-live="polite"></aside>
+    </div>
+    <dl class="stats">
+      <div><dd id="recSpeedup"></dd><dt>faster than the plain pass</dt></div>
+      <div><dd id="recCached"></dd><dt>if the plain pass already cached attention, the fairer number</dt></div>
+      <div><dd id="recTuned"></dd><dt>tuned, full game loop</dt></div>
+      <div><dd id="recUntuned"></dd><dt>untuned, full game loop</dt></div>
+    </dl>
+    <p class="opts-note">No code was copied from any project named here. chatgbc and Elyan Labs also shaped how we test: an integer reference to compare against, and measuring every change on its own. Nothing here has run on a physical console.</p>
   </section>
 </main>
 

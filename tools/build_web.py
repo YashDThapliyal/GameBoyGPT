@@ -26,15 +26,34 @@ def speed_ladder() -> list[dict[str, float | str]]:
     return [{"label": label, "seconds": mean_for(version)} for version, label in LADDER]
 
 
-def speed_steps() -> list[dict[str, float | str]]:
-    """Recorded seconds per reply for each cumulative build, and the gain over the build before it."""
+PHASE_GROUPS = {"keys": ("kv",), "attention": ("query", "attention", "projection_norm"), "feedForward": ("feed_forward_norm",), "output": ("output_head",), "picking": ("decode",)}
+
+
+def phase_shares(variant: dict) -> dict[str, float]:
+    """Each group's share of the recorded cycles, across every workload and round of one build."""
+    totals = dict.fromkeys(PHASE_GROUPS, 0.0)
+    for rounds in variant["workloads"].values():
+        for run in rounds:
+            for group, phases in PHASE_GROUPS.items():
+                totals[group] += sum(run["phases"].get(phase, 0) for phase in phases)
+    whole = sum(totals.values()) or 1.0
+    return {group: value / whole for group, value in totals.items()}
+
+
+def speed_steps() -> list[dict[str, object]]:
+    """Recorded seconds per reply for each cumulative build, the gain over the build before, and where the time went."""
     rows = list(csv.DictReader((ROOT / "reports" / "benchmark.csv").open()))
+    variants = json.loads((ROOT / "reports" / "benchmark.json").read_text())["variants"]
     order = ("V0", "V1", "V2", "V3", "V4", "V5", "V5S", "V5Z", "V6T")
     def mean_for(version: str) -> float:
         values = [float(r["seconds_per_response"]) for r in rows if r["version"] == version]
         return sum(values) / len(values)
     seconds = [mean_for(version) for version in order]
-    return [{"id": version, "seconds": now, "gain": (seconds[i - 1] / now) if i else 1.0} for i, (version, now) in enumerate(zip(order, seconds))]
+    steps = []
+    for i, (version, now) in enumerate(zip(order, seconds)):
+        shares = phase_shares(variants[version])
+        steps.append({"id": version, "seconds": now, "gain": (seconds[i - 1] / now) if i else 1.0, "phases": {group: share * now for group, share in shares.items()}})
+    return steps
 
 
 def memory_map(syms: dict, map_text: str, wram: int, model_bytes: int, rom_bytes: int) -> dict[str, list[dict[str, int | str]]]:

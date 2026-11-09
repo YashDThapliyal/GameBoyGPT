@@ -5,7 +5,8 @@ import { tokenLabel } from "./tokens.js";
 const WRAM_START = 0xc000;
 const GRID_W = 128;
 const GRID_H = 64;
-const CANDIDATES_SHOWN = 6;
+const CANDIDATES_SHOWN = 5;
+const CLOSE_MS = 560;
 const BYTE_SHADES = [[0x4d, 0x53, 0x3c], [0x8b, 0x95, 0x6d], [0xc4, 0xcf, 0xa1], [0xe6, 0xdf, 0xca]];
 const ACTIVATION_SHADES = ["#1f1f1f", "#4d533c", "#8b956d", "#c4cfa1"];
 // Compute order through one forward pass.
@@ -46,9 +47,11 @@ export class XRay {
 
   toggle() {
     this.active = !this.active;
-    this.el("device").classList.toggle("xray", this.active);
-    document.documentElement.classList.toggle("xray-on", this.active);
-    this.el("xrayPanel").hidden = !this.active;
+    const device = this.el("device");
+    device.classList.toggle("xray", this.active);
+    device.classList.toggle("closing", !this.active);
+    if (!this.active) setTimeout(() => device.classList.remove("closing"), CLOSE_MS);
+    this.el("caseNote").hidden = !this.active;
     this.el("btnXray").setAttribute("aria-pressed", String(this.active));
     this.el("btnXray").textContent = this.active ? "Close the case" : "See inside the chip";
   }
@@ -114,6 +117,5 @@ export class XRay {
       row.append(make("b", "", tokenLabel(this.build.vocab, c.id)), make("span", "", `${Math.round(share)}%`), bar);
       return row;
     }));
-    this.el("candMore").textContent = list.length > CANDIDATES_SHOWN ? `Plus ${list.length - CANDIDATES_SHOWN} less likely options.` : "";
   }
 }

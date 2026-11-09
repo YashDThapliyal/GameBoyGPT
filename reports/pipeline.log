@@ -2,35 +2,35 @@
 robot sprite tiles: 118
 logo tiles: 112
 .venv/bin/python tools/build.py V0 V1 V2 V3 V4 V5 V5S V5Z V6T A_QSQ A_NIB A_KV
-build/V0/gameboygpt.gb 131072 a66be8ecae9d784c
-build/V0/test.gb 131072 a682ed63383cdfe2
-build/V1/gameboygpt.gb 131072 b40b2d828c37e630
-build/V1/test.gb 131072 ff7310fa177e4ed4
-build/V2/gameboygpt.gb 131072 88395838b080eab5
-build/V2/test.gb 131072 464e7e3929601f84
-build/V3/gameboygpt.gb 131072 39a1524bdea79f47
-build/V3/test.gb 131072 a400847c26f1e5d3
-build/V4/gameboygpt.gb 131072 6feeaf4c0d0a7328
-build/V4/test.gb 131072 bc50d77277d53f2e
-build/V5/gameboygpt.gb 131072 53ed5d789ceb6c80
-build/V5/test.gb 131072 46d058562634c715
-build/V5S/gameboygpt.gb 131072 f3b982376edde1b2
-build/V5S/test.gb 131072 1ca14b04d0a52f76
-build/V5Z/gameboygpt.gb 131072 6180ffa0400161de
-build/V5Z/test.gb 131072 8f699d7518883645
-build/V6T/gameboygpt.gb 131072 2f19f24005f192f8
-build/V6T/test.gb 131072 512e1c71f1c3db8d
-build/A_QSQ/gameboygpt.gb 131072 2201b101eae47aa2
-build/A_QSQ/test.gb 131072 cee0a1c2c6a8af32
-build/A_NIB/gameboygpt.gb 131072 0040e2ddb4a86335
-build/A_NIB/test.gb 131072 ccc89835d66d7417
-build/A_KV/gameboygpt.gb 131072 2b2cfef69b9a9542
-build/A_KV/test.gb 131072 ba20049aae4f1707
+build/V0/gameboygpt.gb 131072 1964d2fc973691e6
+build/V0/test.gb 131072 a69d1ae4bddf080d
+build/V1/gameboygpt.gb 131072 28ed64d63f9bc298
+build/V1/test.gb 131072 74245815091a0a83
+build/V2/gameboygpt.gb 131072 7cda30d913e61886
+build/V2/test.gb 131072 4d8d0fd907cf0e4e
+build/V3/gameboygpt.gb 131072 7683b87a1fa0883c
+build/V3/test.gb 131072 c08e4c293818a271
+build/V4/gameboygpt.gb 131072 9650de0df00cf983
+build/V4/test.gb 131072 5e98c02babbfc402
+build/V5/gameboygpt.gb 131072 9672c0f567970081
+build/V5/test.gb 131072 9fe0a2b70f863219
+build/V5S/gameboygpt.gb 131072 5ed3ee0ab8689b47
+build/V5S/test.gb 131072 0d9ad78365fe2688
+build/V5Z/gameboygpt.gb 131072 30bb4942bdea1aa6
+build/V5Z/test.gb 131072 d8e86a9aacc34d91
+build/V6T/gameboygpt.gb 131072 958522e77e024709
+build/V6T/test.gb 131072 71b38f27cd6721c1
+build/A_QSQ/gameboygpt.gb 131072 f0523d4eb2eb1992
+build/A_QSQ/test.gb 131072 7453656704d9f618
+build/A_NIB/gameboygpt.gb 131072 13c1d656c920118b
+build/A_NIB/test.gb 131072 c49df5b4152ae46b
+build/A_KV/gameboygpt.gb 131072 018845f4dbe2f9ac
+build/A_KV/test.gb 131072 8a3a4936819fc656
 .venv/bin/python tools/build.py V0 V6T --selftest
-build/V0/gameboygpt.gb 131072 a66be8ecae9d784c
-build/V0/test.gb 131072 a682ed63383cdfe2
-build/V6T/gameboygpt.gb 131072 2f19f24005f192f8
-build/V6T/test.gb 131072 512e1c71f1c3db8d
+build/V0/gameboygpt.gb 131072 1964d2fc973691e6
+build/V0/test.gb 131072 a69d1ae4bddf080d
+build/V6T/gameboygpt.gb 131072 958522e77e024709
+build/V6T/test.gb 131072 71b38f27cd6721c1
 cp build/V6T/gameboygpt.gb build/system_override.gb
 cp build/V6T/gameboygpt.sym build/system_override.sym
 cp build/V0/gameboygpt.gb build/system_override_v0.gb
@@ -38,10 +38,10 @@ mkdir -p release
 cp build/system_override.gb build/system_override_v0.gb release/
 cd release && shasum -a 256 system_override.gb system_override_v0.gb > SHA256SUMS
 cat release/SHA256SUMS
-2f19f24005f192f8b84f225a6eda454077b5b8fc2d720abc6cfc825bc3022e89  system_override.gb
-a66be8ecae9d784c7ee44f6d006474a002860b7463957d7e13b88fa541538d02  system_override_v0.gb
+958522e77e02470994f6b57ed22cd97b4d5192635a7584a824da4b9196bfb6f4  system_override.gb
+1964d2fc973691e6d47551d100b2dd9f2aeea23994a02cdcd23eae49c06c2dd5  system_override_v0.gb
 .venv/bin/python -m pytest tests/test_smoke.py tests/test_conversation.py tests/test_fixed_point.py tests/test_export.py tests/test_benchmark_integrity.py -q
-.....................................sssss                               [100%]
+........................................sssss                            [100%]
 =============================== warnings summary ===============================
 .venv/lib/python3.12/site-packages/sdl2/_internal.py:24
   /Users/yash/Documents/GameBoyGPT/.venv/lib/python3.12/site-packages/sdl2/_internal.py:24: UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
@@ -65,34 +65,5 @@ for v in V1 V2 V3 V4 V5 V5S V5Z A_QSQ A_NIB A_KV; do GBGPT_VARIANT=$v .venv/bin/
 ...........................                                              [100%]
 test -x .third_party/SameBoy/build/bin/tester/sameboy_tester || { git clone https://github.com/LIJI32/SameBoy .third_party/SameBoy && git -C .third_party/SameBoy checkout ea667ad && /Library/Developer/CommandLineTools/usr/bin/make -C .third_party/SameBoy tester CONF=release; }
 .venv/bin/python tools/second_emulator.py --variants V0 V6T
-V0 {'sameboy': {'frames': [7200, 5053, 5054, 5055], 'verdict': 'SELFTEST PASS'}, 'pyboy': {'frames': [7200, 5053, 5054, 5055], 'verdict': 'SELFTEST PASS'}}
-V6T {'sameboy': {'frames': [689, 525, 522, 523], 'verdict': 'SELFTEST PASS'}, 'pyboy': {'frames': [689, 525, 522, 523], 'verdict': 'SELFTEST PASS'}}
-.venv/bin/python tools/benchmark.py --variants V0 V1 V2 V3 V4 V5 V5S V5Z V6T A_QSQ A_NIB A_KV --game V0 V6T
-V0 GREET:10.152s/tok,119.2s,match=SELF,ref=True INSULT:9.513s/tok,83.7s,match=SELF,ref=True TECH:9.514s/tok,83.7s,match=SELF,ref=True SHUTDOWN:9.517s/tok,83.7s,match=SELF,ref=True
-V1 GREET:10.141s/tok,119.1s,match=True,ref=True INSULT:9.504s/tok,83.6s,match=True,ref=True TECH:9.505s/tok,83.6s,match=True,ref=True SHUTDOWN:9.507s/tok,83.6s,match=True,ref=True
-V2 GREET:5.796s/tok,68.1s,match=True,ref=True INSULT:5.433s/tok,47.8s,match=True,ref=True TECH:5.433s/tok,47.8s,match=True,ref=True SHUTDOWN:5.433s/tok,47.8s,match=True,ref=True
-V3 GREET:3.243s/tok,37.3s,match=True,ref=True INSULT:3.031s/tok,25.9s,match=True,ref=True TECH:3.034s/tok,25.9s,match=True,ref=True SHUTDOWN:3.032s/tok,25.9s,match=True,ref=True
-V4 GREET:3.184s/tok,36.7s,match=True,ref=True INSULT:2.980s/tok,25.5s,match=True,ref=True TECH:2.980s/tok,25.5s,match=True,ref=True SHUTDOWN:2.983s/tok,25.5s,match=True,ref=True
-V5 GREET:1.345s/tok,16.4s,match=True,ref=True INSULT:1.339s/tok,12.3s,match=True,ref=True TECH:1.339s/tok,12.4s,match=True,ref=True SHUTDOWN:1.342s/tok,12.4s,match=True,ref=True
-V5S GREET:1.253s/tok,15.3s,match=True,ref=True INSULT:1.247s/tok,11.5s,match=True,ref=True TECH:1.248s/tok,11.5s,match=True,ref=True SHUTDOWN:1.250s/tok,11.5s,match=True,ref=True
-V5Z GREET:1.211s/tok,14.8s,match=True,ref=True INSULT:1.208s/tok,11.1s,match=True,ref=True TECH:1.205s/tok,11.1s,match=True,ref=True SHUTDOWN:1.205s/tok,11.1s,match=True,ref=True
-V6T GREET:0.906s/tok,11.4s,match=True,ref=True INSULT:0.905s/tok,8.7s,match=True,ref=True TECH:0.899s/tok,8.6s,match=True,ref=True SHUTDOWN:0.901s/tok,8.7s,match=True,ref=True
-A_QSQ GREET:5.807s/tok,68.2s,match=True,ref=True INSULT:5.442s/tok,47.9s,match=True,ref=True TECH:5.442s/tok,47.9s,match=True,ref=True SHUTDOWN:5.443s/tok,47.9s,match=True,ref=True
-A_NIB GREET:8.465s/tok,99.4s,match=True,ref=True INSULT:7.933s/tok,69.8s,match=True,ref=True TECH:7.934s/tok,69.8s,match=True,ref=True SHUTDOWN:7.937s/tok,69.8s,match=True,ref=True
-A_KV GREET:4.399s/tok,56.0s,match=True,ref=True INSULT:4.377s/tok,42.6s,match=True,ref=True TECH:4.378s/tok,42.6s,match=True,ref=True SHUTDOWN:4.378s/tok,42.6s,match=True,ref=True
-Traceback (most recent call last):
-  File "/Users/yash/Documents/GameBoyGPT/tools/benchmark.py", line 218, in <module>
-    main()
-  File "/Users/yash/Documents/GameBoyGPT/tools/benchmark.py", line 207, in main
-    db["game"][v] = game_mode(v, model)
-                    ^^^^^^^^^^^^^^^^^^^
-  File "/Users/yash/Documents/GameBoyGPT/tools/benchmark.py", line 162, in game_mode
-    action(gb, what)
-  File "/Users/yash/Documents/GameBoyGPT/tests/chat_harness.py", line 62, in action
-    wait_response(gb)
-  File "/Users/yash/Documents/GameBoyGPT/tests/chat_harness.py", line 55, in wait_response
-    gb.wait_for(lambda: gb.read1("wMB_State") == ST_READ, limit)
-  File "/Users/yash/Documents/GameBoyGPT/tools/run_emulator.py", line 64, in wait_for
-    raise TimeoutError(f"condition not met after {max_frames} frames; PC={self.pyboy.register_file.PC:04X}")
-TimeoutError: condition not met after 60000 frames; PC=09DB
-make: *** [benchmark] Error 1
+V0 {'sameboy': {'frames': [4979, 5660, 6367, 3693], 'verdict': 'SELFTEST PASS'}, 'pyboy': {'frames': [4979, 5660, 6367, 3693], 'verdict': 'SELFTEST PASS'}}
+V6T {'sameboy': {'frames': [516, 569, 626, 408], 'verdict': 'SELFTEST PASS'}, 'pyboy': {'frames': [516, 569, 626, 408], 'verdict': 'SELFTEST PASS'}}

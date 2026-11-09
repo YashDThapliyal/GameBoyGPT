@@ -21,7 +21,8 @@
 /* ---- The console ---- */
 .device { position: relative; flex: none; width: calc(var(--p) * 192); height: calc(var(--p) * 318); }
 .shell { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; pointer-events: none; }
-.device > *:not(.shell) { z-index: 1; }
+.cover { position: absolute; inset: 0; z-index: 1; transform-origin: 20% 90%; }
+.power, .led, .lcd { z-index: 2; }
 
 .power { position: absolute; left: calc(var(--p) * 19); top: calc(var(--p) * 3); width: calc(var(--p) * 27); height: calc(var(--p) * 6); padding: 0; border: 0; background: #4e5048; transform: translateX(calc(var(--u) * var(--dodge, 0))); transition: transform .12s steps(3); }
 .power-knob { position: absolute; left: var(--p); top: var(--p); width: calc(var(--p) * 12); height: calc(var(--p) * 4); background: #f4eedc; }
@@ -45,6 +46,8 @@
 .clean .lcd { background: #fff; }
 .clean .lcd-grid, .clean .lcd-glass { display: none !important; }
 
+.board { position: absolute; inset: 0; }
+.board-art { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
 .brand { position: absolute; left: calc(var(--p) * 12); top: calc(var(--p) * 181); font: 400 calc(var(--u) * 16)/1 var(--display); color: #2f3a70; letter-spacing: -.04em; pointer-events: none; }
 
 .dpad { position: absolute; left: calc(var(--p) * 17); top: calc(var(--p) * 212); width: calc(var(--p) * 51); height: calc(var(--p) * 51); display: grid; grid-template: repeat(3, 1fr) / repeat(3, 1fr); }

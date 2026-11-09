@@ -79,8 +79,8 @@ def test_free_text_reaches_the_prompt_and_facts_persist():
         say(gb, text)
         t.expect(gb, cv.parse(text), seed)
         next_page(gb)
-    assert t.state.name == "BOB" and t.state.like == "PIZZA" and t.state.word == "MARRY"
-    assert bytes(gb.read("wName", 3)) == b"BOB" and bytes(gb.read("wWord", 5)) == b"MARRY"
+    assert t.state.name == "BOB" and t.state.like == "PIZZA" and t.state.word == "DUMB"
+    assert bytes(gb.read("wName", 3)) == b"BOB" and bytes(gb.read("wWord", 4)) == b"DUMB"
     gb.stop()
 
 

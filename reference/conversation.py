@@ -96,9 +96,19 @@ def clean_words(text: str) -> list[str]:
 class Parsed:
     intent: str
     topic: str
-    word: str = ""      # echoed word when an input was not understood
+    word: str = ""      # echoed word: one not understood, or the cue behind an insult, threat or challenge
     name: str = ""      # fact learned from "my name is X"
     like: str = ""      # fact learned from "i like X"
+
+
+ECHOED_INTENTS = ("INSULT", "THREAT", "CHALLENGE")  # the reply can repeat the player's own word back at them
+
+
+def _cue_word(words: list[str], intent: str) -> str:
+    """The first word that triggered this intent. Empty after a negation swap, where no word is of that class."""
+    if intent not in ECHOED_INTENTS:
+        return ""
+    return next((w for w in words if CUES.get(w) == intent), "")
 
 
 def _after(words: list[str], lead: tuple[str, ...]) -> str:
@@ -145,7 +155,7 @@ def parse(text: str) -> Parsed:
         elif topic != "NONE":
             intent = "QUESTION" if words[0] in QUESTION_WORDS else "TALK"
     if intent:
-        return Parsed(intent, topic)
+        return Parsed(intent, topic, word=_cue_word(words, intent))
     # Nothing recognized: admit it and echo the longest word that is not a stop word.
     best = ""
     for w in words:
@@ -214,7 +224,7 @@ def apply_turn(s: State, p: Parsed) -> State:
         topic_cursor=cursor,
         name=p.name or s.name,
         like=p.like or s.like,
-        word=p.word or s.word,
+        word=p.word,  # only this turn's word, so an old one can't turn up in a later reply
     )
 
 

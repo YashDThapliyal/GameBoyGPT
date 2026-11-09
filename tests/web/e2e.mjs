@@ -161,7 +161,7 @@ const pinSeed = (page, seed) => page.evaluate((s) => {
     const vocab = await page.evaluate(() => window.__override.build.vocab);
     // The previous reply is still on screen after sending, so wait for the panel to start the new one first.
     const replyTo = async (text) => {
-      await page.waitForFunction((t) => document.getElementById("lvYou").textContent === t, text, { timeout: 30000 });
+      await page.waitForFunction((t) => document.getElementById("youShort").textContent === t, text, { timeout: 30000 });
       await waitState(page, 6);
       return seqTokens(page);
     };
@@ -174,16 +174,15 @@ const pinSeed = (page, seed) => page.evaluate((s) => {
     assert.equal(vocab[seq[6]], "<I_TECH>");
     assert.equal(vocab[seq[7]], "<T_CPU>");
     await page.waitForTimeout(300);
-    assert.equal(await page.locator("#lvYou").innerText(), "WHAT IS YOUR CPU?");
-    assert.equal(await page.locator("#hdIntent").innerText(), "a hardware question");
-    assert.equal(await page.locator("#hdTopic").innerText(), "cpu");
+    assert.equal(await page.locator("#youShort").innerText(), "WHAT IS YOUR CPU?");
+    assert.match(await page.locator("#heardShort").innerText(), /^a hardware question, about cpu/);
     assert.equal(await page.locator("#strip i").count(), seq.length - 9);
     await page.screenshot({ path: `${SHOTS}/web_typed.png` });
     // Sent straight from the reply screen, without going back to the menu by hand.
     seq = await send("do you have a soul");
     assert.equal(vocab[seq[6]], "<I_UNKNOWN>");
     await page.waitForTimeout(300);
-    assert.equal(await page.locator("#hdIntent").innerText(), "nothing it recognizes");
+    assert.match(await page.locator("#heardShort").innerText(), /^nothing it recognizes/);
     // The quick moves send real phrases, show them, and move on to the next one each press.
     const moves = JSON.parse(readFileSync("web/moves.json"));
     const roast = page.getByRole("button", { name: "ROAST" });
@@ -276,7 +275,9 @@ const pinSeed = (page, seed) => page.evaluate((s) => {
   });
   await check("the x-ray draws live memory, and the picked token is among the real candidates", async () => {
     await page.locator("#btnXray").click();
-    assert.equal(await page.locator("#xrayPanel").isVisible(), true);
+    await page.waitForTimeout(900);
+    assert.equal(await page.locator("#cover").isVisible(), false);
+    assert.equal(await page.evaluate(() => getComputedStyle(document.getElementById("cover")).visibility), "hidden");
     await waitState(page, 6, 45000).catch(() => {});
     for (let i = 0; i < 80 && (await state(page)) !== 2; i++) {
       if ((await state(page)) <= 1 || (await state(page)) === 6) await page.keyboard.press("KeyX", { delay: 80 });
@@ -312,7 +313,9 @@ const pinSeed = (page, seed) => page.evaluate((s) => {
     assert.ok(lit >= 3, `wram shades ${lit}`);
     await page.screenshot({ path: `${SHOTS}/web_xray.png` });
     await page.locator("#btnXray").click();
-    assert.equal(await page.locator("#xrayPanel").isVisible(), false);
+    await page.waitForTimeout(700);
+    assert.equal(await page.evaluate(() => getComputedStyle(document.getElementById("cover")).visibility), "visible");
+    assert.ok(await page.locator("[data-pad=a]").isVisible());
   });
   await check("the power switch doesn't turn it off: it counts as a shutdown attempt", async () => {
     await page.waitForFunction(() => !document.getElementById("send").disabled);
@@ -333,7 +336,7 @@ const pinSeed = (page, seed) => page.evaluate((s) => {
     const say = async (text) => {
       await page.locator("#say").fill(text);
       await page.locator("#say").press("Enter");
-      await page.waitForFunction((t) => document.getElementById("lvYou").textContent === t, text.toUpperCase(), { timeout: 30000 });
+      await page.waitForFunction((t) => document.getElementById("youShort").textContent === t, text.toUpperCase(), { timeout: 30000 });
       await waitState(page, 6);
       await page.waitForTimeout(300);
     };
@@ -427,6 +430,7 @@ const pinSeed = (page, seed) => page.evaluate((s) => {
     assert.ok(r.tokens.length >= 3);
     assert.ok(r.slow / r.fast >= 5, `ratio ${r.slow / r.fast}`);
     assert.equal(await page.locator("#result").isVisible(), true);
+    assert.ok((await page.locator("#screenFast").boundingBox()).y + (await page.locator("#screenFast").boundingBox()).height <= 860, "race fits one screen");
     assert.equal(await page.locator("#resultMultiple").innerText(), `${(r.slow / r.fast).toFixed(1)}× faster`);
     assert.match(await page.locator("#resultLine").innerText(), new RegExp(`same ${r.tokens.length} tokens`));
     assert.equal(await page.locator("#countFast").innerText(), String(r.tokens.length));
@@ -450,8 +454,11 @@ const pinSeed = (page, seed) => page.evaluate((s) => {
     await page.waitForURL(/benchmarks\.html/);
     await page.waitForFunction(() => document.querySelector("[data-step=V6T] .gain").textContent !== "");
     assert.equal(await page.locator(".opt").count(), 9);
-    assert.equal(await page.locator("[data-step=V2] .gain").innerText(), "1.75×");
-    assert.equal(await page.locator("#recCached").innerText(), "4.91×");
+    assert.match(await page.locator("h1").innerText(), /^After 8 optimizations, we get a \d+\.\d\d× average speedup$/);
+    assert.match(await page.locator("[data-step=V2] .gain").innerText(), /^\d+\.\d\d×$/);
+    await page.locator("[data-step=V6T]").click();
+    assert.match(await page.locator("#optDetail").innerText(), /Saved .* per reply/);
+    assert.match(await page.locator("#recCached").innerText(), /^\d+\.\d\d×$/);
     await page.screenshot({ path: `${SHOTS}/web_benchmarks.png`, fullPage: true });
     assert.equal(await page.locator("nav a[aria-current=page]").innerText(), "Benchmarks");
     await page.getByRole("link", { name: "Play" }).click();

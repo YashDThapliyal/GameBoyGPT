@@ -24,6 +24,8 @@ MAGENTA = (140, 37, 89, 255)
 MAGENTA_HI = (176, 62, 118, 255)
 MAGENTA_LO = (81, 18, 47, 255)
 CLEAR = (0, 0, 0, 0)
+PCB = (24, 66, 48, 255)
+PCB_TRACE = (42, 92, 66, 255)
 LCD_SHADES = ((196, 207, 161, 255), (139, 149, 109, 255), (77, 83, 60, 255), (31, 31, 31, 255))
 BACK_FAR = (33, 61, 45, 255)
 BACK_NEAR = (38, 69, 51, 255)
@@ -87,6 +89,28 @@ def shell() -> Image.Image:
         d.line(((x, 310 - i), (x + 14, 276 - i)), fill=CREAM_DEEP, width=3)
         d.line(((x + 2, 310 - i), (x + 16, 276 - i)), fill=INK, width=1)
     # anything that strayed past the rounded edge goes back to clear
+    img.putalpha(rounded((SHELL_W, SHELL_H), 5, 5, 34, 5).convert("L").point(lambda v: 255 if v else 0))
+    return img
+
+
+def board() -> Image.Image:
+    """What's under the cover: a circuit board, with the screen's frame still in place."""
+    img = Image.new("RGBA", (SHELL_W, SHELL_H), CLEAR)
+    fill_mask(img, rounded((SHELL_W, SHELL_H), 5, 5, 34, 5), (0, 0), INK)
+    fill_mask(img, rounded((SHELL_W - 2, SHELL_H - 2), 4, 4, 33, 4), (1, 1), PCB)
+    d = ImageDraw.Draw(img)
+    # traces: straight runs with stepped corners, from the screen down to the parts
+    for x, y_end, jog in ((24, 300, 6), (40, 214, -5), (60, 214, 7), (92, 224, -6), (120, 224, 5), (150, 224, -7), (172, 280, -9)):
+        d.line((x, 176, x, y_end - 12), fill=PCB_TRACE)
+        d.line((x, y_end - 12, x + jog, y_end - 6), fill=PCB_TRACE)
+        d.line((x + jog, y_end - 6, x + jog, y_end), fill=PCB_TRACE)
+    for x in range(14, 180, 8):
+        d.point((x, 3), fill=PCB_TRACE)
+    for hole in ((5, 8), (SHELL_W - 8, 8), (5, SHELL_H - 9)):
+        d.ellipse((hole[0] - 2, hole[1] - 2, hole[0] + 2, hole[1] + 2), fill=INK)
+    fill_mask(img, rounded((176, 160), 4, 4, 24, 4), (8, 17), INK)
+    fill_mask(img, rounded((174, 158), 3, 3, 23, 3), (9, 18), BEZEL)
+    d.rectangle((15, 26, 176, 171), fill=INK)
     img.putalpha(rounded((SHELL_W, SHELL_H), 5, 5, 34, 5).convert("L").point(lambda v: 255 if v else 0))
     return img
 
@@ -171,7 +195,7 @@ def robot_icon() -> Image.Image:
 
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
-    for name, art in (("shell", shell()), ("dpad", dpad()), ("button", round_button()), ("pill", pill()), ("landscape", landscape()), ("cloud", cloud()), ("robot", robot_icon())):
+    for name, art in (("shell", shell()), ("board", board()), ("dpad", dpad()), ("button", round_button()), ("pill", pill()), ("landscape", landscape()), ("cloud", cloud()), ("robot", robot_icon())):
         art.save(OUT / f"{name}.png", optimize=True)
     if len(sys.argv) < 2:
         return

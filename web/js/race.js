@@ -1,6 +1,7 @@
 // The race. Two emulators run two real ROMs with the same seed and the same button press, and the page compares what comes out.
 // Timers show emulated seconds, so fast-forwarding changes how long you wait and leaves every number the same.
 import { Handheld } from "./emulator.js";
+import { showSteps } from "./steps.js";
 
 const $ = (id) => document.getElementById(id);
 const ST = { BOOT: 0, INTRO: 1, MENU: 2, THINKING: 4, STREAMING: 5, READ: 6 };
@@ -238,28 +239,18 @@ async function start(item, build, roms) {
   phase = "booting";
 }
 
-/** A recorded benchmark, kept apart from the live race and labelled as one. */
+/** Recorded benchmark numbers, kept apart from the live race and labelled as such. */
 function showRecorded(build) {
+  $("headParams").textContent = build.params.toLocaleString("en-US");
   const m = build.measured;
   if (!m) return;
-  $("recTuned").textContent = `${friendly(m.secondsPerResponse)} per reply, ${m.secondsPerToken.toFixed(2)} s per token`;
-  $("recUntuned").textContent = `${friendly(m.baselineSecondsPerResponse)} per reply, ${m.baselineSecondsPerToken.toFixed(2)} s per token`;
+  $("headSpeedup").textContent = `${m.speedup.toFixed(2)}×`;
+  if (build.steps) $("headCount").textContent = String(build.steps.length - 1);
+  $("recTuned").textContent = friendly(m.secondsPerResponse);
+  $("recUntuned").textContent = friendly(m.baselineSecondsPerResponse);
   $("recSpeedup").textContent = `${m.speedup.toFixed(2)}×`;
   $("recCached").textContent = `${m.speedupVsCached.toFixed(2)}×`;
   showSteps(build.steps);
-}
-
-/** Fills each optimization's measured gain and what it left of the original time, from the recorded benchmark. */
-function showSteps(steps) {
-  if (!steps) return;
-  const slowest = steps[0].seconds;
-  for (const step of steps) {
-    const row = document.querySelector(`[data-step="${step.id}"]`);
-    if (!row) continue;
-    row.querySelector(".gain").textContent = step.id === "V0" ? "start" : `${step.gain.toFixed(2)}×`;
-    row.querySelector(".left b").textContent = `${step.seconds.toFixed(1)} s`;
-    row.querySelector(".left i").style.width = `${(step.seconds / slowest) * 100}%`;
-  }
 }
 
 async function main() {

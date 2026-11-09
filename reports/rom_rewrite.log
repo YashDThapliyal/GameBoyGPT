@@ -1,0 +1,42 @@
+.venv/bin/python tools/make_art.py
+robot sprite tiles: 118
+logo tiles: 112
+.venv/bin/python tools/build.py V0 V1 V2 V3 V4 V5 V5S V5Z V6T A_QSQ A_NIB A_KV
+build/V0/gameboygpt.gb 131072 f7d81a724785cb28
+build/V0/test.gb 131072 5938dbaf2fd81c1a
+build/V1/gameboygpt.gb 131072 27f977de507f6837
+build/V1/test.gb 131072 ea5bc7ae1ab95455
+build/V2/gameboygpt.gb 131072 1ec7b4cf27a3418d
+build/V2/test.gb 131072 7209ce017a5f2589
+build/V3/gameboygpt.gb 131072 4045113e5609499c
+build/V3/test.gb 131072 e1c7ef82e0bcdef6
+build/V4/gameboygpt.gb 131072 d3ce8048e1ab89c8
+build/V4/test.gb 131072 c2b4198adb5a015e
+build/V5/gameboygpt.gb 131072 18a258aa6052c700
+build/V5/test.gb 131072 0dc5d8055c702ef5
+build/V5S/gameboygpt.gb 131072 a3d9f94f31fefea7
+build/V5S/test.gb 131072 973175788336fbd2
+build/V5Z/gameboygpt.gb 131072 99dd08e700ed388e
+build/V5Z/test.gb 131072 48cfd01910a5e103
+build/V6T/gameboygpt.gb 131072 d87bbe3b6d9e82e8
+build/V6T/test.gb 131072 b1fa1f9228e25919
+build/A_QSQ/gameboygpt.gb 131072 0b732710dd2e99ff
+build/A_QSQ/test.gb 131072 a3dec89e3eb57fb8
+build/A_NIB/gameboygpt.gb 131072 66bcd6cda13b2467
+build/A_NIB/test.gb 131072 0ff522c487dbc858
+build/A_KV/gameboygpt.gb 131072 0d8960a22527bf5e
+build/A_KV/test.gb 131072 17e477fa2329fbf7
+.venv/bin/python tools/build.py V0 V6T --selftest
+build/V0/gameboygpt.gb 131072 f7d81a724785cb28
+build/V0/test.gb 131072 5938dbaf2fd81c1a
+build/V6T/gameboygpt.gb 131072 d87bbe3b6d9e82e8
+build/V6T/test.gb 131072 b1fa1f9228e25919
+cp build/V6T/gameboygpt.gb build/system_override.gb
+cp build/V6T/gameboygpt.sym build/system_override.sym
+cp build/V0/gameboygpt.gb build/system_override_v0.gb
+mkdir -p release
+cp build/system_override.gb build/system_override_v0.gb release/
+cd release && shasum -a 256 system_override.gb system_override_v0.gb > SHA256SUMS
+cat release/SHA256SUMS
+d87bbe3b6d9e82e88c90b864fa171780004e7a272c38fbbe5085d6343f0fde53  system_override.gb
+f7d81a724785cb28689aee95caee9d03ab348a8f68002da514bf424be0ff35c8  system_override_v0.gb

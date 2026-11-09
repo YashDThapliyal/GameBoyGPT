@@ -119,3 +119,20 @@ def test_page_move_phrases_parse_to_the_intent_their_button_promises():
             assert re.fullmatch(r"[A-Z0-9',.?! -]+", phrase["say"]), phrase["say"]
             assert len(phrase["say"]) <= cv.MAX_INPUT, phrase["say"]
             assert cv.parse(phrase["say"]).intent == phrase["intent"], phrase["say"]
+
+
+def test_insults_threats_and_challenges_keep_the_players_own_word_for_one_turn():
+    assert cv.parse("YOU ARE DUMB").word == "DUMB"
+    assert cv.parse("I WILL SMASH YOUR SCREEN").word == "SMASH"
+    assert cv.parse("RACE ME").word == "RACE"
+    assert cv.parse("YOU ARE COOL").word == ""
+    assert cv.parse("YOU ARE NOT COOL").word == ""  # swapped to an insult, with no insult word to repeat
+    s = cv.apply_turn(cv.State(), cv.parse("YOU ARE DUMB"))
+    assert s.word == "DUMB"
+    assert cv.apply_turn(s, cv.parse("HELLO")).word == ""
+
+
+def test_a_full_word_never_strands_its_punctuation_on_the_next_line():
+    # 18 characters of words followed by a period would otherwise wrap the period alone.
+    tokens = ["<E_SMUG>", "hhhhhhhhh", "mmmmmmmm", ".", "<EOS>"]
+    assert dl.rendered_lines(tokens) == 2

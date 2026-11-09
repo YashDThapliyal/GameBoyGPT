@@ -3,52 +3,43 @@
 .plug:hover:not(:disabled) { background: #a93a70; }
 .plug[hidden] { display: none; }
 
-/* ---- Inside the chip ---- */
-.wram { display: none; position: absolute; left: calc(var(--p) * 11); top: calc(var(--p) * 193); width: calc(var(--p) * 170); height: calc(var(--p) * 85); image-rendering: pixelated; }
-.device.xray .shell { opacity: .22; }
-.device.xray .wram { display: block; }
-.device.xray .brand, .device.xray .pills span, .device.xray .ab-well span, .device.xray .power-label { color: var(--cream); }
+/* ---- Inside the chip: the cover comes off, and the board underneath shows the live chip. ---- */
+.device.xray .cover { visibility: hidden; animation: cover-off .75s steps(10) forwards; }
+.device.closing .cover { animation: cover-on .55s steps(8); }
+@keyframes cover-off {
+  0% { visibility: visible; transform: none; }
+  22% { visibility: visible; transform: translate(-1%, -4%) rotate(-2deg); }
+  99% { visibility: visible; transform: translate(-150%, 4%) rotate(-11deg); }
+  100% { visibility: hidden; transform: translate(-150%, 4%) rotate(-11deg); }
+}
+@keyframes cover-on {
+  from { transform: translate(-150%, 4%) rotate(-11deg); }
+  to { transform: none; }
+}
+.case-note { margin: 0; color: var(--lcd); font-size: 21px; line-height: 1.15; }
+.case-note[hidden] { display: none; }
 
-.xray-panel { display: flex; flex-direction: column; gap: 10px; padding-top: 12px; border-top: var(--px) solid var(--forest-line); }
-.xray-panel[hidden] { display: none; }
-.xray-panel h2 { margin: 8px 0 0; font-size: 11px; line-height: 1.4; color: var(--lcd); }
-.xray-panel > p { margin: 0; color: var(--cream-soft); line-height: 1.15; }
-
-.slip { padding: 10px 14px; background: var(--lcd); color: var(--ink); }
-.slip-head, .slip-foot { display: flex; justify-content: space-between; gap: 12px; margin: 0; color: var(--olive-dark); font-size: 20px; line-height: 1.1; }
-.you { display: flex; gap: 8px; margin: 6px 0 0; }
-.you[hidden], .heard[hidden] { display: none; }
-.you span { color: var(--olive-dark); }
-.you b { font-weight: 400; overflow-wrap: anywhere; }
-.heard { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 10px; margin: 6px 0 0; padding: 4px 0; border-block: 2px solid var(--lcd-mid); }
-.heard > div { display: flex; gap: 8px; }
-.heard dt { color: var(--olive-dark); }
-.heard dd { margin: 0; }
-.tokens { display: flex; flex-wrap: wrap; gap: 4px 8px; min-height: 66px; align-content: flex-start; margin-top: 8px; }
-.tokens .empty { margin: 0; color: var(--olive-dark); line-height: 1.1; }
-.pair { display: inline-flex; }
-.tok { display: inline-flex; flex-direction: column; line-height: 1; }
-.tok b { font-weight: 400; font-size: 26px; }
-.tok i { font-style: normal; font-size: 16px; color: var(--olive-dark); }
-.tok.slot b { text-decoration: underline; }
-.tok.ctl b { color: var(--olive-dark); font-size: 21px; line-height: 1.24; }
-.strip { display: flex; gap: 2px; height: 10px; margin-top: 8px; }
-.strip:empty { background: rgba(77, 83, 60, .16); }
-.strip i { flex: 1 1 0; min-width: 2px; background: var(--olive-dark); }
-.strip i.first { background: var(--ink); }
-.strip i.live { background: var(--lcd-mid); }
-
-.candidates { display: flex; flex-direction: column; gap: 3px; min-height: 150px; }
-.cand { display: grid; grid-template-columns: 1fr auto; column-gap: 12px; line-height: 1; }
-.cand b { font-weight: 400; }
-.cand span { color: var(--cream-soft); }
-.cand i { grid-column: 1 / -1; display: block; height: 4px; min-width: 2px; background: var(--forest-line); }
-.cand.picked b, .cand.picked span { color: var(--lcd); }
+.ram { position: absolute; left: calc(var(--p) * 10); top: calc(var(--p) * 177); margin: 0; }
+.ram canvas { display: block; width: calc(var(--u) * 128); height: calc(var(--u) * 64); background: var(--ink); image-rendering: pixelated; }
+.ram figcaption { margin-top: var(--p); color: var(--lcd); font: 400 calc(var(--u) * 15)/1 var(--body); }
+.layers { position: absolute; left: calc(var(--p) * 78); right: calc(var(--p) * 9); top: calc(var(--p) * 177); display: flex; flex-direction: column; gap: calc(var(--u) * 1); }
+.layer { display: grid; grid-template-columns: calc(var(--u) * 86) 1fr; gap: calc(var(--u) * 4); align-items: center; color: var(--cream); font: 400 calc(var(--u) * 15)/1 var(--body); }
+.layer canvas { display: block; width: 100%; height: calc(var(--u) * 9); image-rendering: pixelated; background: var(--ink); }
+.choosing { position: absolute; left: calc(var(--p) * 10); right: calc(var(--p) * 9); top: calc(var(--p) * 222); }
+.choosing h2 { margin: 0 0 calc(var(--u) * 5); font-size: calc(var(--u) * 9); line-height: 1; color: var(--lcd); }
+.candidates { display: flex; flex-direction: column; gap: calc(var(--u) * 2); }
+.candidates .note { color: var(--cream-soft); font-size: calc(var(--u) * 19); }
+.cand { display: grid; grid-template-columns: 1fr auto; column-gap: calc(var(--u) * 8); color: var(--cream); font: 400 calc(var(--u) * 19)/1 var(--body); }
+.cand b { font-weight: 400; overflow: hidden; white-space: nowrap; text-overflow: clip; }
+.cand i { grid-column: 1 / -1; display: block; height: calc(var(--u) * 3); min-width: var(--p); background: var(--lcd-mid); }
+.cand.picked { color: var(--lcd); }
 .cand.picked i { background: var(--lcd); }
-#candMore:empty { display: none; }
-.layers { display: flex; flex-direction: column; gap: 3px; }
-.layer { display: grid; grid-template-columns: 110px 1fr; gap: 8px; align-items: center; color: var(--cream-soft); font-size: 20px; line-height: 1; }
-.layer canvas { display: block; width: 100%; height: 10px; image-rendering: pixelated; background: var(--ink); }
+.timing { position: absolute; left: calc(var(--p) * 10); right: calc(var(--p) * 30); top: calc(var(--p) * 296); }
+.timing p { margin: var(--u) 0 0; color: var(--cream-soft); font: 400 calc(var(--u) * 15)/1 var(--body); }
+.strip { display: flex; gap: 1px; height: calc(var(--u) * 7); background: var(--ink); }
+.strip i { flex: 1 1 0; min-width: 1px; background: var(--lcd-mid); }
+.strip i.first { background: var(--cream); }
+.strip i.live { background: var(--lcd); }
 
 /* ---- The shutdown fight. Each level follows the ROM's own shutdown count. ---- */
 body { transition: background-color .4s steps(4); }
