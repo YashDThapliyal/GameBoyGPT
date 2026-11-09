@@ -1,5 +1,5 @@
 # Progress: SYSTEM OVERRIDE (branch `system-override`)
-Status: release candidate on branch `system-override`, not merged, not pushed. v0.3.1 stays tagged and reproducible, see below.
+Status: released on `main`, published on GitHub and live at https://gameboygpt.vercel.app. v0.3.1 stays tagged and reproducible, see below.
 Physical hardware: not tested at any point in this project.
 
 ## Phase log

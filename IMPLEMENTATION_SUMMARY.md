@@ -1,6 +1,6 @@
 # Implementation summary
 
-SYSTEM OVERRIDE, on branch `system-override`. Not merged and not pushed. Nothing was published. Measurements are in [RESULTS.md](RESULTS.md), and every one comes from an emulator.
+GameBoyGPT, whose robot is called SYSTEM OVERRIDE. It's on `main`, published on GitHub and live at https://gameboygpt.vercel.app. Measurements are in [RESULTS.md](RESULTS.md), and every one comes from an emulator.
 
 ## Acceptance criteria
 
