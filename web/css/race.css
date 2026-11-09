@@ -35,6 +35,23 @@ header p { margin: 0; max-width: 68ch; color: var(--paper-soft); }
 .picks input { width: 16px; height: 16px; accent-color: var(--lcd-0); }
 .status { margin: 0; min-height: 1.5em; font-weight: 500; }
 
+.track { display: flex; flex-direction: column; gap: 6px; padding: 8px 0; }
+.rail { display: grid; grid-template-columns: 52px 1fr 32px; gap: 12px; align-items: center; font-weight: 500; }
+.rail b { font: 600 24px/1 "Barlow Condensed", sans-serif; text-align: right; font-variant-numeric: tabular-nums; }
+.groove { position: relative; height: 36px; margin-right: 40px; background: linear-gradient(var(--navy-line), var(--navy-line)) 0 50% / 100% 2px no-repeat; }
+.fill { position: absolute; left: 0; top: calc(50% - 3px); height: 6px; width: 0; background: var(--lcd-0); transition: width .35s; }
+.runner { position: absolute; left: 0; top: 0; width: 40px; height: 36px; background: var(--lcd-0); border-radius: 3px; image-rendering: pixelated; transition: left .35s; }
+
+.result { display: grid; grid-template-columns: auto 1fr; gap: 12px 28px; align-items: center; padding: 14px 20px; background: var(--lcd-0); color: var(--lcd-3); border-radius: 6px 6px 32px 6px; }
+.result[hidden] { display: none; }
+.multiple { margin: 0; font: 600 italic 76px/1 Jost, sans-serif; letter-spacing: -.02em; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.result-detail { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.result-detail p { margin: 0 0 4px; font-weight: 500; }
+.time-row { display: grid; grid-template-columns: 44px 1fr 78px; gap: 10px; align-items: center; font-size: 14px; }
+.time-row i { display: block; position: relative; height: 10px; }
+.time-row i::before { content: ""; display: block; height: 100%; width: var(--share, 0%); background: #1f1f1f; transition: width .8s cubic-bezier(.2, .8, .3, 1); }
+.time-row b { font-weight: 500; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
 .lanes { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
 .lane { display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: 4px 12px; }
 .lane h2 { margin: 0; font: 600 italic 24px/1 Jost, sans-serif; }
@@ -57,6 +74,8 @@ footer p { margin: 0; max-width: 72ch; }
   .clock { font-size: 30px; }
   .lane h2 { font-size: 19px; }
   .words { font-size: 14px; }
+  .result { grid-template-columns: 1fr; }
+  .multiple { font-size: 56px; }
 }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }

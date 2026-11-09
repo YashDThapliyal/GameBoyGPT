@@ -9,6 +9,10 @@ const GAP_SEC = 0.07;
 const PROMPT_LEN_FALLBACK = 9;
 const FAST_FORWARD = 8;
 const SEED_RANGE = 0xffff;
+const FACE = { w: 72, h: 64 };
+const OPENING_TRACK_TOKENS = 16;
+const TRACK_LEAD_ROOM = 2;
+const FRAMES_PER_DRAW = 6;
 
 class Racer {
   constructor(side, rom, addresses, build) {
@@ -111,6 +115,7 @@ let racers = [];
 let raceItem = 0;
 let phase = "idle";
 let audioCtx = null;
+let frameCount = 0;
 
 function setSpeed() {
   const speed = $("fast").checked ? FAST_FORWARD : 1;
@@ -119,6 +124,39 @@ function setSpeed() {
 
 function showClocks() {
   for (const r of racers) $(`clock${r.side}`).textContent = clock(r.elapsed);
+}
+
+/** The reply's length isn't known until someone finishes, so the track grows until then and fits it afterwards. */
+function trackLength() {
+  const finisher = racers.find((r) => r.finishedAt !== null);
+  if (finisher) return Math.max(finisher.tokens.length, 1);
+  const lead = Math.max(...racers.map((r) => r.tokens.length));
+  return Math.max(OPENING_TRACK_TOKENS, lead + TRACK_LEAD_ROOM);
+}
+
+function showTrack() {
+  const length = trackLength();
+  for (const r of racers) {
+    const share = Math.min(r.tokens.length / length, 1) * 100;
+    $(`fill${r.side}`).style.width = `${share}%`;
+    $(`runner${r.side}`).style.left = `${share}%`;
+    $(`count${r.side}`).textContent = String(r.tokens.length);
+  }
+  if (frameCount % FRAMES_PER_DRAW) return;
+  // The runners are the real sprites, live from each console's own screen.
+  for (const r of racers) $(`runner${r.side}`).getContext("2d").drawImage($(`screen${r.side}`), 0, 0, FACE.w, FACE.h, 0, 0, FACE.w, FACE.h);
+}
+
+function commentary() {
+  const [fast, slow] = racers;
+  const gap = fast.tokens.length - slow.tokens.length;
+  if (fast.finishedAt !== null) return `Tuned finished in ${friendly(fast.elapsed)}. Plain is on ${slow.tokens.length} of ${fast.tokens.length} tokens.`;
+  if (slow.finishedAt !== null) return `Plain finished in ${friendly(slow.elapsed)}. Tuned is on ${fast.tokens.length} of ${slow.tokens.length} tokens.`;
+  if (!fast.tokens.length && !slow.tokens.length) return "Neck and neck. Both are reading the prompt.";
+  if (gap === 0) return `Neck and neck on ${fast.tokens.length} ${fast.tokens.length === 1 ? "token" : "tokens"}.`;
+  const leader = gap > 0 ? "Tuned" : "Plain";
+  const lead = Math.abs(gap);
+  return `${leader} is ahead by ${lead} ${lead === 1 ? "token" : "tokens"}.`;
 }
 
 function tick() {
@@ -133,12 +171,14 @@ function tick() {
     const seed = Math.floor(Math.random() * SEED_RANGE) + 1;
     for (const r of racers) r.go(seed);
     phase = "racing";
-    $("status").textContent = "Racing. Both consoles got the same seed and the same button press at the same moment.";
     return;
   }
   if (phase !== "racing") return;
   const done = racers.map((r) => r.follow());
+  frameCount += 1;
   showClocks();
+  showTrack();
+  $("status").textContent = commentary();
   for (const r of racers) $(`lane${r.side}`).classList.toggle("finished", r.finishedAt !== null);
   if (done.every(Boolean)) finish();
 }
@@ -148,10 +188,21 @@ function finish() {
   const [fast, slow] = racers;
   const same = fast.tokens.length === slow.tokens.length && fast.tokens.every((t, i) => t === slow.tokens[i]);
   window.__race = { same, fast: fast.elapsed, slow: slow.elapsed, tokens: fast.tokens, slowTokens: slow.tokens };
-  $("status").textContent = same
-    ? `Both wrote the same ${fast.tokens.length} tokens. The plain build took ${friendly(slow.elapsed)}, the tuned one ${friendly(fast.elapsed)}, which is ${(slow.elapsed / fast.elapsed).toFixed(1)} times faster.`
-    : "The two consoles wrote different tokens, which should never happen. Reload the page and try again.";
+  showTrack();
+  if (same) showResult(fast, slow);
+  else $("status").textContent = "The two consoles wrote different tokens, which should never happen. Reload the page and try again.";
   setPicking(true);
+}
+
+function showResult(fast, slow) {
+  $("status").textContent = "";
+  $("resultMultiple").textContent = `${(slow.elapsed / fast.elapsed).toFixed(1)}× faster`;
+  $("resultLine").textContent = `Both wrote the same ${fast.tokens.length} tokens. The speed work saved ${friendly(slow.elapsed - fast.elapsed)} on this reply.`;
+  $("timeFast").textContent = friendly(fast.elapsed);
+  $("timeSlow").textContent = friendly(slow.elapsed);
+  $("timeBarSlow").style.setProperty("--share", "100%");
+  $("timeBarFast").style.setProperty("--share", `${(fast.elapsed / slow.elapsed) * 100}%`);
+  $("result").hidden = false;
 }
 
 function setPicking(enabled) {
@@ -164,10 +215,14 @@ async function start(item, build, roms) {
   phase = "off";
   setPicking(false);
   $("status").textContent = "Starting both consoles.";
+  $("result").hidden = true;
   for (const side of ["Fast", "Slow"]) {
     $(`words${side}`).textContent = "";
     $(`clock${side}`).textContent = clock(0);
     $(`lane${side}`).classList.remove("finished");
+    $(`fill${side}`).style.width = "0%";
+    $(`runner${side}`).style.left = "0%";
+    $(`count${side}`).textContent = "0";
   }
   audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
   const shipAddresses = { ...build.addresses, ...build.debug };

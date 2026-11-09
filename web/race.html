@@ -25,6 +25,20 @@
   </div>
   <p class="status" id="status" role="status">Loading both ROMs.</p>
 
+  <section class="result" id="result" aria-label="Race result" hidden>
+    <p class="multiple" id="resultMultiple"></p>
+    <div class="result-detail">
+      <p id="resultLine"></p>
+      <div class="time-row"><span>Tuned</span><i id="timeBarFast"></i><b id="timeFast"></b></div>
+      <div class="time-row"><span>Plain</span><i id="timeBarSlow"></i><b id="timeSlow"></b></div>
+    </div>
+  </section>
+
+  <section class="track" aria-label="Tokens written so far">
+    <div class="rail"><span>Tuned</span><div class="groove"><i class="fill" id="fillFast"></i><canvas class="runner" id="runnerFast" width="72" height="64" aria-hidden="true"></canvas></div><b id="countFast">0</b></div>
+    <div class="rail"><span>Plain</span><div class="groove"><i class="fill" id="fillSlow"></i><canvas class="runner" id="runnerSlow" width="72" height="64" aria-hidden="true"></canvas></div><b id="countSlow">0</b></div>
+  </section>
+
   <div class="lanes">
     <section class="lane" id="laneFast" aria-label="Tuned build">
       <h2>Tuned</h2>
