@@ -26,6 +26,7 @@
 .power { position: absolute; left: calc(var(--p) * 19); top: calc(var(--p) * 3); width: calc(var(--p) * 27); height: calc(var(--p) * 6); padding: 0; border: 0; background: #4e5048; transform: translateX(calc(var(--u) * var(--dodge, 0))); transition: transform .12s steps(3); }
 .power-knob { position: absolute; left: var(--p); top: var(--p); width: calc(var(--p) * 12); height: calc(var(--p) * 4); background: #f4eedc; }
 .power[aria-pressed="true"] .power-knob { left: calc(var(--p) * 14); }
+.power.flick .power-knob { left: var(--p); }
 .power-label { position: absolute; left: calc(var(--p) * 49); top: calc(var(--p) * 3.5); font: 400 calc(var(--u) * 6)/1 var(--display); color: #6b6652; }
 .bezel-label { position: absolute; left: 0; width: 100%; top: calc(var(--p) * 19.5); text-align: center; font: 400 calc(var(--u) * 7)/1 var(--display); color: #c4c6b8; }
 .led { position: absolute; left: calc(var(--p) * 10); top: calc(var(--p) * 72); width: calc(var(--p) * 4); height: calc(var(--p) * 4); background: #2e1518; }

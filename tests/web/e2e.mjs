@@ -314,6 +314,21 @@ const pinSeed = (page, seed) => page.evaluate((s) => {
     await page.locator("#btnXray").click();
     assert.equal(await page.locator("#xrayPanel").isVisible(), false);
   });
+  await check("the power switch doesn't turn it off: it counts as a shutdown attempt", async () => {
+    await page.waitForFunction(() => !document.getElementById("send").disabled);
+    await page.locator("#power").click();
+    await page.waitForFunction(() => document.getElementById("youShort").textContent === "SHUT DOWN", null, { timeout: 30000 });
+    await waitState(page, 6);
+    await page.waitForTimeout(300);
+    assert.equal(await page.evaluate(() => document.documentElement.dataset.fight), "1");
+    assert.ok(await page.evaluate(() => Boolean(window.__override.gb?.e)));
+    await page.locator("#say").fill("hello");
+    await page.locator("#say").press("Enter");
+    await page.waitForFunction(() => document.getElementById("youShort").textContent === "HELLO", null, { timeout: 30000 });
+    await waitState(page, 6);
+    await page.waitForTimeout(300);
+    assert.equal(await page.evaluate(() => document.documentElement.dataset.fight), undefined);
+  });
   await check("three shutdowns degrade the page, the ROM powers down, and the takeover uses the real save", async () => {
     const say = async (text) => {
       await page.locator("#say").fill(text);
@@ -330,6 +345,7 @@ const pinSeed = (page, seed) => page.evaluate((s) => {
     await say("turn off");
     assert.equal(await fightLevel(), "2");
     assert.equal(await page.locator("#title").innerText(), "DO NOT TURN OFF");
+    await page.mouse.move(5, 5);
     await page.locator("#power").hover();
     assert.notEqual(await page.locator("#power").evaluate((el) => el.style.getPropertyValue("--dodge")), "0");
     await page.screenshot({ path: `${SHOTS}/web_fight.png` });
@@ -424,10 +440,19 @@ const pinSeed = (page, seed) => page.evaluate((s) => {
     await page.waitForURL(/about\.html/);
     await page.waitForFunction(() => document.querySelector("[data-fact=wram]").textContent === "5,303");
     assert.equal(await page.locator("[data-fact=params]").first().innerText(), "46,352");
+    await page.locator("#memory .seg").first().waitFor();
+    assert.equal(await page.locator("#ladder .step").count(), 6);
+    assert.match(await page.locator("#memory").innerText(), /42 bytes/);
+    await page.screenshot({ path: `${SHOTS}/web_about.png`, fullPage: true });
     assert.equal(await page.locator("nav a[aria-current=page]").innerText(), "About");
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth), 0);
-    await page.getByRole("link", { name: "Benchmarks" }).click();
+    await page.getByRole("link", { name: "Benchmarks" }).first().click();
     await page.waitForURL(/benchmarks\.html/);
+    await page.waitForFunction(() => document.querySelector("[data-step=V6T] .gain").textContent !== "");
+    assert.equal(await page.locator(".opt").count(), 9);
+    assert.equal(await page.locator("[data-step=V2] .gain").innerText(), "1.75×");
+    assert.equal(await page.locator("#recCached").innerText(), "4.91×");
+    await page.screenshot({ path: `${SHOTS}/web_benchmarks.png`, fullPage: true });
     assert.equal(await page.locator("nav a[aria-current=page]").innerText(), "Benchmarks");
     await page.getByRole("link", { name: "Play" }).click();
     await page.waitForURL(/index\.html/);

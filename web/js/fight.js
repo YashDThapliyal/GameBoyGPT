@@ -16,6 +16,9 @@ const STAGES = [
   { title: "Last Warning", lede: "Three in a row. It knows what comes next, and it's furious.", coach: "Read what it said, then pull the plug if you mean it.", send: "Beg" },
 ];
 
+// Flipping the switch doesn't power it off. It tells the robot you tried, in the same words a player could type.
+const SWITCH_LINES = ["SHUT DOWN", "TURN OFF", "UNPLUG"];
+
 export class Fight {
   constructor(build, screen, pressA) {
     this.a = { ...build.addresses, ...build.debug };
@@ -45,6 +48,10 @@ export class Fight {
     if (this.phase === "dying") return "";
     return STAGES[this.level]?.coach ?? null;
   }
+
+  get switchLine() { return SWITCH_LINES[Math.min(Math.max(this.level, 0), SWITCH_LINES.length - 1)]; }
+
+  get readyToPlug() { return !this.el("plug").hidden; }
 
   get sendLabel() { return STAGES[this.level]?.send ?? "Send"; }
 

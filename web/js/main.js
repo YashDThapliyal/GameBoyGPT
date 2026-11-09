@@ -11,6 +11,7 @@ const SAVE_KEY = "system-override-save-v1";
 const PREF_KEY = "system-override-display-v1";
 const POWER_FLASH_MS = 350;
 const PLUG_PRESS_MS = 120;
+const FLICK_MS = 260;
 const SAY_PLACEHOLDER = "Say something to it...";
 const CONTENT_MAX = 1240;
 const CONSOLE_SHARE = 0.46;
@@ -157,6 +158,19 @@ async function sendMove(button) {
   showPreview(button);
 }
 
+/** The switch boots the console, then stops cooperating. A real power-off lives under Options. */
+function flipSwitch() {
+  if (!on) {
+    powerOn();
+    return;
+  }
+  $("power").classList.add("flick");
+  setTimeout(() => $("power").classList.remove("flick"), FLICK_MS);
+  if (!fight) return;
+  if (fight.readyToPlug) $("plug").click();
+  else sendMessage(fight.switchLine);
+}
+
 function showPreview(button) {
   $("say").placeholder = button ? `Next: ${nextPhrase(button.dataset.move)}` : SAY_PLACEHOLDER;
 }
@@ -222,7 +236,7 @@ async function main() {
   window.addEventListener("pagehide", () => storeSave(true));
   bindControls(document, () => gb, () => { audioCtx?.resume().catch(() => {}); });
 
-  $("power").addEventListener("click", () => (on ? powerOff() : powerOn()));
+  $("power").addEventListener("click", flipSwitch);
   $("btnPower").addEventListener("click", () => (on ? powerOff() : powerOn()));
   $("btnReset").addEventListener("click", () => { powerOff(); powerOn(); });
   $("btnFull").addEventListener("click", () => {

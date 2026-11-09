@@ -245,6 +245,21 @@ function showRecorded(build) {
   $("recTuned").textContent = `${friendly(m.secondsPerResponse)} per reply, ${m.secondsPerToken.toFixed(2)} s per token`;
   $("recUntuned").textContent = `${friendly(m.baselineSecondsPerResponse)} per reply, ${m.baselineSecondsPerToken.toFixed(2)} s per token`;
   $("recSpeedup").textContent = `${m.speedup.toFixed(2)}×`;
+  $("recCached").textContent = `${m.speedupVsCached.toFixed(2)}×`;
+  showSteps(build.steps);
+}
+
+/** Fills each optimization's measured gain and what it left of the original time, from the recorded benchmark. */
+function showSteps(steps) {
+  if (!steps) return;
+  const slowest = steps[0].seconds;
+  for (const step of steps) {
+    const row = document.querySelector(`[data-step="${step.id}"]`);
+    if (!row) continue;
+    row.querySelector(".gain").textContent = step.id === "V0" ? "start" : `${step.gain.toFixed(2)}×`;
+    row.querySelector(".left b").textContent = `${step.seconds.toFixed(1)} s`;
+    row.querySelector(".left i").style.width = `${(step.seconds / slowest) * 100}%`;
+  }
 }
 
 async function main() {

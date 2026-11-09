@@ -72,8 +72,62 @@
       <div><dt>Tuned</dt><dd id="recTuned"></dd></div>
       <div><dt>Untuned</dt><dd id="recUntuned"></dd></div>
       <div><dt>Recorded speedup, inference alone</dt><dd id="recSpeedup"></dd></div>
+      <div><dt>Against a baseline that already caches attention</dt><dd id="recCached"></dd></div>
     </dl>
     <p>Nothing here has run on a physical console.</p>
+  </section>
+
+  <section class="opts">
+    <h2>How it beat a plain forward pass</h2>
+    <p class="opts-note">Each step keeps the ones above it and has to write exactly the same tokens. Bars show the recorded time left for one reply, with inference alone.</p>
+    <ol class="opt-list">
+      <li class="opt" data-step="V0">
+        <p class="gain"></p>
+        <div class="opt-text"><h3>Plain forward pass</h3><p>The baseline. Every multiply is shift-and-add, and every token recomputes attention for all the tokens before it.</p><p class="origin">Where we started.</p></div>
+        <div class="left"><i></i><b></b></div>
+      </li>
+      <li class="opt" data-step="V1">
+        <p class="gain"></p>
+        <div class="opt-text"><h3>Bank layout</h3><p>Keeps tensors in one ROM bank and skips repeat bank switches. Barely helped, because no tensor here crosses a bank in a hot loop.</p><p class="origin">Framing from <a href="https://arxiv.org/abs/2205.14135">FlashAttention</a>: treat data movement as a cost.</p></div>
+        <div class="left"><i></i><b></b></div>
+      </li>
+      <li class="opt" data-step="V2">
+        <p class="gain"></p>
+        <div class="opt-text"><h3>Quarter-square multiply</h3><p>Replaces shift-and-add with two table lookups, which is the identity at the bottom of the About page.</p><p class="origin">A classic maths trick. We also tried a nibble table, and it lost.</p></div>
+        <div class="left"><i></i><b></b></div>
+      </li>
+      <li class="opt" data-step="V3">
+        <p class="gain"></p>
+        <div class="opt-text"><h3>Fused dot product, row pruning</h3><p>Runs each row as one unrolled loop instead of calling multiply each time, and skips words that can't be chosen. The first token only scores 8 faces.</p><p class="origin">From our own profiling.</p></div>
+        <div class="left"><i></i><b></b></div>
+      </li>
+      <li class="opt" data-step="V4">
+        <p class="gain"></p>
+        <div class="opt-text"><h3>Sparse attention</h3><p>Skips attention weights that rounded to zero. Attention is a small share of the time, so the gain is small.</p><p class="origin">Same idea as the zero skips in <a href="https://github.com/crashtheuniverse/chatgbc">chatgbc</a>.</p></div>
+        <div class="left"><i></i><b></b></div>
+      </li>
+      <li class="opt" data-step="V5">
+        <p class="gain"></p>
+        <div class="opt-text"><h3>Cached attention</h3><p>An earlier token's keys and values never change in a one-layer model, so each is computed once. This is why token time stops growing with context.</p><p class="origin">Standard transformer practice. <a href="https://github.com/maddiedreese/gbc-transformer">gbc-transformer</a> also caches them.</p></div>
+        <div class="left"><i></i><b></b></div>
+      </li>
+      <li class="opt" data-step="V5S">
+        <p class="gain"></p>
+        <div class="opt-text"><h3>Weights through the stack pointer</h3><p>Reads weights with <code>pop</code>, the fastest way to read in sequence on this CPU. Interrupts are held off per row, and it's untested on hardware.</p><p class="origin">Technique also used in the <a href="https://www.elyanlabs.ai/gbc-llm.html">Elyan Labs</a> fork, which warns about the same risk.</p></div>
+        <div class="left"><i></i><b></b></div>
+      </li>
+      <li class="opt" data-step="V5Z">
+        <p class="gain"></p>
+        <div class="opt-text"><h3>Zero-column skip</h3><p>An activation of zero makes a whole column of products zero, so that column is skipped.</p><p class="origin">Same idea as the zero skips in <a href="https://github.com/crashtheuniverse/chatgbc">chatgbc</a>.</p></div>
+        <div class="left"><i></i><b></b></div>
+      </li>
+      <li class="opt" data-step="V6T">
+        <p class="gain"></p>
+        <div class="opt-text"><h3>Per-token head tables</h3><p>Scoring 763 tokens from 16 inputs is the slowest part. So it builds a times table for each input, then every multiply is one lookup. Uses 8 KB of cartridge RAM.</p><p class="origin">Found in our own profile. Closest earlier idea: chatgbc's 27-sum lookup.</p></div>
+        <div class="left"><i></i><b></b></div>
+      </li>
+    </ol>
+    <p class="opts-note">No code was copied from any project named here. Two of them also shaped how we test: <a href="https://github.com/crashtheuniverse/chatgbc">chatgbc</a> for checking a ROM against an integer reference, and Elyan Labs for measuring every change as its own step. The 16-unit bottleneck isn't listed because it changes the model, so it had to pass a quality check instead.</p>
   </section>
 </main>
 

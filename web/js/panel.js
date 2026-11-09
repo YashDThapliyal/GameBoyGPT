@@ -9,7 +9,7 @@ const MENU = 2;
 const FRAME_SEC = 70224 / 4194304;
 const SLOT_BYTES = 9;
 
-const OFF_COACH = "Type something and send it. That switches the console on.";
+const OFF_COACH = "Flip the switch, or type something and send it.";
 const COACH = [
   "It's starting up. Your message can go in now.",
   "It's introducing itself. Send a message to skip this, or press A (X key).",

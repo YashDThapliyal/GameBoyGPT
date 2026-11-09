@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>About: GameBoyGPT</title>
 <link rel="icon" href="assets/robot.png">
-<meta name="description" content="How a 46,352-parameter transformer runs in SM83 assembly on an emulated 1989 handheld.">
+<meta name="description" content="How a 46,352-parameter transformer fits in SM83 assembly on an emulated 1989 handheld, in diagrams.">
 <link rel="stylesheet" href="css/theme.css">
 <link rel="stylesheet" href="css/about.css">
 </head>
@@ -21,53 +21,64 @@
 
 <main class="about">
   <h1>How it fits</h1>
-  <p class="lead">A real transformer, written in assembly for the Game Boy's 8-bit CPU. The words on the screen are computed there, one token at a time. You're watching it in an emulator, and it has never been tested on a physical console.</p>
+  <p class="lead">A real transformer, written in assembly for a 1989 8-bit CPU. It runs here in an emulator and has never been tested on a physical console.</p>
 
-  <dl class="facts" id="facts">
+  <dl class="facts">
     <div><dd data-fact="params">46,352</dd><dt>parameters</dt></div>
     <div><dd data-fact="rom">128 KB</dd><dt>ROM</dt></div>
     <div><dd>8 KB</dd><dt>built-in RAM</dt></div>
-    <div><dd>4.19 MHz</dd><dt>CPU clock</dt></div>
+    <div><dd>4.19 MHz</dd><dt>no multiply instruction</dt></div>
   </dl>
 
   <section>
-    <h2>The model</h2>
-    <p>One transformer block with two attention heads, 32-dimensional embeddings and a 64-unit feed-forward layer. It looks at up to 32 tokens at once, from a vocabulary of <span data-fact="vocab">763</span> words and short phrases.</p>
-    <p>A full output layer would be too big, so it goes through a 16-unit bottleneck first. It was trained on a computer against a dialogue corpus written for this character. The console only runs it, and the weights never change during play.</p>
-  </section>
-
-  <section>
-    <h2>Numbers</h2>
-    <p>The CPU has no floating point, so weights and activations are 8-bit integers. Training simulated that rounding, so the model learned to work with it. A separate Python reference does the same integer math, and the tests require the ROM to match it token for token.</p>
-  </section>
-
-  <section>
-    <h2>Memory</h2>
-    <p>The console has 8 KB of built-in work RAM, and this ROM uses <span data-fact="wram">5,303</span> bytes of it. That covers the attention cache, activations, scores for every token and the game itself. The weights stay in the 128 KB ROM.</p>
-    <p>The cartridge adds 32 KB of battery-backed RAM. One 8 KB bank holds speed-up tables, and a much smaller part holds your save. That save is why it remembers your name: it stores facts and counters in ordinary game memory, and the model reads a summary of them. It isn't learning.</p>
-  </section>
-
-  <section>
-    <h2>From your keyboard to the chip</h2>
-    <ol>
-      <li>The page puts your text in the ROM's input buffer, the same one its on-screen keyboard fills, and presses Start. The four quick buttons send ready-made phrases the same way.</li>
-      <li>A parser in assembly picks out keywords and turns them into an intent and a topic. Unknown words get an admission that it didn't understand.</li>
-      <li>The game adds its mood, what it thinks of you and what it remembers, making a 9-token prompt.</li>
-      <li>The model reads that prompt and starts writing.</li>
+    <h2>What happens when you type</h2>
+    <ol class="flow" aria-label="From your message to the screen">
+      <li class="box"><span class="tag">You</span><b>YOU ARE DUMB</b></li>
+      <li class="box"><span class="tag">Keyword parser</span><b>INSULT</b><small>in assembly</small></li>
+      <li class="box wide"><span class="tag">The prompt it sees</span>
+        <span class="chips"><i>SMUG</i><i>PEST</i><i>NEW</i><i>ONCE</i><i>NONE</i><i class="hit">INSULT</i><i>NONE</i></span>
+      </li>
+      <li class="box loop"><span class="tag">Transformer</span><b>one token</b><small>about <span data-fact="perToken">0.96</span> s each, fed back in</small></li>
+      <li class="box"><span class="tag">Screen</span><b>BEHOLD. I COULD BEAT THAT WITH ONE BIT.</b></li>
     </ol>
-    <p>That parser is the reason it can't hold a general conversation. The model sees only that summary, never your actual sentence, and it knows a handful of topics.</p>
+    <p class="caption">From a real run. The model sees those labels and never your sentence, which is why it can't hold a general conversation.</p>
   </section>
 
   <section>
-    <h2>Writing one token</h2>
-    <p>Each step runs attention over the tokens so far, reusing cached results for the earlier ones. It then scores every allowed token, marks down words it has already used, and draws from the closest candidates using the ROM's own random numbers. The first token picks the robot's face, and every token after that is a word or punctuation.</p>
-    <p>A token takes about <span data-fact="perToken">0.96</span> seconds, and an average reply takes about <span data-fact="perReply">13.5</span> seconds. Replies mostly recombine sentences people wrote, which is what a model this small can do reliably.</p>
+    <h2>Inside the model</h2>
+    <div class="stack" aria-label="The layers of the model, in order">
+      <div class="layer" style="--w:100%"><b>763</b><span>token vocabulary, up to 32 at a time</span></div>
+      <div class="layer" style="--w:42%"><b>32</b><span>embedding</span></div>
+      <div class="layer dark" style="--w:42%"><b>2 heads</b><span>attention</span></div>
+      <div class="layer dark" style="--w:58%"><b>64</b><span>feed-forward</span></div>
+      <div class="layer" style="--w:30%"><b>16</b><span>bottleneck</span></div>
+      <div class="layer" style="--w:100%"><b>763</b><span>scores, then a weighted draw</span></div>
+    </div>
+    <p class="caption">One block, with 8-bit weights and activations. Bar widths are a sketch, not to scale. The ROM's output matches a separate Python reference, token for token.</p>
+  </section>
+
+  <section id="memory">
+    <h2>Where everything lives</h2>
+    <div class="bar-group" data-memory="wram"><h3>Built-in work RAM: <span data-fact="wram">5,303</span> of 8,192 bytes used</h3></div>
+    <div class="bar-group" data-memory="rom"><h3>ROM: 128 KB</h3></div>
+    <div class="bar-group" data-memory="cart"><h3>Cartridge RAM: 32 KB</h3></div>
+    <p class="caption">Everything it remembers about you fits in <b data-fact="save">42 bytes</b>. That's a save file, not learning: the weights never change.</p>
   </section>
 
   <section>
-    <h2>Why this is hard</h2>
-    <p>The CPU has no multiply instruction. A transformer is mostly multiplication, and each one has to be built by hand from shifts and adds. The registers are 8 bits wide, the ROM can only show a small window of itself at a time, and the screen and animation still need attention every frame so the game doesn't freeze while it thinks.</p>
-    <p>Caching attention made it about twice as fast on its own. A table-based multiply gave about 1.75 times, and per-token multiplication tables in cartridge RAM added about 1.29 times on top of the rest. All the work together makes it about ten times faster, with identical output. You can <a href="benchmarks.html">race both versions yourself</a>.</p>
+    <h2>Ten times faster, same words</h2>
+    <div class="ladder" id="ladder"></div>
+    <p class="caption">Seconds per token, recorded in the PyBoy emulator. Each step keeps the ones above it. <a href="benchmarks.html">Race the first and last live.</a></p>
+  </section>
+
+  <section>
+    <h2>Multiplying without multiply</h2>
+    <div class="trick">
+      <p class="sum">13 × 11</p>
+      <p class="eq">= (13 + 11)² ÷ 4 − (13 − 11)² ÷ 4</p>
+      <p class="eq">= 144 − 1 = <b>143</b></p>
+    </div>
+    <p class="caption">A transformer is mostly multiplication, and this CPU can't do it directly. Looking up squares in a table made the model about 1.75 times faster.</p>
   </section>
 </main>
 
