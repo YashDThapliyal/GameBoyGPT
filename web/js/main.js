@@ -19,6 +19,8 @@ const CONTENT_MAX = 1240;
 const CONSOLE_SHARE = 0.46;
 const HEADER_AND_HINTS = 150;
 const SHELL_UNITS = { w: 192, h: 318 };
+const PHONE_MARGIN = 12;
+const PHONE_MIN_HEIGHT = 320;
 const params = new URLSearchParams(location.search);
 
 let gb = null;
@@ -245,8 +247,20 @@ function fit() {
   const full = document.fullscreenElement != null;
   document.documentElement.classList.toggle("fullscreen", full);
   const narrow = window.innerWidth <= 900;
-  const availW = narrow || full ? window.innerWidth - 16 : Math.min(window.innerWidth, CONTENT_MAX) * CONSOLE_SHARE;
-  const availH = narrow ? Infinity : window.innerHeight - (full ? 8 : HEADER_AND_HINTS);
+  // A phone's keyboard shrinks the window while typing. The console holds its size.
+  if (narrow && document.activeElement === $("say")) return;
+  let availW = Math.min(window.innerWidth, CONTENT_MAX) * CONSOLE_SHARE;
+  let availH = window.innerHeight - HEADER_AND_HINTS;
+  if (full) {
+    availW = window.innerWidth - 16;
+    availH = window.innerHeight - 8;
+  } else if (narrow) {
+    const dock = $("dock").getBoundingClientRect().height;
+    const above = document.querySelector(".top").getBoundingClientRect().height + document.querySelector(".intro").getBoundingClientRect().height;
+    document.documentElement.style.setProperty("--dock-space", `${Math.ceil(dock) + 8}px`);
+    availW = window.innerWidth - PHONE_MARGIN;
+    availH = Math.max(window.innerHeight - above - dock - PHONE_MARGIN, PHONE_MIN_HEIGHT);
+  }
   const maxK = Math.min(availW / SHELL_UNITS.w, availH / SHELL_UNITS.h, full ? 8 : 4);
   const smallest = narrow || full ? 1 : 2;
   const k = Math.max(smallest, Math.floor(maxK * dpr) / dpr);
@@ -257,6 +271,7 @@ async function main() {
   restorePrefs();
   applyDisplay();
   fit();
+  document.fonts?.ready.then(fit); // The dock's height depends on the fonts, and the console fills what's left.
   window.addEventListener("resize", fit);
   document.addEventListener("fullscreenchange", fit);
   window.addEventListener("pagehide", () => storeSave(true));

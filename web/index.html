@@ -74,6 +74,7 @@
   </div>
 
   <div class="talk">
+    <div class="dock" id="dock">
     <div class="moves" id="moves" aria-label="Quick moves">
       <button class="menu-button" type="button" data-move="talk" aria-pressed="false">TALK</button>
       <button class="menu-button" type="button" data-move="roast" aria-pressed="false">ROAST</button>
@@ -88,6 +89,7 @@
       </div>
     </form>
     <p class="status"><span id="lvState">Powered off</span><span class="cursor" aria-hidden="true">_</span></p>
+    </div>
     <p class="coach" id="coach" role="status"></p>
     <p class="heard-line" id="heardLine" hidden>You said: <b id="youShort"></b><br>The model got: <b id="heardShort"></b></p>
     <button class="menu-button plug" id="plug" type="button" hidden>Pull the plug</button>

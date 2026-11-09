@@ -36,3 +36,7 @@ reports/junit/
 docs/history/v0.3.1/reports/*.log
 # The GIF that make_short_demo.py also writes. docs/demo/gameboygpt.gif is the one to share.
 docs/demo/system_override_short.gif
+
+# Local Vercel project link
+.vercel/
+web/.vercel/

@@ -1,0 +1,4 @@
+# Test tooling. The site itself has no dependencies or build step.
+node_modules
+package.json
+package-lock.json
