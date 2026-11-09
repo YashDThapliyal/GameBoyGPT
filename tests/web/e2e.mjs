@@ -308,7 +308,7 @@ const pinSeed = (page, seed) => page.evaluate((s) => {
     for (const { token, ids } of landed) assert.ok(ids.includes(token), `token ${token} not in ${ids}`);
     await waitState(page, 6);
     await page.waitForTimeout(300);
-    assert.ok((await page.locator("#candidates .cand").count()) >= 2, "the board holds a moment with real options");
+    assert.equal(await page.locator("#candidates .cand").count(), 5);
     assert.equal(await page.locator("#candidates .cand.picked").count(), 1, "the winner is always in the list");
     const lit = await page.evaluate(() => { const d = document.getElementById("wram").getContext("2d").getImageData(0, 0, 128, 64).data; const c = new Set(); for (let i = 0; i < d.length; i += 4) c.add(d[i]); return c.size; });
     assert.ok(lit >= 3, `wram shades ${lit}`);

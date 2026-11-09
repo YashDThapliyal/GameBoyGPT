@@ -5,7 +5,7 @@ CUMULATIVE := V0 V1 V2 V3 V4 V5 V5S V5Z V6T
 ISOLATED := A_QSQ A_NIB A_KV
 VARIANTS := $(CUMULATIVE) $(ISOLATED)
 TESTER := .third_party/SameBoy/build/bin/tester/sameboy_tester
-.PHONY: all bootstrap smoke train study export art rom variants sameboy verify second-emulator play web web-art web-test demo demo-short benchmark report evaluate clean
+.PHONY: all bootstrap smoke train study export art rom variants sameboy verify second-emulator play web web-art web-test demo demo-short gif benchmark report evaluate clean
 all: rom verify
 bootstrap:
 	tools/bootstrap.sh
@@ -53,6 +53,9 @@ web-test:
 demo:
 	$(PY) tools/build_web.py
 	node tools/capture_demo.mjs
+gif:
+	$(PY) tools/build_web.py
+	node tools/capture_gif.mjs
 demo-short:
 	$(PY) tools/make_short_demo.py
 benchmark:

@@ -16,4 +16,6 @@ The takeover's page effects and big lines are scripted, and the screen says so. 
 
 The recorder logs the moment of each beat. Screencast time drifts from real time, so `tools/capture_demo.mjs` ties both to two moments visible in the footage, the LED lighting up and the takeover filling the page, and corrects the full video to true speed.
 
-To rerecord: `make demo`, then `make demo-short`.
+`docs/demo/gameboygpt.gif` is the clip for sharing, recorded by `tools/capture_gif.mjs`. It plays at 1.5 times real speed, the seed is chosen, and the recording fails unless the ROM replays the reference's tokens. The first message in that session, which set the name, is cut.
+
+To rerecord: `make gif`, or `make demo` then `make demo-short`.

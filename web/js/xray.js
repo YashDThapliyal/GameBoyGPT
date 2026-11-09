@@ -6,6 +6,7 @@ const WRAM_START = 0xc000;
 const GRID_W = 128;
 const GRID_H = 64;
 const CANDIDATES_SHOWN = 5;
+const SCORE_UNITS_PER_NAT = 32; // the output layer's fixed-point scale: its scores are logits times 2^5
 const CLOSE_MS = 560;
 const BYTE_SHADES = [[0x4d, 0x53, 0x3c], [0x8b, 0x95, 0x6d], [0xc4, 0xcf, 0xa1], [0xe6, 0xdf, 0xca]];
 const ACTIVATION_SHADES = ["#1f1f1f", "#4d533c", "#8b956d", "#c4cfa1"];
@@ -101,24 +102,40 @@ export class XRay {
     return list;
   }
 
-  /** Mid-sentence the model is usually certain, so the board holds the last moment it really had options, with the winner lit. */
+  /** Every allowed token's score, read straight from the ROM's scoring array, for the token it has just chosen. */
+  readScores(gb, generatedSoFar) {
+    const vocab = this.build.vocab;
+    const firstEmotion = vocab.findIndex((w) => w.startsWith("<E_"));
+    const eos = vocab.indexOf("<EOS>");
+    const [from, to] = generatedSoFar === 1 ? [firstEmotion, eos] : [eos, vocab.length];
+    const scores = [];
+    for (let id = from; id < to; id++) {
+      const raw = gb.peek(this.a.wLogits + id * 2) | (gb.peek(this.a.wLogits + id * 2 + 1) << 8);
+      scores.push({ id, score: raw > 32767 ? raw - 65536 : raw });
+    }
+    return scores;
+  }
+
+  /** The top of the board's list changes with every token: the real rivals, the real odds, and the winner lit. */
   renderCandidates(gb) {
     const length = gb.peek(this.a.wSeqLen);
     if (length === this.lastLength) return;
     this.lastLength = length;
-    const list = this.readCandidates(gb);
-    if (list.length < 2) return;
-    const picked = gb.peek(this.a.wPickId) | (gb.peek(this.a.wPickId + 1) << 8);
-    const total = list.reduce((sum, c) => sum + c.weight, 0) || 1;
-    const sorted = [...list].sort((a, b) => b.weight - a.weight);
-    const top = sorted.slice(0, CANDIDATES_SHOWN);
-    if (!top.some((c) => c.id === picked)) top[top.length - 1] = sorted.find((c) => c.id === picked) ?? top[top.length - 1];
+    const generated = length - this.build.promptLen;
+    if (generated < 1 || length > this.build.ctx) return;
+    const picked = gb.peek(this.a.wSeq + (length - 1) * 2) | (gb.peek(this.a.wSeq + (length - 1) * 2 + 1) << 8);
+    const scores = this.readScores(gb, generated).sort((a, b) => b.score - a.score);
+    const best = scores[0].score;
+    const total = scores.reduce((sum, c) => sum + Math.exp((c.score - best) / SCORE_UNITS_PER_NAT), 0);
+    const top = scores.slice(0, CANDIDATES_SHOWN);
+    if (!top.some((c) => c.id === picked)) top[top.length - 1] = scores.find((c) => c.id === picked) ?? top[top.length - 1];
+    const lowest = Math.min(...top.map((c) => c.score)) - SCORE_UNITS_PER_NAT;
     this.el("candidates").replaceChildren(...top.map((c) => {
-      const share = (c.weight / total) * 100;
+      const odds = (Math.exp((c.score - best) / SCORE_UNITS_PER_NAT) / total) * 100;
       const row = make("div", c.id === picked ? "cand picked" : "cand");
       const bar = make("i");
-      bar.style.width = `${share}%`;
-      row.append(make("b", "", slotValue(gb, this.a, this.build.vocab[c.id]) ?? tokenLabel(this.build.vocab, c.id)), make("span", "", `${Math.round(share)}%`), bar);
+      bar.style.width = `${((c.score - lowest) / (best - lowest)) * 100}%`;
+      row.append(make("b", "", slotValue(gb, this.a, this.build.vocab[c.id]) ?? tokenLabel(this.build.vocab, c.id)), make("span", "", odds < 1 ? "<1%" : `${Math.round(odds)}%`), bar);
       return row;
     }));
   }

@@ -4,7 +4,7 @@
 
 ![The browser handheld running the real ROM, with the tokens it just generated listed beside it](docs/screenshots/hero.png)
 
-![Demo](docs/demo/system_override_short.gif)
+![Demo](docs/demo/gameboygpt.gif)
 
 [Watch the short demo](docs/demo/system_override_short.mp4), with waits sped up, or the [full one at real speed](docs/demo/system_override_demo.mp4). Both are real emulator footage, and [docs/DEMO.md](docs/DEMO.md) lists what was chosen.
 
