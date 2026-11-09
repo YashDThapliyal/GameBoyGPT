@@ -24,7 +24,7 @@ Phrase tokens help too. Byte-pair encoding over the corpus's words makes "i have
 
 ## The scaling study
 
-Twelve configurations trained on the same corpus, from 40K to 392K parameters, including a GRU. The result was clearer than expected: **past about 46K parameters, size stopped helping**. Held-out loss was 0.500 at 46,352 parameters and stayed between 0.490 and 0.502 all the way to 392,416, which would take a projected 223 s per response. For a corpus this narrow, what limits quality is the corpus, not the model. Larger candidates only cost time, and those with d above 32 also don't fit the HRAM-based kernels.
+Twelve configurations trained on the previous version of the corpus, before its rewrite, from 40K to 392K parameters, including a GRU. The result was clearer than expected: **past about 46K parameters, size stopped helping**. Held-out loss was 0.500 at 46,352 parameters and stayed between 0.490 and 0.502 all the way to 392,416, which would take a projected 223 s per response. For a corpus this narrow, what limits quality is the corpus, not the model. Larger candidates only cost time, and those with d above 32 also don't fit the HRAM-based kernels.
 
 The informative axis was the output bottleneck: k=8 gave 93.0% valid on held-out situations, k=12 96.8%, k=16 99.2%. k=16 is where the curve flattens, so it shipped. The GRU reached similar validity but a worse loss (0.585) and, with its float weights and no engine, wasn't a real alternative.
 
@@ -32,9 +32,9 @@ This is a warning about the study's generality: a larger and less compositional 
 
 ## Engine changes
 
-- **16-bit token ids.** The vocabulary is 763. Embeddings are pinned to whole banks, so `id >> 9` selects the bank.
+- **16-bit token ids.** The vocabulary is 720. Embeddings are pinned to whole banks, so `id >> 9` selects the bank.
 - **Low-rank head.** `d x V` multiplies become `k x (d + V)`.
-- **Head tables (V6T).** After the bottleneck, the head has 699 rows and only 16 inputs. Building a 256-entry table per input costs about 72 T-cycles an entry, and then each MAC is one lookup instead of a quarter-square pair. Result: 1.29x overall, bit-identical. The output head went from 51.2% of cycles to 37.2%. The tables take one 8 KB bank of cartridge RAM. The study projected 0.79 s/token and the kernel measured 0.90, so the projection was about 12% optimistic.
+- **Head tables (V6T).** After the bottleneck, the head has 656 rows and only 16 inputs. Building a 256-entry table per input costs about 72 T-cycles an entry, and then each MAC is one lookup instead of a quarter-square pair. Result: 1.29x overall, bit-identical. The output head went from 51.2% of cycles to 37.2%. The tables take one 8 KB bank of cartridge RAM. The study projected 0.79 s/token and the kernel measured 0.90, so the projection was about 12% optimistic.
 - **Sampling.** Softmax at temperature 1 over candidates near the best, using the same exponential lookup as attention, plus a repetition penalty. The old rule was uniform among 4 candidates, too crude for a model with many valid next words.
 
 Everything else was reused unchanged. Re-measured on this model, V0 to V5Z scale about as they did before, with the output head now the clear bottleneck.

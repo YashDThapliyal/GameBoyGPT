@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>About: GameBoyGPT</title>
 <link rel="icon" href="assets/robot.png">
-<meta name="description" content="How a 46,352-parameter transformer fits in SM83 assembly on an emulated 1989 handheld, in diagrams.">
+<meta name="description" content="How a tiny transformer fits in SM83 assembly on an emulated 1989 handheld, in diagrams.">
 <link rel="stylesheet" href="css/theme.css">
 <link rel="stylesheet" href="css/about.css">
 </head>
@@ -24,7 +24,7 @@
   <p class="lead">A real transformer, written in assembly for a 1989 8-bit CPU. It runs here in an emulator and has never been tested on a physical console.</p>
 
   <dl class="facts">
-    <div><dd data-fact="params">46,352</dd><dt>parameters</dt></div>
+    <div><dd data-fact="params">44,288</dd><dt>parameters</dt></div>
     <div><dd data-fact="rom">128 KB</dd><dt>ROM</dt></div>
     <div><dd>8 KB</dd><dt>built-in RAM</dt></div>
     <div><dd>4.19 MHz</dd><dt>no multiply instruction</dt></div>
@@ -34,32 +34,32 @@
     <h2>What happens when you type</h2>
     <ol class="flow" aria-label="From your message to the screen">
       <li class="box"><span class="tag">You</span><b>YOU ARE DUMB</b></li>
-      <li class="box"><span class="tag">Keyword parser</span><b>INSULT</b><small>in assembly</small></li>
+      <li class="box"><span class="tag">Keyword parser</span><b>INSULT</b><small>and keeps the word DUMB</small></li>
       <li class="box wide"><span class="tag">The prompt it sees</span>
         <span class="chips"><i>SMUG</i><i>PEST</i><i>NEW</i><i>ONCE</i><i>NONE</i><i class="hit">INSULT</i><i>NONE</i></span>
       </li>
-      <li class="box loop"><span class="tag">Transformer</span><b>one token</b><small>about <span data-fact="perToken">0.96</span> s each, fed back in</small></li>
-      <li class="box"><span class="tag">Screen</span><b>BEHOLD. I COULD BEAT THAT WITH ONE BIT.</b></li>
+      <li class="box loop"><span class="tag">Transformer</span><b>one token</b><small>about <span data-fact="perToken">0.93</span> s each, fed back in</small></li>
+      <li class="box"><span class="tag">Screen</span><b>DUMB? THAT FIT IN ONE BYTE.</b></li>
     </ol>
-    <p class="caption">From a real run. The model sees those labels and never your sentence, which is why it can't hold a general conversation.</p>
+    <p class="caption">From a real run. The model sees those labels and never your sentence, which is why it can't hold a general conversation. The game fills in the saved word when it draws the reply.</p>
   </section>
 
   <section>
     <h2>Inside the model</h2>
     <div class="stack" aria-label="The layers of the model, in order">
-      <div class="layer" style="--w:100%"><b>763</b><span>token vocabulary, up to 32 at a time</span></div>
+      <div class="layer" style="--w:100%"><b data-fact="vocab">720</b><span>token vocabulary, up to 32 at a time</span></div>
       <div class="layer" style="--w:42%"><b>32</b><span>embedding</span></div>
       <div class="layer dark" style="--w:42%"><b>2 heads</b><span>attention</span></div>
       <div class="layer dark" style="--w:58%"><b>64</b><span>feed-forward</span></div>
       <div class="layer" style="--w:30%"><b>16</b><span>bottleneck</span></div>
-      <div class="layer" style="--w:100%"><b>763</b><span>scores, then a weighted draw</span></div>
+      <div class="layer" style="--w:100%"><b data-fact="vocab">720</b><span>scores, then a weighted draw</span></div>
     </div>
     <p class="caption">One block, with 8-bit weights and activations. Bar widths are a sketch, not to scale. The ROM's output matches a separate Python reference, token for token.</p>
   </section>
 
   <section id="memory">
     <h2>Where everything lives</h2>
-    <div class="bar-group" data-memory="wram"><h3>Built-in work RAM: <span data-fact="wram">5,303</span> of 8,192 bytes used</h3></div>
+    <div class="bar-group" data-memory="wram"><h3>Built-in work RAM: <span data-fact="wram">5,217</span> of 8,192 bytes used</h3></div>
     <div class="bar-group" data-memory="rom"><h3>ROM: 128 KB</h3></div>
     <div class="bar-group" data-memory="cart"><h3>Cartridge RAM: 32 KB</h3></div>
     <p class="caption">Everything it remembers about you fits in <b data-fact="save">42 bytes</b>. That's a save file, not learning: the weights never change.</p>

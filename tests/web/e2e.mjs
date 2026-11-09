@@ -442,8 +442,10 @@ const pinSeed = (page, seed) => page.evaluate((s) => {
   await check("the about page fills its numbers from the build, and all three pages link to each other", async () => {
     await page.getByRole("link", { name: "About" }).click();
     await page.waitForURL(/about\.html/);
-    await page.waitForFunction(() => document.querySelector("[data-fact=wram]").textContent === "5,303");
-    assert.equal(await page.locator("[data-fact=params]").first().innerText(), "46,352");
+    const built = JSON.parse(readFileSync("web/rom/build.json"));
+    await page.waitForFunction((n) => document.querySelector("[data-fact=wram]").textContent === n, built.wramBytes.toLocaleString("en-US"));
+    assert.equal(await page.locator("[data-fact=params]").first().innerText(), built.params.toLocaleString("en-US"));
+    assert.equal(await page.locator("[data-fact=vocab]").first().innerText(), String(built.vocabSize));
     await page.locator("#memory .seg").first().waitFor();
     assert.equal(await page.locator("#ladder .step").count(), 6);
     assert.match(await page.locator("#memory").innerText(), /42 bytes/);

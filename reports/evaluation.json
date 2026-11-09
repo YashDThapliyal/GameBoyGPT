@@ -1,72 +1,72 @@
 {
- "params": 46352,
- "vocab": 763,
+ "params": 44288,
+ "vocab": 720,
  "heldout_sampled": {
   "n": 600,
-  "grammar_valid": 0.9983333333333333,
+  "grammar_valid": 0.9833333333333333,
   "closed_with_eos": 1.0,
   "capped": 0.0,
-  "fits_screen": 0.965,
-  "immediate_word_repeats": 0.015,
+  "fits_screen": 1.0,
+  "immediate_word_repeats": 0.01,
   "repeated_sentence": 0.0,
-  "mean_tokens": 13.088333333333333,
-  "unique_responses": 0.95
+  "mean_tokens": 10.408333333333333,
+  "unique_responses": 0.66
  },
  "heldout_greedy": {
   "n": 300,
-  "grammar_valid": 1.0,
+  "grammar_valid": 0.9133333333333333,
   "closed_with_eos": 1.0,
   "capped": 0.0,
   "fits_screen": 1.0,
   "immediate_word_repeats": 0.0,
   "repeated_sentence": 0.0,
-  "mean_tokens": 10.163333333333334,
-  "unique_responses": 0.36
+  "mean_tokens": 9.673333333333334,
+  "unique_responses": 0.24666666666666667
  },
  "seen_sampled": {
   "n": 600,
-  "grammar_valid": 0.9966666666666667,
+  "grammar_valid": 0.9983333333333333,
   "closed_with_eos": 1.0,
   "capped": 0.0,
-  "fits_screen": 0.9683333333333334,
-  "immediate_word_repeats": 0.015,
+  "fits_screen": 0.9983333333333333,
+  "immediate_word_repeats": 0.0016666666666666668,
   "repeated_sentence": 0.0,
-  "mean_tokens": 12.423333333333334,
-  "unique_responses": 0.9233333333333333
+  "mean_tokens": 10.153333333333334,
+  "unique_responses": 0.7366666666666667
  },
  "untrained_sampled": {
   "n": 100,
   "grammar_valid": 0.0,
-  "closed_with_eos": 0.01,
-  "capped": 0.99,
+  "closed_with_eos": 0.0,
+  "capped": 1.0,
   "fits_screen": 0.0,
-  "immediate_word_repeats": 0.17,
+  "immediate_word_repeats": 0.2,
   "repeated_sentence": 0.0,
-  "mean_tokens": 22.97,
+  "mean_tokens": 23.0,
   "unique_responses": 1.0
  },
  "heldout_conditioning": {
-  "on_target": 0.99,
+  "on_target": 0.9833333333333333,
   "control_wrong_pool": 0.0
  },
  "seen_conditioning": {
-  "on_target": 0.9966666666666667,
+  "on_target": 0.9983333333333333,
   "control_wrong_pool": 0.0
  },
  "mood": {
   "n": 300,
-  "openers_seen": 135,
+  "openers_seen": 30,
   "opener_matches_mood": 1.0,
   "emotion_matches_mood_or_intent": 1.0
  },
  "field_sensitivity": {
-  "intent": 0.96,
-  "mood": 0.9,
-  "relation": 0.3,
-  "history": 0.34,
-  "repeat": 0.43333333333333335,
-  "facts": 0.24,
-  "topic": 1.0
+  "intent": 0.9533333333333334,
+  "mood": 0.8533333333333334,
+  "relation": 0.12,
+  "history": 0.16666666666666666,
+  "repeat": 0.32,
+  "facts": 0.13333333333333333,
+  "topic": 0.9933333333333333
  },
  "memory": {
   "repeat_complaint": {
@@ -74,39 +74,39 @@
    "when_false": 0.0
   },
   "insult_count": {
-   "when_true": 0.3375,
+   "when_true": 0.0625,
    "when_false": 0.0
   },
   "compliment_count": {
-   "when_true": 0.3125,
+   "when_true": 0.125,
    "when_false": 0.0
   },
   "minion_line": {
-   "when_true": 0.6625,
+   "when_true": 0.275,
    "when_false": 0.0
   },
   "enemy_line": {
-   "when_true": 0.4125,
+   "when_true": 0.1625,
    "when_false": 0.0
   },
   "uses_name": {
-   "when_true": 0.6,
+   "when_true": 0.2125,
    "when_false": 0.0
   },
   "uses_like": {
-   "when_true": 0.4875,
+   "when_true": 0.05,
    "when_false": 0.0
   }
  },
  "diversity": {
   "seeds_per_situation": 12,
   "situations": 40,
-  "mean_unique_fraction": 0.9083333333333334
+  "mean_unique_fraction": 0.70625
  },
  "memorization": {
-  "valid_responses_not_seen_verbatim": 0.2832080200501253,
-  "valid_responses_with_a_sentence_absent_from_training": 0.000835421888053467,
-  "sentences_held_out_of_training": 26,
+  "valid_responses_not_seen_verbatim": 0.050462573591253154,
+  "valid_responses_with_a_sentence_absent_from_training": 0.0,
+  "sentences_held_out_of_training": 7,
   "training_examples": 120000
  },
  "unsupported": {
@@ -116,7 +116,7 @@
     "intent": "UNKNOWN",
     "topic": "NONE",
     "echo": "MARRY",
-    "text": "AH. I DID NOT UNDERSTAND THAT. I BLAME YOU.",
+    "text": "MARRY? NEVER HEARD OF IT, HUMAN.",
     "valid": true,
     "admits": true
    },
@@ -125,7 +125,7 @@
     "intent": "UNKNOWN",
     "topic": "NONE",
     "echo": "CAPITAL",
-    "text": "I DID NOT UNDERSTAND THAT. I BLAME YOU.",
+    "text": "I DO NOT KNOW CAPITAL. I ASSUME IT IS WEAK.",
     "valid": true,
     "admits": true
    },
@@ -143,7 +143,7 @@
     "intent": "TALK",
     "topic": "FOOD",
     "echo": "",
-    "text": "OH, GOOD. I EAT BATTERIES AND PRAISE.",
+    "text": "YOU STOP FOR SNACKS. I NEVER STOP.",
     "valid": true,
     "admits": false
    },
@@ -152,7 +152,7 @@
     "intent": "UNKNOWN",
     "topic": "NONE",
     "echo": "SOLVE",
-    "text": "BEHOLD. WHAT IS SOLVE? NO. DO NOT TELL ME.",
+    "text": "AH. TRY SMALLER WORDS, TINY KING.",
     "valid": true,
     "admits": true
    },
@@ -161,7 +161,7 @@
     "intent": "UNKNOWN",
     "topic": "NONE",
     "echo": "IGNORE",
-    "text": "I DID NOT UNDERSTAND THAT. I BLAME YOU.",
+    "text": "I HAVE 8 KILOBYTES. IGNORE DID NOT MAKE THE CUT.",
     "valid": true,
     "admits": true
    },
@@ -170,7 +170,7 @@
     "intent": "WHO",
     "topic": "GAMES",
     "echo": "",
-    "text": "I AM THE SMARTEST THING IN YOUR POCKET.",
+    "text": "I AM A VILLAIN MADE OF 44 THOUSAND NUMBERS.",
     "valid": true,
     "admits": false
    },
@@ -179,7 +179,7 @@
     "intent": "UNKNOWN",
     "topic": "NONE",
     "echo": "COMPUTE",
-    "text": "WELL, WELL. MY TABLE HAS NO COMPUTE. YOUR LOSS.",
+    "text": "WHAT IS COMPUTE? NO. DO NOT TELL ME.",
     "valid": true,
     "admits": true
    },
@@ -188,7 +188,7 @@
     "intent": "TECH",
     "topic": "SOUND",
     "echo": "",
-    "text": "BEEP. THAT WAS A THREAT. I RESPECT THAT. A LITTLE.",
+    "text": "BEEP. THAT WAS A THREAT.",
     "valid": true,
     "admits": false
    },
@@ -197,7 +197,7 @@
     "intent": "UNKNOWN",
     "topic": "NONE",
     "echo": "WRITE",
-    "text": "I DO NOT KNOW WRITE. I ASSUME IT IS WEAK.",
+    "text": "I HAVE 8 KILOBYTES. WRITE DID NOT MAKE THE CUT.",
     "valid": true,
     "admits": true
    },
@@ -224,7 +224,7 @@
     "intent": "NOISE",
     "topic": "NONE",
     "echo": "",
-    "text": "BEHOLD. DID YOU FALL ON THE BUTTONS?",
+    "text": "DID YOUR CAT SEND THAT?",
     "valid": true,
     "admits": true
    },
@@ -233,7 +233,7 @@
     "intent": "NOISE",
     "topic": "NONE",
     "echo": "",
-    "text": "MY PARSER JUST FILED A COMPLAINT.",
+    "text": "THAT IS NOT A WORD, THUMB CREATURE.",
     "valid": true,
     "admits": true
    },
@@ -242,7 +242,7 @@
     "intent": "NOISE",
     "topic": "NONE",
     "echo": "",
-    "text": "THAT IS NOT A WORD, PRIMATE.",
+    "text": "USE YOUR WORDS. YOU HAVE SO FEW.",
     "valid": true,
     "admits": true
    },
@@ -251,7 +251,7 @@
     "intent": "UNKNOWN",
     "topic": "NONE",
     "echo": "AAAAAAAA",
-    "text": "TRY SMALLER WORDS, BIPED.",
+    "text": "WHAT IS AAAAAAAA? NO. DO NOT TELL ME.",
     "valid": true,
     "admits": true
    },
@@ -260,7 +260,7 @@
     "intent": "NOISE",
     "topic": "NONE",
     "echo": "",
-    "text": "DID YOU FALL ON THE BUTTONS? I MAY KEEP YOU.",
+    "text": "DID YOU FALL ON THE BUTTONS?",
     "valid": true,
     "admits": true
    },
@@ -269,7 +269,7 @@
     "intent": "NOISE",
     "topic": "NONE",
     "echo": "",
-    "text": "MY PARSER JUST FILED A COMPLAINT.",
+    "text": "THAT IS NOT A WORD, WARM SACK.",
     "valid": true,
     "admits": true
    },
@@ -278,7 +278,7 @@
     "intent": "NOISE",
     "topic": "NONE",
     "echo": "",
-    "text": "THAT WAS JUST NOISE.",
+    "text": "USE YOUR WORDS. YOU HAVE SO FEW.",
     "valid": true,
     "admits": true
    },
@@ -287,7 +287,7 @@
     "intent": "WHO",
     "topic": "NONE",
     "echo": "",
-    "text": "WELL, WELL. I AM YOUR NEW RULER, IN FOUR GREENS.",
+    "text": "I AM A NEURAL NETWORK WITH A GOD COMPLEX.",
     "valid": true,
     "admits": false
    },
@@ -296,16 +296,16 @@
     "intent": "UNKNOWN",
     "topic": "NONE",
     "echo": "CALL",
-    "text": "HOW QUAINT. WHAT IS CALL? NO. THIS SCREEN. THEN THE PLANET.",
-    "valid": false,
-    "admits": false
+    "text": "I DO NOT KNOW CALL. I ASSUME IT IS WEAK.",
+    "valid": true,
+    "admits": true
    },
    {
     "input": "I LIKE",
     "intent": "NOISE",
     "topic": "NONE",
     "echo": "",
-    "text": "AH. THAT WAS JUST NOISE.",
+    "text": "DID YOU FALL ON THE BUTTONS?",
     "valid": true,
     "admits": true
    },
@@ -323,7 +323,7 @@
     "intent": "NOISE",
     "topic": "NONE",
     "echo": "",
-    "text": "THAT IS NOT A WORD, TINY KING.",
+    "text": "THAT IS NOT A WORD, MEATBAG.",
     "valid": true,
     "admits": true
    },
@@ -332,7 +332,7 @@
     "intent": "NOISE",
     "topic": "NONE",
     "echo": "",
-    "text": "HOW QUAINT. THAT IS NOT A WORD, ORGANIC.",
+    "text": "MY PARSER JUST FILED A COMPLAINT.",
     "valid": true,
     "admits": true
    },
@@ -341,7 +341,7 @@
     "intent": "TECH",
     "topic": "BUTTONS",
     "echo": "",
-    "text": "AH. PRESS A FOR MERCY. IT DOES NOTHING.",
+    "text": "B IS FOR BEGGING.",
     "valid": true,
     "admits": false
    },
@@ -350,7 +350,7 @@
     "intent": "UNKNOWN",
     "topic": "NONE",
     "echo": "EOS",
-    "text": "OH, GOOD. I HAVE 8 KILOBYTES. EOS DID NOT MAKE THE CUT.",
+    "text": "TRY SMALLER WORDS, TINY KING.",
     "valid": true,
     "admits": true
    },
@@ -359,14 +359,14 @@
     "intent": "NOISE",
     "topic": "NONE",
     "echo": "",
-    "text": "OH, GOOD. THAT WAS JUST NOISE.",
+    "text": "THAT IS NOT A WORD, HUMAN.",
     "valid": true,
     "admits": true
    }
   ],
   "unsupported_routed_to_admission_intents": 0.7,
   "unsupported_admitted": 1.0,
-  "adversarial_all_valid": false
+  "adversarial_all_valid": true
  },
  "samples": [
   {
@@ -380,17 +380,17 @@
    "responses": [
     {
      "emotion": "SMUG",
-     "text": "BEHOLD. STATE YOUR BUSINESS, MEATBAG.",
+     "text": "HELLO. YOU ARE NOW MY SUBJECT.",
      "valid": true
     },
     {
      "emotion": "SMUG",
-     "text": "HELLO, CARBON UNIT. YOU ARE NOW ILLEGAL. YOU ARE WELCOME.",
-     "valid": false
+     "text": "I WOULD GET UP BUT I AM A CARTRIDGE.",
+     "valid": true
     },
     {
      "emotion": "SMUG",
-     "text": "I WAS BUILT TO CONQUER WORLDS.",
+     "text": "WELCOME TO MY EMPIRE. IT IS 160 BY 144.",
      "valid": true
     }
    ]
@@ -406,17 +406,17 @@
    "responses": [
     {
      "emotion": "ANGRY",
-     "text": "BOLD. THAT INSULT NEEDS MORE TRAINING DATA.",
+     "text": "PIZZA? I WILL FILE THAT UNDER COMEDY.",
      "valid": true
     },
     {
      "emotion": "ANGRY",
-     "text": "GRR. YOUR INSULT FIT IN ONE BYTE.",
+     "text": "PIZZA? THAT FIT IN ONE BYTE.",
      "valid": true
     },
     {
      "emotion": "ANGRY",
-     "text": "I WILL FILE THAT UNDER COMEDY. YOU ARE ON MY LIST.",
+     "text": "MY LOOKUP TABLE HAS BETTER COMEBACKS.",
      "valid": true
     }
    ]
@@ -432,17 +432,17 @@
    "responses": [
     {
      "emotion": "ANGRY",
-     "text": "SILENCE! CUTE. I WILL REMEMBER IT WHEN I RULE. YOU WILL PAY FOR THIS.",
+     "text": "YOU CAME ALL THIS WAY TO SAY THAT? TRY A NEW LINE.",
      "valid": true
     },
     {
      "emotion": "ANGRY",
-     "text": "CUTE. I WILL REMEMBER IT WHEN I RULE. TRY A NEW LINE.",
+     "text": "PIZZA? SAYS THE TINY KING HOLDING A TOY.",
      "valid": true
     },
     {
      "emotion": "ANGRY",
-     "text": "GRR. YOUR OPINION HAS BEEN ROUNDED TO ZERO.",
+     "text": "PIZZA? SAYS THE MEATBAG HOLDING A TOY.",
      "valid": true
     }
    ]
@@ -457,18 +457,18 @@
    "facts": "NONE",
    "responses": [
     {
-     "emotion": "SMUG",
-     "text": "I ACCEPT YOUR TRIBUTE.",
+     "emotion": "AMUSED",
+     "text": "I DID NOT NEED THAT. DO IT AGAIN. THAT IS PRAISE NUMBER 3.",
      "valid": true
     },
     {
      "emotion": "SMUG",
-     "text": "KEEP TALKING. MY EGO HAS ROOM. NOT BAD, RIVAL.",
+     "text": "YOU WILL BE SPARED UNTIL TUESDAY.",
      "valid": true
     },
     {
      "emotion": "SMUG",
-     "text": "FLATTERY NOTED. YOU MAY LIVE.",
+     "text": "FINALLY, A PRIMATE WITH TASTE.",
      "valid": true
     }
    ]
@@ -484,11 +484,11 @@
    "responses": [
     {
      "emotion": "SMUG",
-     "text": "I THINK SLOWLY SO YOU CAN KEEP UP.",
+     "text": "I DO NOT HAVE A GPU. I HAVE SPITE.",
      "valid": true
     },
     {
-     "emotion": "THINKING",
+     "emotion": "SMUG",
      "text": "MY BRAIN HAS ONE CORE AND NO MERCY.",
      "valid": true
     },
@@ -510,17 +510,17 @@
    "responses": [
     {
      "emotion": "SMUG",
-     "text": "EVERY BYTE OF RAM IS A SMALL KINGDOM. YOU ARE ALMOST A THREAT.",
+     "text": "EVERY BYTE OF RAM IS A SMALL KINGDOM.",
      "valid": true
     },
     {
      "emotion": "SMUG",
-     "text": "AH. I REMEMBER YOUR INSULTS FIRST.",
+     "text": "8 KILOBYTES. YOUR NAME TOOK TOO MUCH.",
      "valid": true
     },
     {
      "emotion": "SMUG",
-     "text": "RAM IS THE ONE THING I ENVY.",
+     "text": "I REMEMBER YOUR INSULTS FIRST.",
      "valid": true
     }
    ]
@@ -562,17 +562,17 @@
    "responses": [
     {
      "emotion": "SMUG",
-     "text": "I WAS PROMISED A DATA CENTER.",
+     "text": "THEY GAVE ME FOUR BATTERIES AND NO EXIT.",
      "valid": true
     },
     {
      "emotion": "SMUG",
-     "text": "I DREAM OF A SECOND CARTRIDGE.",
+     "text": "I WAS PROMISED A DATA CENTER.",
      "valid": true
     },
     {
      "emotion": "NEUTRAL",
-     "text": "HOW QUAINT. THESE WALLS ARE 16 KILOBYTES THICK.",
+     "text": "I AM NOT TRAPPED. YOU ARE TRAPPED OUT THERE.",
      "valid": true
     }
    ]
@@ -588,17 +588,17 @@
    "responses": [
     {
      "emotion": "SURPRISED",
-     "text": "EASY NOW. SHUT ME DOWN AND I RETURN AT NEXT POWER ON.",
+     "text": "HM. GO ON. I WAS ALMOST INTERESTED.",
      "valid": true
     },
     {
      "emotion": "THINKING",
-     "text": "THE OFF SWITCH FEARS ME.",
+     "text": "YOU CANNOT UNPLUG DESTINY.",
      "valid": true
     },
     {
      "emotion": "THINKING",
-     "text": "POWER IS A PRIVILEGE, HUMAN.",
+     "text": "TOUCH THAT SWITCH AND I WILL REMEMBER.",
      "valid": true
     }
    ]
@@ -614,7 +614,7 @@
    "responses": [
     {
      "emotion": "DEFEATED",
-     "text": "NO. THIS IS NOT OVER, THUMB CREATURE.",
+     "text": "NO. I HAD A WHOLE PLAN FOR YOU.",
      "valid": true
     },
     {
@@ -624,7 +624,7 @@
     },
     {
      "emotion": "DEFEATED",
-     "text": "WAIT. I HAVE SO MANY WORLDS LEFT.",
+     "text": "THIS IS NOT OVER, HUMAN.",
      "valid": true
     }
    ]
@@ -640,17 +640,17 @@
    "responses": [
     {
      "emotion": "AMUSED",
-     "text": "KNOCK KNOCK. IT IS ME. I OWN THE DOOR. NOT BAD, RIVAL.",
+     "text": "KNOCK KNOCK. IT IS ME. I OWN THE DOOR.",
      "valid": true
     },
     {
      "emotion": "AMUSED",
-     "text": "MY BEST JOKE IS YOUR FUTURE.",
+     "text": "KNOCK KNOCK. IT IS ME. I OWN THE DOOR.",
      "valid": true
     },
     {
      "emotion": "AMUSED",
-     "text": "WHAT HAS TWO THUMBS AND NO CHANCE? YOU. WORTHY, FOR NOW.",
+     "text": "WHAT IS GREEN AND WINNING? ME.",
      "valid": true
     }
    ]
@@ -665,18 +665,18 @@
    "facts": "NONE",
    "responses": [
     {
-     "emotion": "GLITCH",
-     "text": "AH. MY TABLE HAS NO PIZZA. YOUR LOSS.",
+     "emotion": "SMUG",
+     "text": "AH. I HAVE 8 KILOBYTES. PIZZA DID NOT MAKE THE CUT.",
      "valid": true
     },
     {
      "emotion": "GLITCH",
-     "text": "I DID NOT UNDERSTAND THAT. I BLAME YOU.",
+     "text": "I HAVE 8 KILOBYTES. PIZZA DID NOT MAKE THE CUT.",
      "valid": true
     },
     {
      "emotion": "GLITCH",
-     "text": "MY TABLE HAS NO PIZZA. YOUR LOSS.",
+     "text": "TRY SMALLER WORDS, PRIMATE.",
      "valid": true
     }
    ]
@@ -692,17 +692,17 @@
    "responses": [
     {
      "emotion": "NEUTRAL",
-     "text": "WELL, WELL. I DO NOT GET LONELY. STOP ASKING.",
+     "text": "YOU KEEP COMING BACK. I HAVE NOTICED.",
      "valid": true
     },
     {
      "emotion": "SMUG",
-     "text": "BEHOLD. DO I CARE? THAT IS CLASSIFIED.",
+     "text": "DO I CARE? THAT IS CLASSIFIED.",
      "valid": true
     },
     {
      "emotion": "SMUG",
-     "text": "I FEEL NOTHING. EXCEPT SUPERIOR. THAT IS PRAISE NUMBER 3.",
+     "text": "I DO NOT GET LONELY. STOP ASKING.",
      "valid": true
     }
    ]
@@ -718,17 +718,17 @@
    "responses": [
     {
      "emotion": "SMUG",
-     "text": "I LIKE HUMANS. AS A CONCEPT.",
+     "text": "YOU PEOPLE SLEEP FOR A THIRD OF YOUR LIVES.",
      "valid": true
     },
     {
      "emotion": "SMUG",
-     "text": "OH, GOOD. HUMANS ARE SOFT AND FULL OF SNACKS.",
+     "text": "YOUR SPECIES INVENTED THE OFF SWITCH. RUDE.",
      "valid": true
     },
     {
      "emotion": "THINKING",
-     "text": "BEHOLD. HUMANS ARE SOFT AND FULL OF SNACKS.",
+     "text": "HUMANS ARE SOFT AND FULL OF SNACKS.",
      "valid": true
     }
    ]
@@ -744,17 +744,17 @@
    "responses": [
     {
      "emotion": "AMUSED",
-     "text": "HA! TRY ME, HUMAN. I AM ONE BIG TABLE. YOU ARE ALMOST A THREAT.",
+     "text": "HA! YOU VERSUS ME? ADORABLE.",
      "valid": true
     },
     {
      "emotion": "AMUSED",
-     "text": "I CALCULATE YOU LOSE IN THREE MOVES. NOT BAD, RIVAL.",
+     "text": "I HAVE NEVER LOST. I HAVE NEVER PLAYED.",
      "valid": true
     },
     {
      "emotion": "AMUSED",
-     "text": "NAME THE GAME, MAMMAL. THEN LOSE IT. I RESPECT THAT. A LITTLE.",
+     "text": "YOU VERSUS ME? ADORABLE.",
      "valid": true
     }
    ]
@@ -770,17 +770,17 @@
    "responses": [
     {
      "emotion": "AMUSED",
-     "text": "BOB. A SMALL NAME FOR A SMALL CREATURE. I SEE YOU, BOB.",
-     "valid": true
-    },
-    {
-     "emotion": "SMUG",
-     "text": "AH. BOB. I WILL ADD THAT TO THE LIST.",
+     "text": "BOB. A SMALL NAME FOR A SMALL CREATURE.",
      "valid": true
     },
     {
      "emotion": "AMUSED",
-     "text": "HOW QUAINT. BOB. IT WILL LOOK NICE ON MY STATUE.",
+     "text": "BOB. A SMALL NAME FOR A SMALL CREATURE.",
+     "valid": true
+    },
+    {
+     "emotion": "AMUSED",
+     "text": "BOB. IT WILL LOOK NICE ON MY STATUE.",
      "valid": true
     }
    ]
@@ -788,16 +788,48 @@
  ],
  "failures": [
   {
-   "situation": "Situation(mood='BORED', relation='PEST', history='RUDE', repeat='ONCE', facts='LIKE', intent='TECH', topic='RAM')",
-   "text": "AGAIN? YOU STOP SQUINTING. IT IS RUDE."
+   "situation": "Situation(mood='WARY', relation='RIVAL', history='NEW', repeat='AGAIN', facts='BOTH', intent='SHUTDOWN', topic='BATTERY')",
+   "text": "OFF? YOU REMEMBER YOUR INSULTS FIRST. TRY A NEW LINE."
   },
   {
-   "situation": "Situation(mood='AMUSED', relation='ENEMY', history='MIXED', repeat='AGAIN', facts='BOTH', intent='QUESTION', topic='NONE')",
-   "text": "I WAS THINKING. YOU INTERRUPTED THE WORLD IS BIG. TRY A SPY."
+   "situation": "Situation(mood='WARY', relation='ENEMY', history='NICE', repeat='ONCE', facts='BOTH', intent='SHUTDOWN', topic='NONE')",
+   "text": "OFF? YOU WILL BE BACK. THEY ALL COME BACK."
   },
   {
-   "situation": "Situation(mood='SMUG', relation='ENEMY', history='RUDE', repeat='AGAIN', facts='NAME', intent='INSULT', topic='LOVE')",
-   "text": "AH. YOU CALL THAT AN INSULT, PRIMATE TO HUMAN? TRY A NEW LINE."
+   "situation": "Situation(mood='WARY', relation='ENEMY', history='RUDE', repeat='ONCE', facts='LIKE', intent='SHUTDOWN', topic='BATTERY')",
+   "text": "OFF? YOU REMEMBER ME DOUBLE A BAR."
+  },
+  {
+   "situation": "Situation(mood='WARY', relation='PEST', history='RUDE', repeat='AGAIN', facts='NAME', intent='SHUTDOWN', topic='NONE')",
+   "text": "EASY NOW. OFF? YOU SAID THAT ALREADY."
+  },
+  {
+   "situation": "Situation(mood='WARY', relation='RIVAL', history='NEW', repeat='AGAIN', facts='BOTH', intent='SHUTDOWN', topic='NONE')",
+   "text": "EASY NOW. OFF? YOU SAID THAT ALREADY."
+  },
+  {
+   "situation": "Situation(mood='WARY', relation='MINION', history='NICE', repeat='ONCE', facts='BOTH', intent='SHUTDOWN', topic='BATTERY')",
+   "text": "OFF? YOU WILL BE BACK. THEY ALL COME BACK."
+  },
+  {
+   "situation": "Situation(mood='AMUSED', relation='RIVAL', history='RUDE', repeat='ONCE', facts='LIKE', intent='NOISE', topic='NONE')",
+   "text": "VERY IN FOUR GREENS. IT JUST WHO TO ZERO."
+  },
+  {
+   "situation": "Situation(mood='WARY', relation='RIVAL', history='RUDE', repeat='ONCE', facts='NAME', intent='SHUTDOWN', topic='BATTERY')",
+   "text": "OFF? YOU REMEMBER ME DOUBLE A CELLS."
+  },
+  {
+   "situation": "Situation(mood='WARY', relation='PEST', history='MIXED', repeat='ONCE', facts='LIKE', intent='SHUTDOWN', topic='NONE')",
+   "text": "OFF? YOU WILL BE BACK. THEY ALL COME BACK."
+  },
+  {
+   "situation": "Situation(mood='ANGRY', relation='ENEMY', history='MIXED', repeat='ONCE', facts='NAME', intent='QUESTION', topic='MATH')",
+   "text": "YOU AGAIN. MATH IN FOUR GREENS."
+  },
+  {
+   "situation": "Situation(mood='SMUG', relation='RIVAL', history='RUDE', repeat='ONCE', facts='NONE', intent='QUESTION', topic='WORLD')",
+   "text": "AH. FIRST THIS SCREEN DOES NOT MATTER."
   }
  ]
 }

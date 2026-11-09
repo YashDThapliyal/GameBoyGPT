@@ -28,10 +28,10 @@ Things to try: insult it twice. Tell it `MY NAME IS ...`, or `I LIKE ...`. Press
 
 ## What it is
 
-A one-block transformer with 46,352 parameters, in 8-bit fixed point, written in SM83 assembly. It generates one token at a time on the emulated CPU. A typical reply:
+A one-block transformer with 44,288 parameters, in 8-bit fixed point, written in SM83 assembly. It generates one token at a time on the emulated CPU. A typical reply:
 
 ```
-(face: angry)  I WILL FILE THAT UNDER COMEDY. THAT IS INSULT NUMBER 2.
+DUMB? I WILL FILE THAT UNDER COMEDY.
 ```
 
 The face was chosen by the model too: its first token is an emotion. The `2` was not: the model emitted a slot token, and the game printed its own count.
@@ -40,16 +40,16 @@ The face was chosen by the model too: its first token is an emotion. The `2` was
 |---|---:|
 | Face changes after you confirm | 1.49 s |
 | First word appears | 2.40 s |
-| Each word after that | 0.96 s |
-| Whole reply, mean of 16 real turns | 13.5 s |
-| Speedup over the vanilla build, same tokens | 9.90x, or 4.91x against vanilla with only a K/V cache |
+| Each word after that | 0.93 s |
+| Whole reply, mean of 16 real turns | 10.3 s |
+| Speedup over the vanilla build, same tokens | 9.76x, or 4.83x against vanilla with only a K/V cache |
 
 Measured by counting T-cycles in PyBoy. **It has not been run on a physical console.** Full numbers are in [RESULTS.md](RESULTS.md).
 
 ## What it is not
 
 - **Not general chat.** It knows about itself, you, the handheld and a few topics. Your typing reaches the model as an intent and a topic, picked by keyword rules. When the rules recognize nothing it says so, and echoes the word it didn't know.
-- **Not inventing much.** People wrote its sentences. The model chooses, conditions and recombines them: 99.8% of its replies on situations it never trained on parse as authored sentences, and 28% of its replies appeared nowhere verbatim in training. Almost none contained a sentence it hadn't seen.
+- **Not inventing much.** People wrote its sentences. The model chooses, conditions and recombines them: 98.3% of its replies on situations it never trained on parse as authored sentences, and 5% of valid replies never appeared word for word in training. Almost none contained a sentence it hadn't seen.
 - **Not learning.** Its weights are in ROM. It remembers you because its memory (mood, respect, counts, your name) goes into the prompt, and survives in cartridge RAM.
 
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) says exactly which parts are neural. The band above the dialogue says it on screen: `NEURAL` for the model, `SYSTEM` for fixed text. Sample output, including the failures, is in [docs/EVALUATION.md](docs/EVALUATION.md).
@@ -58,7 +58,7 @@ Measured by counting T-cycles in PyBoy. **It has not been run on a physical cons
 
 Multiplying is the problem: the SM83 has no multiply instruction. Reused from earlier work here: quarter-square multiplication, fused dot-product kernels, a K/V cache and weights read through the stack pointer.
 
-New for this model: a 763-token vocabulary is too many outputs for this CPU, so the output layer is factored through 16 values. Since those 16 inputs stay fixed across hundreds of rows, each gets a lookup table of its products, built fresh for each token in cartridge RAM. That made tokens 1.29x faster with bit-identical results. See [docs/PERFORMANCE.md](docs/PERFORMANCE.md).
+New for this model: a 720-token vocabulary is too many outputs for this CPU, so the output layer is factored through 16 values. Since those 16 inputs stay fixed across hundreds of rows, each gets a lookup table of its products, built fresh for each token in cartridge RAM. That made tokens 1.29x faster with bit-identical results. See [docs/PERFORMANCE.md](docs/PERFORMANCE.md).
 
 ## Trust, but check
 

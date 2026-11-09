@@ -1,0 +1,13 @@
+{
+ "ship": {
+  "params": 44288,
+  "vocab": 720,
+  "kernel_seconds_per_token": 0.8867165536591501,
+  "game_seconds_per_token": 0.9328186464625479,
+  "game_seconds_per_response": 10.31361985206604,
+  "first_token_s": 1.501929759979248,
+  "first_word_s": 2.4036221504211426,
+  "speedup_vs_v0": 9.761787233711987,
+  "speedup_vs_v0_kv": 4.833248203451662
+ }
+}

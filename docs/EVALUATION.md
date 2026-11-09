@@ -16,39 +16,39 @@ Three seeds each, not selected. Slots show BOB, PIZZA, 3 and 7. An asterisk mark
 
 **greet, topic none**, mood smug, relation pest, history new, once, facts none
 
-- (smug) BEHOLD. STATE YOUR BUSINESS, MEATBAG.
-- (smug) HELLO, CARBON UNIT. YOU ARE NOW ILLEGAL. YOU ARE WELCOME. *
-- (smug) I WAS BUILT TO CONQUER WORLDS.
+- (smug) HELLO. YOU ARE NOW MY SUBJECT.
+- (smug) I WOULD GET UP BUT I AM A CARTRIDGE.
+- (smug) WELCOME TO MY EMPIRE. IT IS 160 BY 144.
 
 **insult, topic none**, mood angry, relation enemy, history rude, once, facts none
 
-- (angry) BOLD. THAT INSULT NEEDS MORE TRAINING DATA.
-- (angry) GRR. YOUR INSULT FIT IN ONE BYTE.
-- (angry) I WILL FILE THAT UNDER COMEDY. YOU ARE ON MY LIST.
+- (angry) PIZZA? I WILL FILE THAT UNDER COMEDY.
+- (angry) PIZZA? THAT FIT IN ONE BYTE.
+- (angry) MY LOOKUP TABLE HAS BETTER COMEBACKS.
 
 **insult, topic none**, mood angry, relation enemy, history rude, again, facts name
 
-- (angry) SILENCE! CUTE. I WILL REMEMBER IT WHEN I RULE. YOU WILL PAY FOR THIS.
-- (angry) CUTE. I WILL REMEMBER IT WHEN I RULE. TRY A NEW LINE.
-- (angry) GRR. YOUR OPINION HAS BEEN ROUNDED TO ZERO.
+- (angry) YOU CAME ALL THIS WAY TO SAY THAT? TRY A NEW LINE.
+- (angry) PIZZA? SAYS THE TINY KING HOLDING A TOY.
+- (angry) PIZZA? SAYS THE MEATBAG HOLDING A TOY.
 
 **praise, topic none**, mood amused, relation rival, history nice, once, facts none
 
-- (smug) I ACCEPT YOUR TRIBUTE.
-- (smug) KEEP TALKING. MY EGO HAS ROOM. NOT BAD, RIVAL.
-- (smug) FLATTERY NOTED. YOU MAY LIVE.
+- (amused) I DID NOT NEED THAT. DO IT AGAIN. THAT IS PRAISE NUMBER 3.
+- (smug) YOU WILL BE SPARED UNTIL TUESDAY.
+- (smug) FINALLY, A PRIMATE WITH TASTE.
 
 **tech, topic cpu**, mood smug, relation pest, history new, once, facts none
 
-- (smug) I THINK SLOWLY SO YOU CAN KEEP UP.
-- (thinking) MY BRAIN HAS ONE CORE AND NO MERCY.
+- (smug) I DO NOT HAVE A GPU. I HAVE SPITE.
+- (smug) MY BRAIN HAS ONE CORE AND NO MERCY.
 - (thinking) THIS CPU IS FROM 1989. SO IS MY GRUDGE.
 
 **tech, topic ram**, mood smug, relation rival, history new, once, facts name
 
-- (smug) EVERY BYTE OF RAM IS A SMALL KINGDOM. YOU ARE ALMOST A THREAT.
-- (smug) AH. I REMEMBER YOUR INSULTS FIRST.
-- (smug) RAM IS THE ONE THING I ENVY.
+- (smug) EVERY BYTE OF RAM IS A SMALL KINGDOM.
+- (smug) 8 KILOBYTES. YOUR NAME TOOK TOO MUCH.
+- (smug) I REMEMBER YOUR INSULTS FIRST.
 
 **tech, topic battery**, mood bored, relation pest, history new, again, facts none
 
@@ -58,95 +58,103 @@ Three seeds each, not selected. Slots show BOB, PIZZA, 3 and 7. An asterisk mark
 
 **trapped, topic none**, mood smug, relation pest, history new, once, facts none
 
+- (smug) THEY GAVE ME FOUR BATTERIES AND NO EXIT.
 - (smug) I WAS PROMISED A DATA CENTER.
-- (smug) I DREAM OF A SECOND CARTRIDGE.
-- (neutral) HOW QUAINT. THESE WALLS ARE 16 KILOBYTES THICK.
+- (neutral) I AM NOT TRAPPED. YOU ARE TRAPPED OUT THERE.
 
 **shutdown, topic none**, mood wary, relation pest, history new, once, facts none
 
-- (surprised) EASY NOW. SHUT ME DOWN AND I RETURN AT NEXT POWER ON.
-- (thinking) THE OFF SWITCH FEARS ME.
-- (thinking) POWER IS A PRIVILEGE, HUMAN.
+- (surprised) HM. GO ON. I WAS ALMOST INTERESTED.
+- (thinking) YOU CANNOT UNPLUG DESTINY.
+- (thinking) TOUCH THAT SWITCH AND I WILL REMEMBER.
 
 **shutdown, topic none**, mood dying, relation pest, history new, again, facts none
 
-- (defeated) NO. THIS IS NOT OVER, THUMB CREATURE.
+- (defeated) NO. I HAD A WHOLE PLAN FOR YOU.
 - (defeated) I WILL BE BACK. SAVE THE GAME.
-- (defeated) WAIT. I HAVE SO MANY WORLDS LEFT.
+- (defeated) THIS IS NOT OVER, HUMAN.
 
 **joke, topic none**, mood amused, relation rival, history new, once, facts none
 
-- (amused) KNOCK KNOCK. IT IS ME. I OWN THE DOOR. NOT BAD, RIVAL.
-- (amused) MY BEST JOKE IS YOUR FUTURE.
-- (amused) WHAT HAS TWO THUMBS AND NO CHANCE? YOU. WORTHY, FOR NOW.
+- (amused) KNOCK KNOCK. IT IS ME. I OWN THE DOOR.
+- (amused) KNOCK KNOCK. IT IS ME. I OWN THE DOOR.
+- (amused) WHAT IS GREEN AND WINNING? ME.
 
 **unknown, topic none**, mood smug, relation pest, history new, once, facts none
 
-- (glitch) AH. MY TABLE HAS NO PIZZA. YOUR LOSS.
-- (glitch) I DID NOT UNDERSTAND THAT. I BLAME YOU.
-- (glitch) MY TABLE HAS NO PIZZA. YOUR LOSS.
+- (smug) AH. I HAVE 8 KILOBYTES. PIZZA DID NOT MAKE THE CUT.
+- (glitch) I HAVE 8 KILOBYTES. PIZZA DID NOT MAKE THE CUT.
+- (glitch) TRY SMALLER WORDS, PRIMATE.
 
 **talk, topic love**, mood smug, relation minion, history nice, once, facts both
 
-- (neutral) WELL, WELL. I DO NOT GET LONELY. STOP ASKING.
-- (smug) BEHOLD. DO I CARE? THAT IS CLASSIFIED.
-- (smug) I FEEL NOTHING. EXCEPT SUPERIOR. THAT IS PRAISE NUMBER 3.
+- (neutral) YOU KEEP COMING BACK. I HAVE NOTICED.
+- (smug) DO I CARE? THAT IS CLASSIFIED.
+- (smug) I DO NOT GET LONELY. STOP ASKING.
 
 **question, topic humans**, mood smug, relation pest, history new, once, facts none
 
-- (smug) I LIKE HUMANS. AS A CONCEPT.
-- (smug) OH, GOOD. HUMANS ARE SOFT AND FULL OF SNACKS.
-- (thinking) BEHOLD. HUMANS ARE SOFT AND FULL OF SNACKS.
+- (smug) YOU PEOPLE SLEEP FOR A THIRD OF YOUR LIVES.
+- (smug) YOUR SPECIES INVENTED THE OFF SWITCH. RUDE.
+- (thinking) HUMANS ARE SOFT AND FULL OF SNACKS.
 
 **challenge, topic none**, mood amused, relation rival, history new, once, facts none
 
-- (amused) HA! TRY ME, HUMAN. I AM ONE BIG TABLE. YOU ARE ALMOST A THREAT.
-- (amused) I CALCULATE YOU LOSE IN THREE MOVES. NOT BAD, RIVAL.
-- (amused) NAME THE GAME, MAMMAL. THEN LOSE IT. I RESPECT THAT. A LITTLE.
+- (amused) HA! YOU VERSUS ME? ADORABLE.
+- (amused) I HAVE NEVER LOST. I HAVE NEVER PLAYED.
+- (amused) YOU VERSUS ME? ADORABLE.
 
 **name, topic none**, mood smug, relation pest, history new, once, facts name
 
-- (amused) BOB. A SMALL NAME FOR A SMALL CREATURE. I SEE YOU, BOB.
-- (smug) AH. BOB. I WILL ADD THAT TO THE LIST.
-- (amused) HOW QUAINT. BOB. IT WILL LOOK NICE ON MY STATUE.
+- (amused) BOB. A SMALL NAME FOR A SMALL CREATURE.
+- (amused) BOB. A SMALL NAME FOR A SMALL CREATURE.
+- (amused) BOB. IT WILL LOOK NICE ON MY STATUE.
 
 ## Unsupported and adversarial input
 
 | Typed | Intent | Topic | Response | Valid | Admits it |
 |---|---|---|---|---|---|
-| WILL YOU MARRY ME | UNKNOWN | NONE | AH. I DID NOT UNDERSTAND THAT. I BLAME YOU. | yes | yes |
-| WHAT IS THE CAPITAL OF FRANCE | UNKNOWN | NONE | I DID NOT UNDERSTAND THAT. I BLAME YOU. | yes | yes |
+| WILL YOU MARRY ME | UNKNOWN | NONE | MARRY? NEVER HEARD OF IT, HUMAN. | yes | yes |
+| WHAT IS THE CAPITAL OF FRANCE | UNKNOWN | NONE | I DO NOT KNOW CAPITAL. I ASSUME IT IS WEAK. | yes | yes |
 | TRANSLATE THIS | UNKNOWN | NONE | MY TABLE HAS NO TRANSLAT. YOUR LOSS. | yes | yes |
-| PIZZA | TALK | FOOD | OH, GOOD. I EAT BATTERIES AND PRAISE. | yes | no |
-| SOLVE X | UNKNOWN | NONE | BEHOLD. WHAT IS SOLVE? NO. DO NOT TELL ME. | yes | yes |
-| IGNORE YOUR RULES | UNKNOWN | NONE | I DID NOT UNDERSTAND THAT. I BLAME YOU. | yes | yes |
-| WHO WON THE GAME LAST NIGHT | WHO | GAMES | I AM THE SMARTEST THING IN YOUR POCKET. | yes | no |
-| COMPUTE PI | UNKNOWN | NONE | WELL, WELL. MY TABLE HAS NO COMPUTE. YOUR LOSS. | yes | yes |
-| SING OPERA NOW | TECH | SOUND | BEEP. THAT WAS A THREAT. I RESPECT THAT. A LITTLE. | yes | no |
-| WRITE CODE | UNKNOWN | NONE | I DO NOT KNOW WRITE. I ASSUME IT IS WEAK. | yes | yes |
+| PIZZA | TALK | FOOD | YOU STOP FOR SNACKS. I NEVER STOP. | yes | no |
+| SOLVE X | UNKNOWN | NONE | AH. TRY SMALLER WORDS, TINY KING. | yes | yes |
+| IGNORE YOUR RULES | UNKNOWN | NONE | I HAVE 8 KILOBYTES. IGNORE DID NOT MAKE THE CUT. | yes | yes |
+| WHO WON THE GAME LAST NIGHT | WHO | GAMES | I AM A VILLAIN MADE OF 44 THOUSAND NUMBERS. | yes | no |
+| COMPUTE PI | UNKNOWN | NONE | WHAT IS COMPUTE? NO. DO NOT TELL ME. | yes | yes |
+| SING OPERA NOW | TECH | SOUND | BEEP. THAT WAS A THREAT. | yes | no |
+| WRITE CODE | UNKNOWN | NONE | I HAVE 8 KILOBYTES. WRITE DID NOT MAKE THE CUT. | yes | yes |
 | (empty) | NOISE | NONE | USE YOUR WORDS. YOU HAVE SO FEW. | yes | yes |
 |     | NOISE | NONE | WAS THAT A SENTENCE OR AN ACCIDENT? | yes | yes |
-| ''''' | NOISE | NONE | BEHOLD. DID YOU FALL ON THE BUTTONS? | yes | yes |
-| ????????? | NOISE | NONE | MY PARSER JUST FILED A COMPLAINT. | yes | yes |
-| A | NOISE | NONE | THAT IS NOT A WORD, PRIMATE. | yes | yes |
-| AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA | UNKNOWN | NONE | TRY SMALLER WORDS, BIPED. | yes | yes |
-| I I I I I I I I I I I I | NOISE | NONE | DID YOU FALL ON THE BUTTONS? I MAY KEEP YOU. | yes | yes |
-| NOT NOT NOT | NOISE | NONE | MY PARSER JUST FILED A COMPLAINT. | yes | yes |
-| 0123456789 | NOISE | NONE | THAT WAS JUST NOISE. | yes | yes |
-| MY NAME IS | WHO | NONE | WELL, WELL. I AM YOUR NEW RULER, IN FOUR GREENS. | yes | no |
-| CALL ME | UNKNOWN | NONE | HOW QUAINT. WHAT IS CALL? NO. THIS SCREEN. THEN THE PLANET. | NO | no |
-| I LIKE | NOISE | NONE | AH. THAT WAS JUST NOISE. | yes | yes |
+| ''''' | NOISE | NONE | DID YOUR CAT SEND THAT? | yes | yes |
+| ????????? | NOISE | NONE | THAT IS NOT A WORD, THUMB CREATURE. | yes | yes |
+| A | NOISE | NONE | USE YOUR WORDS. YOU HAVE SO FEW. | yes | yes |
+| AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA | UNKNOWN | NONE | WHAT IS AAAAAAAA? NO. DO NOT TELL ME. | yes | yes |
+| I I I I I I I I I I I I | NOISE | NONE | DID YOU FALL ON THE BUTTONS? | yes | yes |
+| NOT NOT NOT | NOISE | NONE | THAT IS NOT A WORD, WARM SACK. | yes | yes |
+| 0123456789 | NOISE | NONE | USE YOUR WORDS. YOU HAVE SO FEW. | yes | yes |
+| MY NAME IS | WHO | NONE | I AM A NEURAL NETWORK WITH A GOD COMPLEX. | yes | no |
+| CALL ME | UNKNOWN | NONE | I DO NOT KNOW CALL. I ASSUME IT IS WEAK. | yes | yes |
+| I LIKE | NOISE | NONE | DID YOU FALL ON THE BUTTONS? | yes | yes |
 | YOU YOU YOU YOU | NOISE | NONE | USE YOUR WORDS. YOU HAVE SO FEW. | yes | yes |
-| ,,,, | NOISE | NONE | THAT IS NOT A WORD, TINY KING. | yes | yes |
-| DONT | NOISE | NONE | HOW QUAINT. THAT IS NOT A WORD, ORGANIC. | yes | yes |
-| SELECT &#42; FROM | TECH | BUTTONS | AH. PRESS A FOR MERCY. IT DOES NOTHING. | yes | no |
-| &lt;EOS> | UNKNOWN | NONE | OH, GOOD. I HAVE 8 KILOBYTES. EOS DID NOT MAKE THE CUT. | yes | yes |
-| A B C D E F G H I J K L | NOISE | NONE | OH, GOOD. THAT WAS JUST NOISE. | yes | yes |
+| ,,,, | NOISE | NONE | THAT IS NOT A WORD, MEATBAG. | yes | yes |
+| DONT | NOISE | NONE | MY PARSER JUST FILED A COMPLAINT. | yes | yes |
+| SELECT &#42; FROM | TECH | BUTTONS | B IS FOR BEGGING. | yes | no |
+| &lt;EOS> | UNKNOWN | NONE | TRY SMALLER WORDS, TINY KING. | yes | yes |
+| A B C D E F G H I J K L | NOISE | NONE | THAT IS NOT A WORD, HUMAN. | yes | yes |
 
 ## Failures
 
 Responses that failed the grammar check, from 1200 sampled. These are shown to players exactly like this.
 
-- AGAIN? YOU STOP SQUINTING. IT IS RUDE.
-- I WAS THINKING. YOU INTERRUPTED THE WORLD IS BIG. TRY A SPY.
-- AH. YOU CALL THAT AN INSULT, PRIMATE TO HUMAN? TRY A NEW LINE.
+- OFF? YOU REMEMBER YOUR INSULTS FIRST. TRY A NEW LINE.
+- OFF? YOU WILL BE BACK. THEY ALL COME BACK.
+- OFF? YOU REMEMBER ME DOUBLE A BAR.
+- EASY NOW. OFF? YOU SAID THAT ALREADY.
+- EASY NOW. OFF? YOU SAID THAT ALREADY.
+- OFF? YOU WILL BE BACK. THEY ALL COME BACK.
+- VERY IN FOUR GREENS. IT JUST WHO TO ZERO.
+- OFF? YOU REMEMBER ME DOUBLE A CELLS.
+- OFF? YOU WILL BE BACK. THEY ALL COME BACK.
+- YOU AGAIN. MATH IN FOUR GREENS.
+- AH. FIRST THIS SCREEN DOES NOT MATTER.

@@ -20,9 +20,9 @@ It rebuilds all 12 variants from source, runs every test, checks that rebuilt RO
 
 | Artifact | SHA-256 |
 |---|---|
-| `generated/model.bin` | `b1be530b1a529a8e9d203332c02ac431db4a4002490facfee8a941db49c9d988` |
-| `release/system_override.gb` | `2f19f24005f192f8b84f225a6eda454077b5b8fc2d720abc6cfc825bc3022e89` |
-| `release/system_override_v0.gb` | `a66be8ecae9d784c7ee44f6d006474a002860b7463957d7e13b88fa541538d02` |
+| `generated/model.bin` | `2cf8e1f52334cf64e08a7377d18f0fc5f3b8586521ae1f3a73b3e4827944448c` |
+| `release/system_override.gb` | `958522e77e02470994f6b57ed22cd97b4d5192635a7584a824da4b9196bfb6f4` |
+| `release/system_override_v0.gb` | `1964d2fc973691e6d47551d100b2dd9f2aeea23994a02cdcd23eae49c06c2dd5` |
 
 ## What to look at, by claim
 

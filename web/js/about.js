@@ -47,6 +47,7 @@ function drawLadder(steps) {
 async function main() {
   const build = await (await fetch("rom/build.json")).json();
   set("params", build.params.toLocaleString("en-US"));
+  set("vocab", String(build.vocabSize));
   set("rom", `${Math.round(build.romBytes / 1024)} KB`);
   set("wram", build.wramBytes.toLocaleString("en-US"));
   for (const group of document.querySelectorAll("[data-memory]")) drawMemory(group, build.memory[group.dataset.memory]);

@@ -12,7 +12,7 @@ SYSTEM OVERRIDE, on branch `system-override`. Not merged and not pushed. Nothing
 | 4 | Real neural dialogue on the Game Boy | Met | `tests/test_neural_genuine.py`: patching weights changes the words, and the ROM holds no corpus sentences |
 | 5 | Responses depend on input and state | Met | RESULTS.md: conditioning, field sensitivity and memory rates |
 | 6 | Numerical verification | Met | Kernels, logits, tokens and RNG against the reference on 12 builds |
-| 7 | Responsive and usable | Met by measurement; "feels good" is yours to judge | First word 2.40 s, 0.96 s per word. Input and animation stay live |
+| 7 | Responsive and usable | Met by measurement; "feels good" is yours to judge | First word 2.40 s, 0.93 s per word. Input and animation stay live |
 | 8 | Browser shell runs and controls the real ROM | Met | `tests/web/e2e.mjs`: tokens in WebAssembly equal the reference |
 | 9 | Benchmark suite | Met | `tools/benchmark.py`, `reports/`, integrity test |
 | 10 | Reproducible builds, docs | Met on this machine | `scripts/verify_release.sh`. Only macOS on Apple Silicon was tried |
@@ -27,7 +27,7 @@ ROM and baseline ROM in `release/`; SM83 source in `src/`; corpus and training i
 
 - **The goal replaced the planned richer lines for the adventure.** That work wasn't done, since the adventure is no longer the product. The old game remains on its tag.
 - **The reference images** look like fan art of an existing comic character. They steered general proportions only. The robot is an original design, and the images stay out of version control and out of the ZIP. Check that the robot looks sufficiently different to you before publishing.
-- **The model is smaller than the goal's suggested sizes,** at 46,352 parameters rather than 50K to 300K. The study found larger models didn't help on this corpus and cost far more time.
+- **The model is smaller than the goal's suggested sizes,** at 44,288 parameters rather than 50K to 300K. The study found larger models didn't help on this corpus and cost far more time.
 - **The shell is a homage to the 1989 hardware, drawn as pixel art with its own wordmark.** It uses no Nintendo logos, and the page credits the Game Boy by name and says the project is unaffiliated. You chose to keep it, knowing that credit and being non-commercial do not rule out a takedown request.
 - **Added cartridge RAM** for saves and head tables, so a physical cartridge would need MBC5 with 32 KB of RAM and a battery.
 - **The demo's sampler seeds were chosen,** as [docs/DEMO.md](docs/DEMO.md) says.

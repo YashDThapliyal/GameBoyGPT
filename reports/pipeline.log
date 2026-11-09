@@ -67,3 +67,22 @@ test -x .third_party/SameBoy/build/bin/tester/sameboy_tester || { git clone http
 .venv/bin/python tools/second_emulator.py --variants V0 V6T
 V0 {'sameboy': {'frames': [4979, 5660, 6367, 3693], 'verdict': 'SELFTEST PASS'}, 'pyboy': {'frames': [4979, 5660, 6367, 3693], 'verdict': 'SELFTEST PASS'}}
 V6T {'sameboy': {'frames': [516, 569, 626, 408], 'verdict': 'SELFTEST PASS'}, 'pyboy': {'frames': [516, 569, 626, 408], 'verdict': 'SELFTEST PASS'}}
+.venv/bin/python tools/benchmark.py --variants V0 V1 V2 V3 V4 V5 V5S V5Z V6T A_QSQ A_NIB A_KV --game V0 V6T
+V0 GREET:9.376s/tok,82.4s,match=SELF,ref=True INSULT:9.587s/tok,93.7s,match=SELF,ref=True TECH:9.800s/tok,105.4s,match=SELF,ref=True SHUTDOWN:8.951s/tok,61.1s,match=SELF,ref=True
+V1 GREET:9.367s/tok,82.4s,match=True,ref=True INSULT:9.578s/tok,93.6s,match=True,ref=True TECH:9.790s/tok,105.3s,match=True,ref=True SHUTDOWN:8.942s/tok,61.1s,match=True,ref=True
+V2 GREET:5.353s/tok,47.1s,match=True,ref=True INSULT:5.474s/tok,53.5s,match=True,ref=True TECH:5.595s/tok,60.2s,match=True,ref=True SHUTDOWN:5.110s/tok,34.9s,match=True,ref=True
+V3 GREET:2.990s/tok,25.6s,match=True,ref=True INSULT:3.058s/tok,29.2s,match=True,ref=True TECH:3.126s/tok,32.9s,match=True,ref=True SHUTDOWN:2.850s/tok,18.8s,match=True,ref=True
+V4 GREET:2.939s/tok,25.2s,match=True,ref=True INSULT:3.005s/tok,28.7s,match=True,ref=True TECH:3.075s/tok,32.4s,match=True,ref=True SHUTDOWN:2.809s/tok,18.5s,match=True,ref=True
+V5 GREET:1.297s/tok,12.0s,match=True,ref=True INSULT:1.296s/tok,13.3s,match=True,ref=True TECH:1.301s/tok,14.6s,match=True,ref=True SHUTDOWN:1.299s/tok,9.4s,match=True,ref=True
+V5S GREET:1.207s/tok,11.2s,match=True,ref=True INSULT:1.207s/tok,12.4s,match=True,ref=True TECH:1.212s/tok,13.6s,match=True,ref=True SHUTDOWN:1.210s/tok,8.8s,match=True,ref=True
+V5Z GREET:1.169s/tok,10.8s,match=True,ref=True INSULT:1.166s/tok,11.9s,match=True,ref=True TECH:1.172s/tok,13.2s,match=True,ref=True SHUTDOWN:1.165s/tok,8.5s,match=True,ref=True
+V6T GREET:0.886s/tok,8.6s,match=True,ref=True INSULT:0.885s/tok,9.4s,match=True,ref=True TECH:0.891s/tok,10.4s,match=True,ref=True SHUTDOWN:0.882s/tok,6.8s,match=True,ref=True
+A_QSQ GREET:5.362s/tok,47.1s,match=True,ref=True INSULT:5.484s/tok,53.6s,match=True,ref=True TECH:5.605s/tok,60.3s,match=True,ref=True SHUTDOWN:5.119s/tok,35.0s,match=True,ref=True
+A_NIB GREET:7.820s/tok,68.8s,match=True,ref=True INSULT:7.996s/tok,78.2s,match=True,ref=True TECH:8.173s/tok,87.9s,match=True,ref=True SHUTDOWN:7.466s/tok,51.0s,match=True,ref=True
+A_KV GREET:4.238s/tok,41.3s,match=True,ref=True INSULT:4.244s/tok,45.6s,match=True,ref=True TECH:4.252s/tok,49.9s,match=True,ref=True SHUTDOWN:4.223s/tok,32.8s,match=True,ref=True
+game V0 {'seconds_per_token': 10.00451118267135, 'seconds_per_response': 102.03396445512772, 'first_token_s': 7.608584880828857, 'first_word_s': 15.693637490272522, 'mean_tokens': 10.4375, 'stack_peak': 64, 'all_match_reference': True}
+game V6T {'seconds_per_token': 0.9328186464625479, 'seconds_per_response': 10.31361985206604, 'first_token_s': 1.501929759979248, 'first_word_s': 2.4036221504211426, 'mean_tokens': 10.4375, 'stack_peak': 64, 'all_match_reference': True}
+.....                                                                    [100%]
+.venv/bin/python training/evaluate.py --out reports/evaluation.json > /dev/null
+.venv/bin/python tools/report.py
+wrote RESULTS.md
