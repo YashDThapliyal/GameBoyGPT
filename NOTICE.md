@@ -7,11 +7,13 @@
 | Files | Source | Licence |
 |---|---|---|
 | `web/vendor/binjgb/binjgb.js`, `binjgb.wasm` | [binji/binjgb](https://github.com/binji/binjgb), commit in `web/vendor/binjgb/COMMIT` | MIT, `web/vendor/binjgb/LICENSE` |
-| `web/fonts/jost-*` | Jost, by Owen Earl, via Fontsource | SIL OFL 1.1, `web/fonts/OFL-Jost.txt` |
-| `web/fonts/barlow-*` | Barlow, by Jeremy Tribby, via Fontsource | SIL OFL 1.1, `web/fonts/OFL-Barlow.txt` |
+| `web/fonts/press-start-2p-*` | Press Start 2P, by CodeMan38, via Fontsource | SIL OFL 1.1, `web/fonts/OFL-PressStart2P.txt` |
+| `web/fonts/vt323-*` | VT323, by Peter Hull, via Fontsource | SIL OFL 1.1, `web/fonts/OFL-VT323.txt` |
 
 **Reference images.** The user supplied two third-party pixel-art images as general style guidance. They are kept in `docs/references/`, excluded from git, and are not part of any release. Nothing was traced from them. No code was copied from the projects in [docs/PRIOR_ART.md](docs/PRIOR_ART.md); ideas taken from them are credited there.
 
 **Tools used but not redistributed:** RGBDS, PyBoy, SameBoy (`make sameboy` clones it to an ignored directory), PyTorch, NumPy, Pillow, pytest, Playwright, FFmpeg. Each has its own licence.
 
 **Trademarks.** Nintendo and Game Boy are trademarks of Nintendo. This is an unofficial, unaffiliated project and uses no Nintendo artwork or logos. The browser shell is an original drawing of a generic handheld, with its own wordmark. The ROM header's required logo bytes are written by `rgbfix` for hardware compatibility, as for any homebrew ROM.
+
+A fan project inspired by Nintendo's Game Boy (1989). Not affiliated with or endorsed by Nintendo. Game Boy is a trademark of Nintendo. The robot, its art and the dialogue are original to this project.

@@ -1,0 +1,20 @@
+/* The About page: plain reading, set wide enough to read comfortably at this type size. */
+.about { width: 100%; max-width: 820px; margin: 0 auto; padding: 8px 24px 200px; }
+.about h1 { margin: 12px 0 14px; font-size: clamp(22px, 3.4vw, 36px); line-height: 1.4; }
+.lead { margin: 0 0 24px; font-size: 28px; line-height: 1.15; }
+.facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 0 0 28px; padding: 16px; background: var(--lcd); color: var(--ink); }
+.facts > div { display: flex; flex-direction: column; gap: 6px; }
+.facts dd { margin: 0; font: 400 clamp(13px, 1.8vw, 18px)/1.2 var(--display); }
+.facts dt { color: var(--olive-dark); line-height: 1; }
+.about h2 { margin: 28px 0 12px; font-size: 14px; line-height: 1.4; color: var(--lcd); }
+.about p, .about li { line-height: 1.2; max-width: 68ch; }
+.about p { margin: 0 0 12px; }
+.about ol { margin: 0 0 12px; padding-left: 28px; }
+.about li { margin-bottom: 6px; }
+.about li::marker { color: var(--lcd); }
+
+@media (max-width: 620px) {
+  .about { padding: 8px 16px 140px; }
+  .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lead { font-size: 25px; }
+}

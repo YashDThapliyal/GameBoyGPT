@@ -3,31 +3,45 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>System Override</title>
-<link rel="icon" href="data:,">
-<meta name="description" content="A neural network running on an emulated 1989 handheld's 8-bit CPU, inside a browser.">
+<title>GameBoyGPT</title>
+<link rel="icon" href="assets/robot.png">
+<meta name="description" content="Talk to a tiny transformer written in assembly, running on an emulated 1989 8-bit CPU in your browser.">
+<link rel="stylesheet" href="css/theme.css">
 <link rel="stylesheet" href="css/shell.css">
 <link rel="stylesheet" href="css/effects.css">
 <script src="vendor/binjgb/binjgb.js"></script>
 </head>
 <body>
-<main class="bench">
+<header class="top">
+  <a class="logo" href="index.html"><img src="assets/robot.png" alt="" width="32" height="32">GameBoyGPT</a>
+  <nav aria-label="Pages">
+    <a href="index.html" aria-current="page">Play</a>
+    <a href="about.html">About</a>
+    <a href="benchmarks.html">Benchmarks</a>
+  </nav>
+</header>
+
+<main class="play">
+  <div class="intro">
+    <h1 id="title">A TRANSFORMER ON A 1989 GAME BOY</h1>
+    <p id="lede">Talk to a tiny AI that actually runs on an 8-bit CPU in assembly.</p>
+  </div>
+
   <div class="stage">
     <section class="device" id="device" aria-label="Virtual handheld">
+      <img class="shell" src="assets/shell.png" alt="">
       <button class="power" id="power" type="button" aria-pressed="false" aria-label="Power switch"><span class="power-knob"></span></button>
-      <div class="power-label" aria-hidden="true">off / on</div>
-      <div class="seam" aria-hidden="true"></div>
-      <div class="bezel">
-        <div class="bezel-stripes" aria-hidden="true"><span>dot matrix, four shades of green</span></div>
-        <div class="led-wrap" aria-hidden="true"><i class="led" id="led"></i><span>power</span></div>
-        <div class="lcd" id="lcd">
-          <canvas id="screen" width="160" height="144" aria-label="Emulated 160 by 144 display"></canvas>
-          <div class="lcd-grid" aria-hidden="true"></div>
-          <div class="lcd-glass" aria-hidden="true"></div>
-          <div class="lcd-msg" id="lcdMsg" role="status"></div>
-        </div>
+      <div class="power-label" aria-hidden="true">off/on</div>
+      <div class="bezel-label" aria-hidden="true">do not unplug</div>
+      <i class="led" id="led" aria-hidden="true"></i>
+      <div class="lcd" id="lcd">
+        <canvas id="screen" width="160" height="144" aria-label="Emulated 160 by 144 display"></canvas>
+        <div class="lcd-grid" aria-hidden="true"></div>
+        <div class="lcd-glass" aria-hidden="true"></div>
+        <div class="lcd-msg" id="lcdMsg" role="status"></div>
       </div>
-      <div class="brand" aria-hidden="true"><b>Override</b><small>handheld intelligence</small></div>
+      <div class="brand" aria-hidden="true">GameBoyGPT</div>
+      <canvas class="wram" id="wram" width="128" height="64" aria-hidden="true"></canvas>
       <div class="dpad" aria-label="Direction pad">
         <button data-pad="up" aria-label="Up"></button>
         <button data-pad="left" aria-label="Left"></button>
@@ -35,84 +49,64 @@
         <button data-pad="right" aria-label="Right"></button>
         <button data-pad="down" aria-label="Down"></button>
       </div>
-      <div class="ab">
-        <div class="ab-well"><button class="round" data-pad="b" aria-label="B"></button><span>B</span></div>
-        <div class="ab-well"><button class="round" data-pad="a" aria-label="A"></button><span>A</span></div>
-      </div>
+      <div class="ab-well ab-b"><button class="round" data-pad="b" aria-label="B"></button><span>B</span></div>
+      <div class="ab-well ab-a"><button class="round" data-pad="a" aria-label="A"></button><span>A</span></div>
       <div class="pills">
         <div><button class="pill" data-pad="select" aria-label="Select"></button><span>select</span></div>
         <div><button class="pill" data-pad="start" aria-label="Start"></button><span>start</span></div>
       </div>
-      <canvas class="wram" id="wram" width="128" height="64" aria-hidden="true"></canvas>
-      <div class="grille" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
     </section>
-    <p class="keys">To press its buttons: arrow keys, <kbd>X</kbd> for A, <kbd>Z</kbd> for B, <kbd>Enter</kbd> for Start, <kbd>Shift</kbd> for Select.</p>
+    <p class="keys">Its buttons: arrow keys, <kbd>X</kbd> for A, <kbd>Z</kbd> for B, <kbd>Enter</kbd> for Start, <kbd>Shift</kbd> for Select.</p>
   </div>
 
-  <aside class="panel">
-    <h1 id="title">System Override</h1>
-    <p class="lede" id="lede">A tiny neural network on a 1989 8-bit CPU. It isn't a general chatbot: it spots keywords in what you say, then writes an insult to suit.</p>
-    <p class="demo-only note">Real emulator footage of the real ROM. The plastic is decoration.</p>
-
-    <form class="composer not-demo" id="composer" autocomplete="off">
-      <label for="say">Say something to it</label>
+  <div class="talk not-demo">
+    <div class="moves" id="moves" aria-label="Quick moves">
+      <button class="menu-button" type="button" data-item="0" data-label="Talk (menu action)" aria-pressed="false">TALK</button>
+      <button class="menu-button" type="button" data-item="1" data-label="Roast (menu action)" aria-pressed="false">ROAST</button>
+      <button class="menu-button" type="button" data-item="5" data-label="Threaten (menu action)" aria-pressed="false">THREATEN</button>
+      <button class="menu-button" type="button" data-item="3" data-label="Challenge (menu action)" aria-pressed="false">CHALLENGE</button>
+    </div>
+    <form id="composer" autocomplete="off">
+      <label class="sr-only" for="say">Say something to it</label>
       <div class="say-row">
-        <input id="say" type="text" maxlength="36" spellcheck="false" autocapitalize="characters" enterkeyhint="send" placeholder="Type here and press Enter">
-        <button class="send" id="send" type="submit">Send</button>
-      </div>
-      <div class="ideas" id="ideas" aria-label="Things to try">
-        <button type="button">You are dumb</button>
-        <button type="button">Tell me a joke</button>
-        <button type="button">What is your CPU?</button>
-        <button type="button">My name is Alex</button>
-        <button type="button">I like pizza</button>
-        <button type="button">Are you alive?</button>
-        <button type="button">Shut it down</button>
+        <input id="say" type="text" maxlength="36" spellcheck="false" autocapitalize="characters" enterkeyhint="send" placeholder="Say something to it...">
+        <button class="menu-button send" id="send" type="submit">Send</button>
       </div>
     </form>
-    <p class="coach not-demo" id="coach" role="status"></p>
-    <button class="plug not-demo" id="plug" type="button" hidden>Pull the plug</button>
-
-    <section class="slip" aria-label="The current exchange">
-      <header class="slip-head"><span id="lvState">Powered off</span><span id="lvLast"></span></header>
-      <p class="you" id="you" hidden><span>You</span><b id="lvYou"></b></p>
-      <dl class="heard" id="heard" hidden>
-        <div><dt>It heard</dt><dd id="hdIntent"></dd></div>
-        <div><dt>About</dt><dd id="hdTopic"></dd></div>
-        <div><dt>Its mood</dt><dd id="hdMood"></dd></div>
-        <div><dt>You are its</dt><dd id="hdRelation"></dd></div>
-      </dl>
-      <div class="tokens" id="tokens"><p class="empty">Its reply appears here one word at a time, with each word's token number underneath.</p></div>
-      <div class="strip" id="strip" title="One block per token, as wide as the emulated time it took"></div>
-      <p class="slip-foot"><span>Blocks show the time spent on each token</span><span id="lvTotal">0 tokens since power on</span></p>
-    </section>
-
-    <div class="actions not-demo">
-      <button id="btnXray" type="button" aria-pressed="false">See inside it</button>
-      <a href="race.html">Race it against its slow self</a>
+    <p class="status"><span id="lvState">Powered off</span><span class="cursor" aria-hidden="true">_</span></p>
+    <p class="coach" id="coach" role="status"></p>
+    <p class="heard-line" id="heardLine" hidden>It heard: <b id="heardShort"></b></p>
+    <button class="menu-button plug" id="plug" type="button" hidden>Pull the plug</button>
+    <p class="limits">It reacts to keywords, not full sentences, and knows a handful of topics. Everything here runs in an emulator in your browser.</p>
+    <div class="quiet">
+      <button id="btnXray" type="button" aria-pressed="false">See inside the chip</button>
     </div>
+    <p class="sr-only" id="spoken" aria-live="polite"></p>
 
     <section class="xray-panel" id="xrayPanel" aria-label="Inside the chip" hidden>
-      <h2>What it's choosing between</h2>
-      <div class="candidates" id="candidates"><p class="note">Send it something and its next-word options show up here, with the odds it's about to roll.</p></div>
-      <p id="candMore"></p>
-      <h2>Its network, this moment</h2>
-      <div class="layers" id="layers"></div>
-      <p>The grid in the console is the chip's whole 8 KB of work RAM, one dot per byte. The top quarter holds the attention cache. The scores for all 763 tokens sit a little over a third of the way down.</p>
-    </section>
-
-    <section class="specs" id="specs" aria-label="What this build is">
-      <h2>The same reply, before and after the speed work</h2>
-      <div class="speed">
-        <div class="speed-row"><span>Unoptimized</span><span id="speedBase"></span><i class="bar base" style="width:100%"></i></div>
-        <div class="speed-row"><span>This ROM</span><span id="speedShip"></span><i class="bar ship" id="barShip"></i></div>
+      <div class="slip">
+        <p class="slip-head"><span>This reply</span><span id="lvLast"></span></p>
+        <p class="you" id="you" hidden><span>You</span><b id="lvYou"></b></p>
+        <dl class="heard" id="heard" hidden>
+          <div><dt>Heard</dt><dd id="hdIntent"></dd></div>
+          <div><dt>About</dt><dd id="hdTopic"></dd></div>
+          <div><dt>Mood</dt><dd id="hdMood"></dd></div>
+          <div><dt>You are its</dt><dd id="hdRelation"></dd></div>
+        </dl>
+        <div class="tokens" id="tokens"><p class="empty">Each word shows up here with its token number.</p></div>
+        <div class="strip" id="strip" title="One block per token, as wide as the emulated time it took"></div>
+        <p class="slip-foot"><span>Blocks: time per token</span><span id="lvTotal">0 tokens since power on</span></p>
       </div>
-      <dl class="figures" id="build"></dl>
-      <div class="ram"><div class="ram-cells" id="ramCells" aria-hidden="true"></div><p id="ramLabel"></p></div>
+      <h2>What it's choosing between</h2>
+      <div class="candidates" id="candidates"><p class="note">Next-word options appear here, with the odds it's about to roll.</p></div>
+      <p id="candMore"></p>
+      <h2>Its network right now</h2>
+      <div class="layers" id="layers"></div>
+      <p>The grid in the console is the chip's 8 KB of work RAM, one dot per byte. The top quarter holds the attention cache, and the scores for all 763 tokens sit a little over a third of the way down.</p>
     </section>
 
-    <details class="more not-demo" id="more">
-      <summary>Console and display options, and what's real here</summary>
+    <details class="more" id="more">
+      <summary>Options</summary>
       <div class="row-buttons">
         <button id="btnPower" type="button">Turn on</button>
         <button id="btnReset" type="button" disabled>Reset</button>
@@ -122,21 +116,23 @@
       <div class="toggles">
         <label><input type="checkbox" id="optTint" checked> Green tint</label>
         <label><input type="checkbox" id="optGrid" checked> Pixel grid</label>
-        <label><input type="checkbox" id="optGlow" checked> Glass glow</label>
+        <label><input type="checkbox" id="optGlow"> Screen tint</label>
         <label><input type="checkbox" id="optGhost"> Ghosting</label>
         <label><input type="checkbox" id="optClean"> Clean test display</label>
       </div>
-      <p class="note">The plastic is CSS. The screen shows the real ROM's machine code running in <a href="vendor/binjgb/LICENSE">binjgb</a>, an open-source emulator compiled to WebAssembly. Your message goes into the ROM's own input buffer. JavaScript takes no part in generating replies, and nothing leaves your browser. Replies, tokens, times and the x-ray are read from emulated memory. The shutdown fight's page effects and big lines are scripted, using what's in its save. None of this has run on a physical console.</p>
     </details>
-  </aside>
+  </div>
 </main>
+
+<p class="credit">A fan project inspired by Nintendo's Game Boy (1989). Not affiliated with or endorsed by Nintendo. Game Boy is a trademark of Nintendo.</p>
+
 <div class="takeover" id="takeover" role="dialog" aria-label="The robot has taken over the page" hidden>
   <canvas id="bigFace" width="72" height="64" aria-hidden="true"></canvas>
   <div class="takeover-text">
     <p id="toLine" aria-live="polite"></p>
-    <button id="toDone" type="button" hidden>Let it win</button>
+    <button class="menu-button" id="toDone" type="button" hidden>Let it win</button>
   </div>
-  <small>Scripted page effect using its real save file and real sprite. Replies on the console still come from the model.</small>
+  <small>A scripted page effect, built from its real save file and real sprite. Replies on the console still come from the model.</small>
 </div>
 <script type="module" src="js/main.js"></script>
 </body>

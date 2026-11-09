@@ -150,11 +150,11 @@ function showTrack() {
 function commentary() {
   const [fast, slow] = racers;
   const gap = fast.tokens.length - slow.tokens.length;
-  if (fast.finishedAt !== null) return `Tuned finished in ${friendly(fast.elapsed)}. Plain is on ${slow.tokens.length} of ${fast.tokens.length} tokens.`;
-  if (slow.finishedAt !== null) return `Plain finished in ${friendly(slow.elapsed)}. Tuned is on ${fast.tokens.length} of ${slow.tokens.length} tokens.`;
+  if (fast.finishedAt !== null) return `Tuned finished in ${friendly(fast.elapsed)}. Untuned is on ${slow.tokens.length} of ${fast.tokens.length} tokens.`;
+  if (slow.finishedAt !== null) return `Untuned finished in ${friendly(slow.elapsed)}. Tuned is on ${fast.tokens.length} of ${slow.tokens.length} tokens.`;
   if (!fast.tokens.length && !slow.tokens.length) return "Neck and neck. Both are reading the prompt.";
   if (gap === 0) return `Neck and neck on ${fast.tokens.length} ${fast.tokens.length === 1 ? "token" : "tokens"}.`;
-  const leader = gap > 0 ? "Tuned" : "Plain";
+  const leader = gap > 0 ? "Tuned" : "Untuned";
   const lead = Math.abs(gap);
   return `${leader} is ahead by ${lead} ${lead === 1 ? "token" : "tokens"}.`;
 }
@@ -238,8 +238,18 @@ async function start(item, build, roms) {
   phase = "booting";
 }
 
+/** A recorded benchmark, kept apart from the live race and labelled as one. */
+function showRecorded(build) {
+  const m = build.measured;
+  if (!m) return;
+  $("recTuned").textContent = `${friendly(m.secondsPerResponse)} per reply, ${m.secondsPerToken.toFixed(2)} s per token`;
+  $("recUntuned").textContent = `${friendly(m.baselineSecondsPerResponse)} per reply, ${m.baselineSecondsPerToken.toFixed(2)} s per token`;
+  $("recSpeedup").textContent = `${m.speedup.toFixed(2)}×`;
+}
+
 async function main() {
   const build = await (await fetch("rom/build.json")).json();
+  showRecorded(build);
   const fetchRom = async (name) => new Uint8Array(await (await fetch(`rom/${name}`)).arrayBuffer());
   const roms = { fast: await fetchRom(build.rom), slow: await fetchRom(build.race.rom) };
   $("fast").addEventListener("change", setSpeed);

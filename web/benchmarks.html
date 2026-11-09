@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Benchmarks: GameBoyGPT</title>
+<link rel="icon" href="assets/robot.png">
+<meta name="description" content="Two emulated 1989 CPUs write the same reply from the same neural network, one tuned and one untuned.">
+<link rel="stylesheet" href="css/theme.css">
+<link rel="stylesheet" href="css/race.css">
+<script src="vendor/binjgb/binjgb.js"></script>
+</head>
+<body>
+<header class="top">
+  <a class="logo" href="index.html"><img src="assets/robot.png" alt="" width="32" height="32">GameBoyGPT</a>
+  <nav aria-label="Pages">
+    <a href="index.html">Play</a>
+    <a href="about.html">About</a>
+    <a href="benchmarks.html" aria-current="page">Benchmarks</a>
+  </nav>
+</header>
+
+<main class="race">
+  <div class="race-intro">
+    <h1>The same reply, twice</h1>
+    <p>Two emulated 8-bit CPUs at 4.19 MHz run the same 46,352 weights. The chip has no multiply instruction. The left console has the speed work, and the right one does every multiplication the slow way.</p>
+  </div>
+
+  <div class="picks" id="picks">
+    <span>Make them say:</span>
+    <button class="menu-button" type="button" data-item="1" disabled>An insult</button>
+    <button class="menu-button" type="button" data-item="2" disabled>A compliment</button>
+    <button class="menu-button" type="button" data-item="5" disabled>A threat</button>
+    <label><input type="checkbox" id="fast"> Fast-forward both, 8x</label>
+  </div>
+  <p class="status" id="status" role="status">Loading both ROMs.</p>
+
+  <section class="result" id="result" aria-label="Race result" hidden>
+    <p class="multiple" id="resultMultiple"></p>
+    <div class="result-detail">
+      <p id="resultLine"></p>
+      <div class="time-row"><span>Tuned</span><i id="timeBarFast"></i><b id="timeFast"></b></div>
+      <div class="time-row"><span>Untuned</span><i id="timeBarSlow"></i><b id="timeSlow"></b></div>
+    </div>
+  </section>
+
+  <section class="track" aria-label="Tokens written so far">
+    <div class="rail"><span>Tuned</span><div class="groove"><i class="fill" id="fillFast"></i><canvas class="runner" id="runnerFast" width="72" height="64" aria-hidden="true"></canvas></div><b id="countFast">0</b></div>
+    <div class="rail"><span>Untuned</span><div class="groove"><i class="fill" id="fillSlow"></i><canvas class="runner" id="runnerSlow" width="72" height="64" aria-hidden="true"></canvas></div><b id="countSlow">0</b></div>
+  </section>
+
+  <div class="lanes">
+    <section class="lane" id="laneFast" aria-label="Tuned build">
+      <h2>Tuned</h2>
+      <p class="clock" id="clockFast">0:00.0</p>
+      <div class="glass"><canvas id="screenFast" width="160" height="144"></canvas></div>
+      <p class="words" id="wordsFast" aria-label="Token numbers from the tuned build"></p>
+    </section>
+    <section class="lane" id="laneSlow" aria-label="Untuned build">
+      <h2>Untuned</h2>
+      <p class="clock" id="clockSlow">0:00.0</p>
+      <div class="glass"><canvas id="screenSlow" width="160" height="144"></canvas></div>
+      <p class="words" id="wordsSlow" aria-label="Token numbers from the untuned build"></p>
+    </section>
+  </div>
+
+  <section class="recorded">
+    <h2>What's live and what's recorded</h2>
+    <p>The race above is live: two real ROMs in two copies of the <a href="vendor/binjgb/LICENSE">binjgb</a> emulator, in your browser, right now. Its clocks show emulated seconds, so fast-forward doesn't change them. Its result changes with every reply.</p>
+    <p>These numbers are different. They're recorded, averaged over the benchmark's test conversation in the PyBoy emulator, and they don't update here.</p>
+    <dl>
+      <div><dt>Tuned</dt><dd id="recTuned"></dd></div>
+      <div><dt>Untuned</dt><dd id="recUntuned"></dd></div>
+      <div><dt>Recorded speedup, inference alone</dt><dd id="recSpeedup"></dd></div>
+    </dl>
+    <p>Nothing here has run on a physical console.</p>
+  </section>
+</main>
+
+<p class="credit">A fan project inspired by Nintendo's Game Boy (1989). Not affiliated with or endorsed by Nintendo. Game Boy is a trademark of Nintendo.</p>
+<script type="module" src="js/race.js"></script>
+</body>
+</html>

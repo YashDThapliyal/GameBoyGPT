@@ -11,9 +11,10 @@ const SAVE_KEY = "system-override-save-v1";
 const PREF_KEY = "system-override-display-v1";
 const POWER_FLASH_MS = 350;
 const PLUG_PRESS_MS = 120;
-const PANEL_WIDTH = 460;
-const PANEL_GAP = 56;
-const PAGE_PADDING = 48;
+const CONTENT_MAX = 1240;
+const CONSOLE_SHARE = 0.46;
+const HEADER_AND_HINTS = 150;
+const SHELL_UNITS = { w: 192, h: 318 };
 const params = new URLSearchParams(location.search);
 
 let gb = null;
@@ -124,6 +125,7 @@ function onFrame() {
   if (++tickCount % 6) return;
   fight.update(gb);
   panel.update(gb, composer, fight.coachLine);
+  document.body.dataset.phase = panel.generating ? "busy" : "idle";
   xray.update(gb);
   syncSend();
   storeSave();
@@ -132,7 +134,21 @@ function onFrame() {
 function syncSend() {
   const blocked = Boolean(panel?.generating || composer?.busy);
   $("send").disabled = blocked;
+  for (const move of document.querySelectorAll("#moves button")) {
+    move.disabled = blocked;
+    if (!blocked) move.setAttribute("aria-pressed", "false");
+  }
   $("send").textContent = blocked ? "Wait" : (fight?.sendLabel ?? "Send");
+}
+
+/** Chooses one of the ROM's menu actions from the page. */
+async function sendMove(button) {
+  if (!composer || panel.generating || composer.busy) return;
+  if (!on) await powerOn();
+  if (!on) return;
+  button.setAttribute("aria-pressed", "true");
+  composer.sendAction(Number(button.dataset.item), button.dataset.label);
+  syncSend();
 }
 
 /** Sends a message from the page, switching the handheld on first when needed. */
@@ -178,10 +194,11 @@ function fit() {
   const full = document.fullscreenElement != null;
   document.documentElement.classList.toggle("fullscreen", full);
   const narrow = window.innerWidth <= 900;
-  const availW = narrow || full ? window.innerWidth - 8 : window.innerWidth - PANEL_WIDTH - PANEL_GAP - PAGE_PADDING;
-  const availH = (narrow ? Infinity : window.innerHeight - (full ? 8 : 70));
-  const maxK = Math.min((availW - 12) / 192, (availH - 8) / 318, full ? 8 : 4);
-  const k = Math.max(1, Math.floor(maxK * dpr) / dpr);
+  const availW = narrow || full ? window.innerWidth - 16 : Math.min(window.innerWidth, CONTENT_MAX) * CONSOLE_SHARE;
+  const availH = narrow ? Infinity : window.innerHeight - (full ? 8 : HEADER_AND_HINTS);
+  const maxK = Math.min(availW / SHELL_UNITS.w, availH / SHELL_UNITS.h, full ? 8 : 4);
+  const smallest = narrow || full ? 1 : 2;
+  const k = Math.max(smallest, Math.floor(maxK * dpr) / dpr);
   document.documentElement.style.setProperty("--u", `${k / 2}px`);
 }
 
@@ -218,9 +235,9 @@ async function main() {
     if (await sendMessage($("say").value)) $("say").value = "";
     $("say").focus();
   });
-  $("ideas").addEventListener("click", (ev) => {
-    const idea = ev.target.closest("button");
-    if (idea) sendMessage(idea.textContent);
+  $("moves").addEventListener("click", (ev) => {
+    const move = ev.target.closest("button");
+    if (move) sendMove(move);
   });
 
   try {

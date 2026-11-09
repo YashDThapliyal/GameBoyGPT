@@ -28,7 +28,12 @@ export class Composer {
   get busy() { return this.pending !== null; }
 
   send(text) {
-    this.pending = { text, wroteAt: null, keyboardAt: null, startedAt: null };
+    this.pending = { text, item: TYPE_ITEM, wroteAt: null, keyboardAt: null, startedAt: null };
+  }
+
+  /** Chooses one of the ROM's own menu actions, as a player would. */
+  sendAction(item, label) {
+    this.pending = { text: "", label, item, wroteAt: null, keyboardAt: null, startedAt: null };
   }
 
   cancel() {
@@ -80,15 +85,24 @@ export class Composer {
     const state = gb.peek(this.a.wMB_State);
     if (state === ST.BOOT || state === ST.INTRO || state === ST.REPLY) this.press(gb, now, "a");
     else if (state === ST.INSPECT) this.press(gb, now, "b");
-    else if (state === ST.MENU) this.chooseTypeItem(gb, now);
+    else if (state === ST.MENU) this.chooseItem(gb, now, p);
     else if (state === ST.KEYBOARD) this.fillKeyboard(gb, now, p);
     else if ((state === ST.READING || state === ST.WRITING) && p.wroteAt !== null) this.pending = null;
   }
 
-  chooseTypeItem(gb, now) {
+  chooseItem(gb, now, p) {
     const sel = gb.peek(this.a.wMenuSel);
-    if (sel === TYPE_ITEM) this.press(gb, now, "a");
-    else this.press(gb, now, (sel >> 1) !== (TYPE_ITEM >> 1) ? "down" : "right");
+    if (sel !== p.item) {
+      this.press(gb, now, (sel >> 1) !== (p.item >> 1) ? "down" : "right");
+      return;
+    }
+    if (p.item === TYPE_ITEM) {
+      this.press(gb, now, "a");
+    } else if (p.wroteAt === null || now - p.wroteAt >= RESEND_AFTER_SEC) {
+      p.wroteAt = now;
+      this.sent = p.label;
+      this.press(gb, now, "a");
+    }
   }
 
   fillKeyboard(gb, now, p) {

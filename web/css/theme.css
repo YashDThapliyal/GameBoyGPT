@@ -1,0 +1,90 @@
+/* Shared by all three pages: palette, type, header, footer and the pixel-art backdrop. */
+@font-face { font-family: "Press Start 2P"; src: url("../fonts/press-start-2p-latin-400-normal.woff2") format("woff2"); font-display: swap; }
+@font-face { font-family: "VT323"; src: url("../fonts/vt323-latin-400-normal.woff2") format("woff2"); font-display: swap; }
+
+:root {
+  --forest: #1c3527;
+  --forest-deep: #162b20;
+  --forest-line: #36593f;
+  --cream: #f0e9d2;
+  --cream-soft: #b9c4a3;
+  --lcd: #c4cfa1;
+  --lcd-mid: #8b956d;
+  --olive: #6b7a3f;
+  --olive-dark: #4d533c;
+  --ink: #1f1f1f;
+  --magenta: #8c2559;
+  --px: 4px;
+  --display: "Press Start 2P", "Courier New", monospace;
+  --body: "VT323", "Courier New", monospace;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--forest);
+  color: var(--cream);
+  font: 400 24px/1.25 var(--body);
+  overflow-x: clip;
+}
+/* The hills sit behind everything, and only at the very bottom of the page. */
+body::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: auto 0 0;
+  height: 288px;
+  background: url("../assets/landscape.png") 0 100% / 960px 288px repeat-x;
+  image-rendering: pixelated;
+}
+body::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  bottom: 300px;
+  left: 4%;
+  width: 120px;
+  height: 39px;
+  background: url("../assets/cloud.png") 0 0 / 100% 100% no-repeat;
+  image-rendering: pixelated;
+}
+
+a { color: var(--cream); }
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+h1, h2, h3 { font-family: var(--display); font-weight: 400; }
+:focus-visible { outline: var(--px) solid var(--lcd); outline-offset: 2px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+.top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 24px; width: 100%; max-width: 1240px; margin: 0 auto; padding: 14px 24px; }
+.logo { display: flex; align-items: center; gap: 12px; font: 400 14px/1 var(--display); text-decoration: none; }
+.logo img { display: block; width: 32px; height: 32px; image-rendering: pixelated; }
+.top nav { display: flex; gap: 6px; }
+.top nav a { padding: 8px 12px; font: 400 11px/1 var(--display); text-decoration: none; color: var(--cream-soft); }
+.top nav a:hover { color: var(--cream); }
+.top nav a[aria-current="page"] { background: var(--lcd); color: var(--ink); }
+
+.credit { width: 100%; max-width: 1240px; margin: auto auto 0; padding: 16px 24px 12px; color: var(--cream-soft); font-size: 18px; line-height: 1.2; }
+
+/* Chunky game-menu buttons. The hard shadow is the only depth on the page. */
+.menu-button { padding: 13px 12px 12px; border: var(--px) solid var(--ink); background: var(--cream); color: var(--ink); font: 400 12px/1 var(--display); box-shadow: var(--px) var(--px) 0 var(--ink); }
+.menu-button:hover:not(:disabled) { background: var(--lcd); }
+.menu-button:active:not(:disabled), .menu-button[aria-pressed="true"] { background: var(--lcd); transform: translate(var(--px), var(--px)); box-shadow: none; }
+.menu-button:disabled { background: var(--lcd-mid); cursor: default; }
+.menu-button.hot { background: var(--cream); }
+
+@media (max-width: 620px) {
+  .top { padding: 12px 16px; justify-content: center; }
+  .logo { font-size: 12px; }
+  .top nav a { padding: 7px 8px; font-size: 10px; }
+  .credit { padding: 14px 16px 10px; }
+  body::after { height: 192px; background-size: 640px 192px; }
+  body::before { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}

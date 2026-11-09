@@ -32,7 +32,7 @@ def main() -> None:
     if summary.exists():
         s = json.loads(summary.read_text())
         baseline = json.loads((ROOT / "reports" / "benchmark.json").read_text())["game"]["V0"]
-        measured = {"secondsPerToken": s["ship"]["game_seconds_per_token"], "secondsPerResponse": s["ship"]["game_seconds_per_response"], "baselineSecondsPerResponse": baseline["seconds_per_response"]}
+        measured = {"secondsPerToken": s["ship"]["game_seconds_per_token"], "secondsPerResponse": s["ship"]["game_seconds_per_response"], "baselineSecondsPerResponse": baseline["seconds_per_response"], "baselineSecondsPerToken": baseline["seconds_per_token"], "firstWordSeconds": s["ship"]["first_word_s"], "baselineFirstWordSeconds": baseline["first_word_s"], "speedup": s["ship"]["speedup_vs_v0"]}
     meta = {"rom": "system_override.gb", "sha256": hashlib.sha256(rom.read_bytes()).hexdigest(), "romBytes": rom.stat().st_size, "wramBytes": wram, "params": m.params, "vocabSize": m.vocab, "ctx": m.ctx,
             "d": m.d, "k": len(m.w_b), "promptLen": dl.PROMPT_LEN, "vocab": list(dl.VOCAB), "addresses": {k: syms[k][1] for k in WATCHED}, "debug": {k: syms[k][1] for k in ("wMB_ForceSeed", "wNarrRng", "wTurns", "wReturning", "wMenuSel", "wRobotOn")}, "measured": measured,
             "race": {"rom": "system_override_v0.gb", "addresses": {k: baseline_syms[k][1] for k in RACE_WATCHED}}}

@@ -5,7 +5,7 @@ CUMULATIVE := V0 V1 V2 V3 V4 V5 V5S V5Z V6T
 ISOLATED := A_QSQ A_NIB A_KV
 VARIANTS := $(CUMULATIVE) $(ISOLATED)
 TESTER := .third_party/SameBoy/build/bin/tester/sameboy_tester
-.PHONY: all bootstrap smoke train study export art rom variants sameboy verify second-emulator play web web-test demo benchmark report evaluate clean
+.PHONY: all bootstrap smoke train study export art rom variants sameboy verify second-emulator play web web-art web-test demo benchmark report evaluate clean
 all: rom verify
 bootstrap:
 	tools/bootstrap.sh
@@ -45,6 +45,8 @@ play: rom
 	SDL_RENDER_SCALE_QUALITY=nearest $(PY) -m pyboy build/system_override.gb --window SDL2 --scale 4 --dmg
 web: rom
 	scripts/serve_web.sh
+web-art:
+	$(PY) tools/make_web_art.py
 web-test:
 	$(PY) tools/build_web.py
 	node tests/web/e2e.mjs

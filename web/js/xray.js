@@ -6,7 +6,7 @@ const WRAM_START = 0xc000;
 const GRID_W = 128;
 const GRID_H = 64;
 const CANDIDATES_SHOWN = 6;
-const BYTE_SHADES = [[0x4d, 0x53, 0x3c], [0x8b, 0x95, 0x6d], [0xc4, 0xcf, 0xa1], [0xf2, 0xf6, 0xd8]];
+const BYTE_SHADES = [[0x4d, 0x53, 0x3c], [0x8b, 0x95, 0x6d], [0xc4, 0xcf, 0xa1], [0xe6, 0xdf, 0xca]];
 const ACTIVATION_SHADES = ["#1f1f1f", "#4d533c", "#8b956d", "#c4cfa1"];
 // Compute order through one forward pass.
 const LAYERS = [["Input", "wE", 32], ["Query", "wQ", 32], ["Attention", "wA", 32], ["Feed-forward", "wF", 64], ["Output", "wX2", 32], ["Bottleneck", "wZ", 16]];
@@ -49,9 +49,8 @@ export class XRay {
     this.el("device").classList.toggle("xray", this.active);
     document.documentElement.classList.toggle("xray-on", this.active);
     this.el("xrayPanel").hidden = !this.active;
-    this.el("specs").hidden = this.active;
     this.el("btnXray").setAttribute("aria-pressed", String(this.active));
-    this.el("btnXray").textContent = this.active ? "Close the case" : "See inside it";
+    this.el("btnXray").textContent = this.active ? "Close the case" : "See inside the chip";
   }
 
   /** Called about ten times a second while the emulator runs. */

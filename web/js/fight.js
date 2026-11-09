@@ -6,7 +6,7 @@ const FACE = { w: 72, h: 64 };
 const LINE_MS = 2100;
 const DODGES_ALLOWED = 3;
 const DODGE_STEPS = [190, 70, 250];
-const SHAKE_MS = 520;
+const SHAKE_MS = 420;
 const NAME_BYTES = 9;
 
 const STAGES = [

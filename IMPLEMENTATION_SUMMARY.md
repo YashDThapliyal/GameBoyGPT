@@ -28,7 +28,7 @@ ROM and baseline ROM in `release/`; SM83 source in `src/`; corpus and training i
 - **The goal replaced the planned richer lines for the adventure.** That work wasn't done, since the adventure is no longer the product. The old game remains on its tag.
 - **The reference images** look like fan art of an existing comic character. They steered general proportions only. The robot is an original design, and the images stay out of version control and out of the ZIP. Check that the robot looks sufficiently different to you before publishing.
 - **The model is smaller than the goal's suggested sizes,** at 46,352 parameters rather than 50K to 300K. The study found larger models didn't help on this corpus and cost far more time.
-- **The shell uses its own wordmark and no Nintendo marks,** though its shape deliberately evokes the 1989 hardware. Whether that shape is safe to use in public is a question for you.
+- **The shell is a homage to the 1989 hardware, drawn as pixel art with its own wordmark.** It uses no Nintendo logos, and the page credits the Game Boy by name and says the project is unaffiliated. You chose to keep it, knowing that credit and being non-commercial do not rule out a takedown request.
 - **Added cartridge RAM** for saves and head tables, so a physical cartridge would need MBC5 with 32 KB of RAM and a battery.
 - **The demo's sampler seeds were chosen,** as [docs/DEMO.md](docs/DEMO.md) says.
 

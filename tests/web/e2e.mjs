@@ -62,7 +62,8 @@ const pinSeed = (page, seed) => page.evaluate((s) => {
   await page.goto(srv.url);
   await check("page loads powered off, with build facts from the ROM's metadata", async () => {
     assert.equal(await page.locator("#lvState").innerText(), "Powered off");
-    assert.match(await page.locator("#build").innerText(), /parameters/);
+    assert.equal(await page.locator("nav a[aria-current=page]").innerText(), "Play");
+    assert.equal(await page.locator("h1").innerText(), "A TRANSFORMER ON A 1989 GAME BOY");
   });
   await check("the power switch boots the ROM", async () => {
     await page.locator("#power").click();
@@ -183,14 +184,20 @@ const pinSeed = (page, seed) => page.evaluate((s) => {
     assert.equal(vocab[seq[6]], "<I_UNKNOWN>");
     await page.waitForTimeout(300);
     assert.equal(await page.locator("#hdIntent").innerText(), "nothing it recognizes");
-    await page.getByRole("button", { name: "You are dumb" }).click();
-    seq = await replyTo("YOU ARE DUMB");
+    // The quick moves go through the ROM's own menu.
+    await page.getByRole("button", { name: "Roast" }).click();
+    seq = await replyTo("Roast (menu action)");
     assert.equal(vocab[seq[6]], "<I_INSULT>");
+    await page.getByRole("button", { name: "Threaten" }).click();
+    seq = await replyTo("Threaten (menu action)");
+    assert.equal(vocab[seq[6]], "<I_THREAT>");
     await hold(page, "a");
     await waitState(page, 2, 5000);
   });
   await check("the page stays responsive during inference", async () => {
     await hold(page, "down");
+    // Any item will do except TYPE, which opens the keyboard instead of replying.
+    if ((await readU8(page, "wMenuSel")) === 7) await hold(page, "down");
     await hold(page, "a");
     await waitState(page, 5, 15000);
     const lag = await page.evaluate(() => new Promise((res) => {
@@ -245,6 +252,7 @@ const pinSeed = (page, seed) => page.evaluate((s) => {
     assert.deepEqual(errors, []);
   });
   await check("switching off in the middle of a reply leaves Send usable", async () => {
+    await page.waitForFunction(() => !document.getElementById("send").disabled);
     await page.locator("#say").fill("tell me a joke");
     await page.locator("#say").press("Enter");
     await waitState(page, 5);
@@ -257,7 +265,6 @@ const pinSeed = (page, seed) => page.evaluate((s) => {
   await check("the x-ray draws live memory, and the picked token is among the real candidates", async () => {
     await page.locator("#btnXray").click();
     assert.equal(await page.locator("#xrayPanel").isVisible(), true);
-    assert.equal(await page.locator("#specs").isVisible(), false);
     await waitState(page, 6, 45000).catch(() => {});
     for (let i = 0; i < 80 && (await state(page)) !== 2; i++) {
       if ((await state(page)) <= 1 || (await state(page)) === 6) await page.keyboard.press("KeyX", { delay: 80 });
@@ -293,7 +300,7 @@ const pinSeed = (page, seed) => page.evaluate((s) => {
     assert.ok(lit >= 3, `wram shades ${lit}`);
     await page.screenshot({ path: `${SHOTS}/web_xray.png` });
     await page.locator("#btnXray").click();
-    assert.equal(await page.locator("#specs").isVisible(), true);
+    assert.equal(await page.locator("#xrayPanel").isVisible(), false);
   });
   await check("three shutdowns degrade the page, the ROM powers down, and the takeover uses the real save", async () => {
     const say = async (text) => {
@@ -310,7 +317,7 @@ const pinSeed = (page, seed) => page.evaluate((s) => {
     assert.equal(await fightLevel(), "1");
     await say("turn off");
     assert.equal(await fightLevel(), "2");
-    assert.equal(await page.locator("#title").innerText(), "Do Not Turn Off");
+    assert.equal(await page.locator("#title").innerText(), "DO NOT TURN OFF");
     await page.locator("#power").hover();
     assert.notEqual(await page.locator("#power").evaluate((el) => el.style.getPropertyValue("--dodge")), "0");
     await page.screenshot({ path: `${SHOTS}/web_fight.png` });
@@ -326,7 +333,7 @@ const pinSeed = (page, seed) => page.evaluate((s) => {
     await page.screenshot({ path: `${SHOTS}/web_takeover.png` });
     await page.locator("#toDone").click({ timeout: 15000 });
     assert.equal(await page.locator("#takeover").isVisible(), false);
-    assert.equal(await page.locator("#title").innerText(), "System Override");
+    assert.equal(await page.locator("#title").innerText(), "A TRANSFORMER ON A 1989 GAME BOY");
     assert.equal(await fightLevel(), undefined);
     await page.waitForFunction(() => window.__override.gb.peek(window.__override.build.addresses.wMB_State) === 2 || window.__override.gb.peek(window.__override.build.addresses.wMB_State) === 6, null, { timeout: 20000 }).catch(() => {});
     assert.deepEqual(errors, []);
@@ -346,7 +353,7 @@ const pinSeed = (page, seed) => page.evaluate((s) => {
     }
     await page.locator("#say").fill("hello");
     await page.locator("#say").press("Enter");
-    await page.waitForFunction(() => document.getElementById("lvState").textContent === "Writing its reply", null, { timeout: 45000 });
+    await page.waitForFunction(() => document.getElementById("lvState").textContent === "Writing", null, { timeout: 45000 });
     await waitState(page, 6);
     assert.deepEqual(errors, []);
   });
@@ -376,7 +383,7 @@ const pinSeed = (page, seed) => page.evaluate((s) => {
   const { browser, page } = await launch({ viewport: { width: 1280, height: 860 } });
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
-  await page.goto(`${srv.url}race.html`);
+  await page.goto(`${srv.url}benchmarks.html`);
   await check("the race page runs both real ROMs and they write identical tokens at very different speeds", async () => {
     await page.locator("#picks button").first().waitFor();
     await page.waitForFunction(() => !document.querySelector("#picks button").disabled);
@@ -398,6 +405,21 @@ const pinSeed = (page, seed) => page.evaluate((s) => {
     assert.equal(await page.locator("#countSlow").innerText(), String(r.tokens.length));
     await page.waitForTimeout(1000);
     await page.screenshot({ path: `${SHOTS}/web_race.png` });
+    assert.deepEqual(errors, []);
+  });
+  await check("the about page fills its numbers from the build, and all three pages link to each other", async () => {
+    await page.getByRole("link", { name: "About" }).click();
+    await page.waitForURL(/about\.html/);
+    await page.waitForFunction(() => document.querySelector("[data-fact=wram]").textContent === "5,303");
+    assert.equal(await page.locator("[data-fact=params]").first().innerText(), "46,352");
+    assert.equal(await page.locator("nav a[aria-current=page]").innerText(), "About");
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth), 0);
+    await page.getByRole("link", { name: "Benchmarks" }).click();
+    await page.waitForURL(/benchmarks\.html/);
+    assert.equal(await page.locator("nav a[aria-current=page]").innerText(), "Benchmarks");
+    await page.getByRole("link", { name: "Play" }).click();
+    await page.waitForURL(/index\.html/);
+    assert.equal(await page.locator("h1").innerText(), "A TRANSFORMER ON A 1989 GAME BOY");
     assert.deepEqual(errors, []);
   });
   await browser.close();
