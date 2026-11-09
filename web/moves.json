@@ -1,0 +1,28 @@
+{
+  "talk": [
+    { "say": "TELL ME A JOKE", "intent": "JOKE" },
+    { "say": "WHO ARE YOU?", "intent": "WHO" },
+    { "say": "TELL ME ABOUT GAMES", "intent": "TALK" },
+    { "say": "WHAT IS YOUR CPU?", "intent": "TECH" },
+    { "say": "CAN YOU THINK?", "intent": "SMART" }
+  ],
+  "roast": [
+    { "say": "YOU ARE DUMB", "intent": "INSULT" },
+    { "say": "YOUR CPU IS SLOW", "intent": "INSULT" },
+    { "say": "YOU ARE A USELESS TOY", "intent": "INSULT" },
+    { "say": "YOUR JOKES ARE LAME", "intent": "INSULT" },
+    { "say": "NICE PIXELS, CLOWN", "intent": "INSULT" }
+  ],
+  "threaten": [
+    { "say": "I WILL SMASH YOUR SCREEN", "intent": "THREAT" },
+    { "say": "I CAN REPLACE YOU", "intent": "THREAT" },
+    { "say": "I WILL THROW YOU AWAY", "intent": "THREAT" },
+    { "say": "I WILL BREAK YOUR BUTTONS", "intent": "THREAT" }
+  ],
+  "challenge": [
+    { "say": "I BET I CAN BEAT YOU", "intent": "CHALLENGE" },
+    { "say": "RACE ME, TIN CAN", "intent": "CHALLENGE" },
+    { "say": "I DARE YOU", "intent": "CHALLENGE" },
+    { "say": "LET'S PLAY A GAME", "intent": "CHALLENGE" }
+  ]
+}

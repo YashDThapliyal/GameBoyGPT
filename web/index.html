@@ -61,10 +61,10 @@
 
   <div class="talk not-demo">
     <div class="moves" id="moves" aria-label="Quick moves">
-      <button class="menu-button" type="button" data-item="0" data-label="Talk (menu action)" aria-pressed="false">TALK</button>
-      <button class="menu-button" type="button" data-item="1" data-label="Roast (menu action)" aria-pressed="false">ROAST</button>
-      <button class="menu-button" type="button" data-item="5" data-label="Threaten (menu action)" aria-pressed="false">THREATEN</button>
-      <button class="menu-button" type="button" data-item="3" data-label="Challenge (menu action)" aria-pressed="false">CHALLENGE</button>
+      <button class="menu-button" type="button" data-move="talk" aria-pressed="false">TALK</button>
+      <button class="menu-button" type="button" data-move="roast" aria-pressed="false">ROAST</button>
+      <button class="menu-button" type="button" data-move="threaten" aria-pressed="false">THREATEN</button>
+      <button class="menu-button" type="button" data-move="challenge" aria-pressed="false">CHALLENGE</button>
     </div>
     <form id="composer" autocomplete="off">
       <label class="sr-only" for="say">Say something to it</label>
@@ -75,7 +75,7 @@
     </form>
     <p class="status"><span id="lvState">Powered off</span><span class="cursor" aria-hidden="true">_</span></p>
     <p class="coach" id="coach" role="status"></p>
-    <p class="heard-line" id="heardLine" hidden>It heard: <b id="heardShort"></b></p>
+    <p class="heard-line" id="heardLine" hidden>You said: <b id="youShort"></b><br>The model got: <b id="heardShort"></b></p>
     <button class="menu-button plug" id="plug" type="button" hidden>Pull the plug</button>
     <p class="limits">It reacts to keywords, not full sentences, and knows a handful of topics. Everything here runs in an emulator in your browser.</p>
     <div class="quiet">

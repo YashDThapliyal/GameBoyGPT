@@ -184,13 +184,25 @@ const pinSeed = (page, seed) => page.evaluate((s) => {
     assert.equal(vocab[seq[6]], "<I_UNKNOWN>");
     await page.waitForTimeout(300);
     assert.equal(await page.locator("#hdIntent").innerText(), "nothing it recognizes");
-    // The quick moves go through the ROM's own menu.
-    await page.getByRole("button", { name: "Roast" }).click();
-    seq = await replyTo("Roast (menu action)");
-    assert.equal(vocab[seq[6]], "<I_INSULT>");
-    await page.getByRole("button", { name: "Threaten" }).click();
-    seq = await replyTo("Threaten (menu action)");
-    assert.equal(vocab[seq[6]], "<I_THREAT>");
+    // The quick moves send real phrases, show them, and move on to the next one each press.
+    const moves = JSON.parse(readFileSync("web/moves.json"));
+    const roast = page.getByRole("button", { name: "ROAST" });
+    await roast.hover();
+    assert.equal(await page.locator("#say").getAttribute("placeholder"), `Next: ${moves.roast[0].say}`);
+    for (const phrase of moves.roast.slice(0, 2)) {
+      await roast.click();
+      seq = await replyTo(phrase.say);
+      assert.equal(vocab[seq[6]], `<I_${phrase.intent}>`);
+      assert.equal(await page.locator("#youShort").innerText(), phrase.say);
+      await page.waitForTimeout(300);
+      assert.match(await page.locator("#heardShort").innerText(), /^an insult/);
+    }
+    assert.equal(await page.locator("#say").getAttribute("placeholder"), `Next: ${moves.roast[2].say}`);
+    await page.mouse.move(5, 5);
+    assert.equal(await page.locator("#say").getAttribute("placeholder"), "Say something to it...");
+    await page.getByRole("button", { name: "THREATEN" }).click();
+    seq = await replyTo(moves.threaten[0].say);
+    assert.equal(vocab[seq[6]], `<I_${moves.threaten[0].intent}>`);
     await hold(page, "a");
     await waitState(page, 2, 5000);
   });

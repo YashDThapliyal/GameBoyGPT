@@ -97,6 +97,9 @@ export class Panel {
   startReply(gb, text) {
     this.el("lvYou").textContent = text ?? "Chosen on the console's menu";
     this.el("you").hidden = false;
+    this.el("youShort").textContent = text ?? "a choice on its own menu";
+    this.el("heardShort").textContent = "";
+    this.el("heardLine").hidden = false;
     this.el("lvLast").textContent = "Timing this reply";
     this.el("tokens").replaceChildren();
     this.el("strip").replaceChildren();
@@ -144,8 +147,9 @@ export class Panel {
     this.el("hdMood").textContent = name(PROMPT_AT.mood).toLowerCase();
     this.el("hdRelation").textContent = name(PROMPT_AT.relation).toLowerCase();
     this.el("heard").hidden = false;
-    this.el("heardShort").textContent = topic === "NONE" ? heard : `${heard}, about ${topic.toLowerCase()}`;
-    this.el("heardLine").hidden = false;
+    // The model never sees the sentence. These labels are what actually goes into its prompt.
+    const about = topic === "NONE" ? "" : `, about ${topic.toLowerCase()}`;
+    this.el("heardShort").textContent = `${heard}${about}, mood ${name(PROMPT_AT.mood).toLowerCase()}, you are its ${name(PROMPT_AT.relation).toLowerCase()}`;
   }
 
   /** What a slot token really printed: the ROM fills these in from its save as it draws them. */

@@ -104,3 +104,18 @@ def test_authored_text_has_no_lowercase_only_tokens_the_font_cannot_draw():
     drawable = set(" ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?:'-")
     for w in dl.VOCAB[dl.FIRST_WORD:]:
         assert set(w.upper()) <= drawable, w
+
+
+def test_page_move_phrases_parse_to_the_intent_their_button_promises():
+    """The page's quick moves are real typed text, so each one must survive the keyboard's charset and the parser."""
+    import json
+    import re
+    from pathlib import Path
+    moves = json.loads((Path(__file__).resolve().parent.parent / "web" / "moves.json").read_text())
+    assert set(moves) == {"talk", "roast", "threaten", "challenge"}
+    for phrases in moves.values():
+        assert len(phrases) >= 3
+        for phrase in phrases:
+            assert re.fullmatch(r"[A-Z0-9',.?! -]+", phrase["say"]), phrase["say"]
+            assert len(phrase["say"]) <= cv.MAX_INPUT, phrase["say"]
+            assert cv.parse(phrase["say"]).intent == phrase["intent"], phrase["say"]

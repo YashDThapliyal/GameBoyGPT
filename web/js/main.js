@@ -11,6 +11,7 @@ const SAVE_KEY = "system-override-save-v1";
 const PREF_KEY = "system-override-display-v1";
 const POWER_FLASH_MS = 350;
 const PLUG_PRESS_MS = 120;
+const SAY_PLACEHOLDER = "Say something to it...";
 const CONTENT_MAX = 1240;
 const CONSOLE_SHARE = 0.46;
 const HEADER_AND_HINTS = 150;
@@ -20,6 +21,8 @@ const params = new URLSearchParams(location.search);
 let gb = null;
 let panel = null;
 let composer = null;
+let moves = {};
+const moveTurns = {};
 let fight = null;
 let xray = null;
 let romBytes = null;
@@ -59,6 +62,7 @@ async function fetchBytes(url) {
 
 async function prepare() {
   const build = await (await fetch("rom/build.json")).json();
+  moves = await (await fetch("moves.json")).json();
   panel = new Panel(build);
   composer = new Composer(() => gb, build.addresses, (text) => {
     $("say").value = text;
@@ -141,14 +145,20 @@ function syncSend() {
   $("send").textContent = blocked ? "Wait" : (fight?.sendLabel ?? "Send");
 }
 
-/** Chooses one of the ROM's menu actions from the page. */
+const nextPhrase = (move) => moves[move][(moveTurns[move] ?? 0) % moves[move].length].say;
+
+/** A quick move is a ready-made message. Each press sends the next one, through the same road as typing. */
 async function sendMove(button) {
-  if (!composer || panel.generating || composer.busy) return;
-  if (!on) await powerOn();
-  if (!on) return;
+  const move = button.dataset.move;
+  if (!(await sendMessage(nextPhrase(move)))) return;
+  moveTurns[move] = (moveTurns[move] ?? 0) + 1;
   button.setAttribute("aria-pressed", "true");
-  composer.sendAction(Number(button.dataset.item), button.dataset.label);
   syncSend();
+  showPreview(button);
+}
+
+function showPreview(button) {
+  $("say").placeholder = button ? `Next: ${nextPhrase(button.dataset.move)}` : SAY_PLACEHOLDER;
 }
 
 /** Sends a message from the page, switching the handheld on first when needed. */
@@ -239,6 +249,8 @@ async function main() {
     const move = ev.target.closest("button");
     if (move) sendMove(move);
   });
+  for (const type of ["pointerover", "focusin"]) $("moves").addEventListener(type, (ev) => { if (moves.talk && ev.target.closest("button")) showPreview(ev.target.closest("button")); });
+  for (const type of ["pointerleave", "focusout"]) $("moves").addEventListener(type, () => showPreview(null));
 
   try {
     await prepare();
