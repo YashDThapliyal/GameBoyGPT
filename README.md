@@ -6,7 +6,7 @@
 
 ![Demo](docs/demo/system_override_demo.gif)
 
-[Watch the 30-second demo](docs/demo/system_override_demo.mp4). It's real emulator footage of the real ROM. The handheld's plastic is decoration, drawn in CSS; the screen is the game.
+[Watch the demo](docs/demo/system_override_demo.mp4). It's real emulator footage at real speed, and [docs/DEMO.md](docs/DEMO.md) lists what was chosen.
 
 ## Play it
 

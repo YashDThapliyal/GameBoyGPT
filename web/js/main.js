@@ -12,6 +12,8 @@ const PREF_KEY = "system-override-display-v1";
 const POWER_FLASH_MS = 350;
 const PLUG_PRESS_MS = 120;
 const FLICK_MS = 260;
+const FORGET_LABEL = "Make it forget me";
+const FORGET_ARM_MS = 4000;
 const SAY_PLACEHOLDER = "Say something to it...";
 const CONTENT_MAX = 1240;
 const CONSOLE_SHARE = 0.46;
@@ -23,6 +25,7 @@ let gb = null;
 let panel = null;
 let composer = null;
 let moves = {};
+let forgetArmed = false;
 const moveTurns = {};
 let fight = null;
 let xray = null;
@@ -158,6 +161,30 @@ async function sendMove(button) {
   showPreview(button);
 }
 
+/** Wipes the cartridge save: its grudges, your name and your likes. Asks twice, because it can't be undone. */
+function forgetMe(button) {
+  if (!forgetArmed) {
+    forgetArmed = true;
+    button.textContent = "Sure? Click again";
+    setTimeout(() => {
+      forgetArmed = false;
+      button.textContent = FORGET_LABEL;
+    }, FORGET_ARM_MS);
+    return;
+  }
+  forgetArmed = false;
+  const wasOn = on;
+  if (gb) gb.saveDirty = false; // Otherwise switching off would write the old memories straight back.
+  powerOff();
+  try {
+    localStorage.removeItem(SAVE_KEY);
+  } catch { /* Storage was never available, so there's nothing saved. */ }
+  $("heardLine").hidden = true;
+  button.textContent = "Forgotten";
+  setTimeout(() => { button.textContent = FORGET_LABEL; }, FORGET_ARM_MS);
+  if (wasOn) powerOn();
+}
+
 /** The switch boots the console, then stops cooperating. A real power-off lives under Options. */
 function flipSwitch() {
   if (!on) {
@@ -227,7 +254,6 @@ function fit() {
 }
 
 async function main() {
-  document.documentElement.classList.toggle("demo", params.get("demo") === "1");
   restorePrefs();
   applyDisplay();
   fit();
@@ -259,6 +285,7 @@ async function main() {
     if (await sendMessage($("say").value)) $("say").value = "";
     $("say").focus();
   });
+  $("btnForget").addEventListener("click", (ev) => forgetMe(ev.currentTarget));
   $("moves").addEventListener("click", (ev) => {
     const move = ev.target.closest("button");
     if (move) sendMove(move);

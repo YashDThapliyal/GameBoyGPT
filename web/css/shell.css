@@ -114,10 +114,6 @@ kbd { font: inherit; color: var(--cream); }
 .toggles input { width: 16px; height: 16px; accent-color: var(--olive); }
 .note { margin: 0; color: var(--cream-soft); line-height: 1.15; }
 
-.demo-only { display: none; }
-.demo .demo-only { display: block; }
-.demo .not-demo { display: none; }
-.demo .keys, .demo .credit { display: none; }
 .fullscreen .top, .fullscreen .credit, .fullscreen .intro, .fullscreen .talk, .fullscreen .keys { display: none; }
 .fullscreen .play { display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 0; }
 

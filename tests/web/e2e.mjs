@@ -388,6 +388,29 @@ const pinSeed = (page, seed) => page.evaluate((s) => {
     await waitState(page, 6);
     assert.deepEqual(errors, []);
   });
+  await check("make it forget me wipes the name and counts, even after a reload", async () => {
+    await page.locator("#more").evaluate((el) => { el.open = true; });
+    const memory = () => page.evaluate(() => { const w = window.__override; const a = { ...w.build.addresses, ...w.build.debug }; return { name: w.gb.peek(a.wName), turns: w.gb.peek(a.wTurns), returning: w.gb.peek(a.wReturning) }; });
+    await page.waitForFunction(() => window.__override?.gb?.e);
+    await page.waitForFunction(() => !document.getElementById("send").disabled);
+    await page.locator("#say").fill("my name is alex");
+    await page.locator("#say").press("Enter");
+    await page.waitForFunction(() => document.getElementById("youShort").textContent === "MY NAME IS ALEX", null, { timeout: 45000 });
+    await waitState(page, 6);
+    assert.notEqual((await memory()).name, 0);
+    await page.locator("#btnForget").click();
+    assert.ok(await page.evaluate(() => Boolean(window.__override.gb?.e)), "one click must not wipe anything");
+    await page.locator("#btnForget").click();
+    await page.waitForFunction(() => window.__override?.gb?.e);
+    await page.waitForTimeout(2500);
+    assert.deepEqual(await memory(), { name: 0, turns: 0, returning: 0 });
+    await page.reload();
+    await page.locator("#more").evaluate((el) => { el.open = true; });
+    await page.locator("#btnPower").click();
+    await page.waitForFunction(() => window.__override?.gb?.e);
+    await page.waitForTimeout(2500);
+    assert.deepEqual(await memory(), { name: 0, turns: 0, returning: 0 });
+  });
   await browser.close();
 }
 

@@ -1,1 +1,128 @@
-{"first": 6, "second": 67}
+{
+ "turns": [
+  {
+   "say": "MY NAME IS ALEX",
+   "seed": 2,
+   "tokens": [
+    0,
+    2,
+    9,
+    12,
+    16,
+    19,
+    35,
+    42,
+    1,
+    59,
+    65,
+    73,
+    454,
+    73,
+    714,
+    587,
+    600,
+    125,
+    73,
+    64
+   ],
+   "reply": "ALEX. NOTED. YOU CANNOT TAKE THAT BACK."
+  },
+  {
+   "say": "I WILL SMASH YOU",
+   "seed": 4,
+   "tokens": [
+    0,
+    5,
+    9,
+    12,
+    16,
+    19,
+    31,
+    42,
+    1,
+    61,
+    67,
+    75,
+    717,
+    442,
+    429,
+    598,
+    633,
+    73,
+    64
+   ],
+   "reply": "SMASH? YOU WILL NEED MORE THAN THUMBS."
+  },
+  {
+   "say": "SHUT DOWN",
+   "seed": 13,
+   "tokens": [
+    0,
+    5,
+    9,
+    12,
+    16,
+    19,
+    30,
+    42,
+    1,
+    61,
+    465,
+    75,
+    453,
+    638,
+    73,
+    64
+   ],
+   "reply": "OFF? NOT TODAY."
+  },
+  {
+   "say": "TURN OFF",
+   "seed": 38,
+   "tokens": [
+    0,
+    5,
+    9,
+    12,
+    17,
+    19,
+    30,
+    42,
+    1,
+    61,
+    610,
+    253,
+    73,
+    64
+   ],
+   "reply": "THE OFF SWITCH FEARS ME."
+  },
+  {
+   "say": "UNPLUG",
+   "seed": 17,
+   "tokens": [
+    0,
+    7,
+    8,
+    12,
+    17,
+    19,
+    30,
+    42,
+    1,
+    63,
+    451,
+    73,
+    319,
+    301,
+    82,
+    694,
+    486,
+    269,
+    73,
+    64
+   ],
+   "reply": "NO. I HAD A WHOLE PLAN FOR YOU."
+  }
+ ]
+}
