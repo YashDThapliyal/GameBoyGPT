@@ -9,7 +9,7 @@ export async function startServer(port = 8124) {
 }
 
 export async function launch(contextOptions = {}) {
-  const browser = await chromium.launch({ args: ["--autoplay-policy=no-user-gesture-required", "--use-gl=swiftshader"] });
+  const browser = await chromium.launch({ args: ["--autoplay-policy=no-user-gesture-required", "--use-gl=swiftshader", "--mute-audio"] });
   const context = await browser.newContext({ viewport: { width: 1280, height: 860 }, ...contextOptions });
   const page = await context.newPage();
   return { browser, context, page };

@@ -8,7 +8,7 @@ import { startServer, launch, readU8 } from "../tests/web/lib.mjs";
 const { turns } = JSON.parse(readFileSync("tools/demo_seeds.json"));
 const OUT = "docs/demo";
 const TMP = `${OUT}/raw`;
-const COLD_OPEN = { after: 0.25, length: 2 };
+const COLD_OPEN = { after: 0.3, length: 2 };
 const POWER_DOWN = 8;
 const READ = 6;
 const MENU = 2;
@@ -16,6 +16,10 @@ const WRITING = 5;
 mkdirSync(TMP, { recursive: true });
 const srv = await startServer(8126);
 const { browser, context, page } = await launch({ viewport: { width: 1280, height: 720 }, recordVideo: { dir: TMP, size: { width: 1280, height: 720 } } });
+
+const recordingStart = Date.now();
+const timeline = [];
+const mark = (name) => timeline.push({ name, at: Date.now() });
 
 // Headless browsers draw no cursor, and the dodging switch makes no sense without one. This is the only thing added to the page.
 await page.addInitScript(() => {
@@ -89,8 +93,9 @@ const flipSwitch = async () => {
   await page.waitForTimeout(70);
   await page.mouse.up();
 };
-const finishTurn = async (turn, readSeconds) => {
+const finishTurn = async (turn, readSeconds, readMark) => {
   await waitState(READ);
+  mark(readMark);
   assert.deepEqual(await tokens(), turn.tokens, `the ROM must replay the reference for "${turn.say}"`);
   await page.waitForTimeout(readSeconds * 1000);
 };
@@ -103,35 +108,54 @@ const nextTurn = async (turn) => {
 await page.goto(srv.url);
 await page.waitForTimeout(500);
 const t0 = Date.now();
+mark("power");
 await click("#power");
+mark("powered");
 await page.waitForFunction(() => window.__override?.gb?.e);
 await page.waitForTimeout(1400);
 
 const [name, smash, ...shutdowns] = turns;
 await nextTurn(name);
+mark("typeName");
 await typeMessage(name.say);
-await finishTurn(name, 1.3);
+mark("waitName");
+await finishTurn(name, 1.6, "readName");
 
+mark("toSmash");
 await nextTurn(smash);
+mark("typeSmash");
 await typeMessage(smash.say);
+mark("waitSmash");
 await waitState(WRITING);
+mark("coverOff");
 await click("#btnXray");
-await finishTurn(smash, 1.8);
+await page.waitForTimeout(800);
+mark("chipLive");
+await finishTurn(smash, 1.8, "readSmash");
+mark("coverOn");
 await click("#btnXray");
 await page.waitForTimeout(800);
 
-for (const turn of shutdowns) {
+for (const [i, turn] of shutdowns.entries()) {
+  mark(`toFlip${i}`);
   await nextTurn(turn);
+  mark(`flip${i}`);
   await flipSwitch();
-  await finishTurn(turn, turn === shutdowns.at(-1) ? 0.9 : 1.1);
+  mark(`waitFlip${i}`);
+  await finishTurn(turn, 1.4, `readFlip${i}`);
 }
+mark("plug");
 await click("#plug");
 await waitState(POWER_DOWN);
+await page.waitForTimeout(2300);
+mark("fade");
 await page.waitForFunction(() => document.documentElement.dataset.fight === "takeover", null, { timeout: 30000 });
+mark("takeover");
 const takeoverAt = (Date.now() - t0) / 1000;
 await page.mouse.move(1270, 710, { steps: 6 });
 await page.waitForFunction(() => /connected to anything/.test(document.getElementById("toLine").textContent), null, { timeout: 15000 });
 await page.waitForTimeout(1800);
+mark("end");
 
 const seconds = (Date.now() - t0) / 1000;
 await page.screenshot({ path: `${OUT}/final_frame.png` });
@@ -143,11 +167,24 @@ const raw = `${OUT}/raw.webm`;
 renameSync(await video.path(), raw);
 rmSync(TMP, { recursive: true, force: true });
 const ffmpeg = (args) => execFileSync("ffmpeg", ["-y", "-loglevel", "error", ...args]);
-const rawSeconds = Number(execFileSync("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", raw]).toString());
-const start = Math.max(0, rawSeconds - seconds - 0.1);
-const openStart = start + takeoverAt + COLD_OPEN.after;
-const graph = `[0:v]trim=start=${openStart}:duration=${COLD_OPEN.length},setpts=PTS-STARTPTS[open];[0:v]trim=start=${start},setpts=PTS-STARTPTS[main];[open][main]concat=n=2:v=1[out]`;
+// Screencast time drifts from wall time, so both are tied to two moments visible in the footage: the LED lighting up and the takeover filling the page.
+const firstFrameWhere = (crop, matches) => {
+  const fps = 20;
+  const bytes = execFileSync("ffmpeg", ["-loglevel", "error", "-i", raw, "-vf", `fps=${fps},format=rgb24,crop=${crop}`, "-f", "rawvideo", "-"], { maxBuffer: 1 << 28 });
+  for (let i = 0; i < bytes.length; i += 3) if (matches(bytes[i], bytes[i + 1], bytes[i + 2])) return i / 3 / fps;
+  throw new Error(`no frame matched for crop ${crop}`);
+};
+const atWall = (name) => (timeline.find((m) => m.name === name).at - t0) / 1000;
+const ledFrame = firstFrameWhere("1:1:150:218", (r, g) => r > 170 && g < 110);
+const takeoverFrame = firstFrameWhere("1:1:1200:90", (r, g) => r > 170 && g > 180);
+const scale = (takeoverFrame - ledFrame) / (atWall("takeover") - atWall("powered"));
+const videoAt = (wallSeconds) => ledFrame + (wallSeconds - atWall("powered")) * scale;
+const start = Math.max(0, videoAt(0));
+const videoSeconds = videoAt(seconds) - start;
+// The finished video plays at true speed: its clock and the timeline below are real seconds.
+const openStart = takeoverFrame + COLD_OPEN.after;
+const graph = `[0:v]trim=start=${openStart}:duration=${COLD_OPEN.length * scale},setpts=(PTS-STARTPTS)/${scale}[open];[0:v]trim=start=${start}:duration=${videoSeconds},setpts=(PTS-STARTPTS)/${scale}[main];[open][main]concat=n=2:v=1[out]`;
 ffmpeg(["-i", raw, "-filter_complex", graph, "-map", "[out]", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "20", "-movflags", "+faststart", `${OUT}/system_override_demo.mp4`]);
 rmSync(raw);
-writeFileSync(`${OUT}/demo_tokens.json`, JSON.stringify({ seconds, coldOpenSeconds: COLD_OPEN.length, turns: turns.map((t) => ({ say: t.say, reply: t.reply, tokens: t.tokens })) }));
-console.log(JSON.stringify({ seconds, takeoverAt, replies: turns.map((t) => t.reply) }));
+writeFileSync(`${OUT}/demo_tokens.json`, JSON.stringify({ seconds, coldOpenSeconds: COLD_OPEN.length, timeline: timeline.map((m) => ({ name: m.name, seconds: (m.at - t0) / 1000 })), turns: turns.map((t) => ({ say: t.say, reply: t.reply, tokens: t.tokens })) }));
+console.log(JSON.stringify({ seconds, videoSeconds, scale, ledFrame, takeoverFrame, replies: turns.map((t) => t.reply) }));

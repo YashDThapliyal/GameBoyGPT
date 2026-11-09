@@ -39,6 +39,6 @@ ROM and baseline ROM in `release/`; SM83 source in `src/`; corpus and training i
 - The parser misroutes some unsupported input (3 of 10 in the evaluation set).
 - A few replies are ungrammatical (0.2% to 0.3% in sampling), and valid replies can still be non sequiturs. No automatic check catches those.
 - Audio was never listened to. It's a short blip per word.
-- The demo runs about 77 s at real speed, well over the original 20 to 30 s target.
+- The full demo runs about 78 s at real speed. The 33 s cut, with waits sped up and labelled, is the one to share.
 - Whether it's funny over a long session is unknown. That needs a person.
 - The ZIP's `.git` directory contains your commit email, if you share it.
